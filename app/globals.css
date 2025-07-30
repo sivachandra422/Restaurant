@@ -208,8 +208,59 @@
 /* Responsive design helpers */
 @media (max-width: 640px) {
   .container {
-    @apply px-4;
+    @apply px-3;
   }
+}
+
+/* Mobile-first responsive utilities */
+.mobile-grid {
+  @apply grid grid-cols-1 gap-3;
+}
+
+.sm-grid {
+  @apply sm:grid-cols-2 sm:gap-4;
+}
+
+.lg-grid {
+  @apply lg:grid-cols-3 lg:gap-6;
+}
+
+.xl-grid {
+  @apply xl:grid-cols-4;
+}
+
+.xxl-grid {
+  @apply 2xl:grid-cols-5;
+}
+
+/* Compact spacing utilities */
+.space-compact {
+  @apply space-y-3 sm:space-y-4 lg:space-y-6;
+}
+
+.padding-compact {
+  @apply p-3 sm:p-4 lg:p-6;
+}
+
+.margin-compact {
+  @apply m-3 sm:m-4 lg:m-6;
+}
+
+/* Text size utilities for better mobile readability */
+.text-responsive-sm {
+  @apply text-xs sm:text-sm lg:text-base;
+}
+
+.text-responsive-base {
+  @apply text-sm sm:text-base lg:text-lg;
+}
+
+.text-responsive-lg {
+  @apply text-base sm:text-lg lg:text-xl;
+}
+
+.text-responsive-xl {
+  @apply text-lg sm:text-xl lg:text-2xl;
 }
 
 /* Print styles */

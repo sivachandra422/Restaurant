@@ -24,10 +24,10 @@ export function ElegantCategoryTabs({
 }: ElegantCategoryTabsProps) {
   return (
     <div className="w-full">
-      {/* Mobile: Horizontal Scroll */}
-      <div className="block md:hidden">
+      {/* Mobile: Compact Horizontal Scroll */}
+      <div className="block lg:hidden">
         <ScrollArea className="w-full" type="always">
-          <div className="flex space-x-3 p-2 pb-4 min-w-max">
+          <div className="flex space-x-2 p-2 pb-3 min-w-max">
             {categories.map((category) => {
               const isActive = category.id === activeCategory;
               
@@ -35,26 +35,26 @@ export function ElegantCategoryTabs({
                 <button
                   key={category.id}
                   onClick={() => onCategoryChange(category.id)}
-                  className={`group relative px-4 py-3 rounded-xl transition-all duration-300 transform hover:scale-105 flex-shrink-0 min-w-[160px] ${
+                  className={`group relative px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-105 flex-shrink-0 min-w-[120px] max-w-[140px] ${
                     isActive
-                      ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-200'
-                      : 'bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-white hover:shadow-md border border-gray-200'
+                      ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md'
+                      : 'bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-white hover:shadow-sm border border-gray-200'
                   }`}
                 >
                   {/* Icon */}
-                  <div className={`text-xl mb-2 transition-transform duration-300 ${
+                  <div className={`text-lg mb-1 transition-transform duration-300 ${
                     isActive ? 'transform scale-110' : 'group-hover:scale-110'
                   }`}>
                     {category.icon}
                   </div>
                   
                   {/* Category Name */}
-                  <div className="font-semibold text-sm mb-1">
+                  <div className="font-semibold text-xs mb-1 leading-tight">
                     {category.name}
                   </div>
                   
                   {/* Description */}
-                  <div className={`text-xs leading-tight max-w-[140px] ${
+                  <div className={`text-xs leading-tight line-clamp-2 ${
                     isActive ? 'text-orange-100' : 'text-gray-500'
                   }`}>
                     {category.description}
@@ -62,19 +62,19 @@ export function ElegantCategoryTabs({
                   
                   {/* Active Indicator */}
                   {isActive && (
-                    <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow-sm" />
+                    <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 bg-white rounded-full shadow-sm" />
                   )}
                 </button>
               );
             })}
           </div>
-          <ScrollBar orientation="horizontal" className="h-2" />
+          <ScrollBar orientation="horizontal" className="h-1" />
         </ScrollArea>
       </div>
 
-      {/* Desktop: Centered Layout */}
-      <div className="hidden md:flex justify-center">
-        <div className="flex flex-wrap justify-center gap-4 lg:gap-6 max-w-6xl">
+      {/* Desktop: Compact Grid Layout */}
+      <div className="hidden lg:flex justify-center">
+        <div className="grid grid-cols-3 gap-3 max-w-4xl w-full">
           {categories.map((category) => {
             const isActive = category.id === activeCategory;
             
@@ -82,26 +82,26 @@ export function ElegantCategoryTabs({
               <button
                 key={category.id}
                 onClick={() => onCategoryChange(category.id)}
-                className={`group relative px-6 py-4 lg:px-8 lg:py-6 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+                className={`group relative px-4 py-3 rounded-lg transition-all duration-300 transform hover:scale-105 ${
                   isActive
-                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-xl shadow-orange-200'
-                    : 'bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-white hover:shadow-lg border border-gray-200'
+                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
+                    : 'bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-white hover:shadow-md border border-gray-200'
                 }`}
               >
                 {/* Icon */}
-                <div className={`text-2xl lg:text-3xl mb-3 lg:mb-4 transition-transform duration-300 ${
+                <div className={`text-xl mb-2 transition-transform duration-300 ${
                   isActive ? 'transform scale-110' : 'group-hover:scale-110'
                 }`}>
                   {category.icon}
                 </div>
                 
                 {/* Category Name */}
-                <div className="font-semibold text-sm lg:text-base mb-2 lg:mb-3">
+                <div className="font-semibold text-sm mb-1">
                   {category.name}
                 </div>
                 
                 {/* Description */}
-                <div className={`text-xs lg:text-sm leading-tight max-w-[200px] lg:max-w-[250px] ${
+                <div className={`text-xs leading-tight line-clamp-2 ${
                   isActive ? 'text-orange-100' : 'text-gray-500'
                 }`}>
                   {category.description}
@@ -109,7 +109,7 @@ export function ElegantCategoryTabs({
                 
                 {/* Active Indicator */}
                 {isActive && (
-                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-white rounded-full shadow-lg" />
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow-sm" />
                 )}
               </button>
             );
