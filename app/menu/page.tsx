@@ -60,7 +60,7 @@ export default function MenuPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-stone-50 to-amber-50">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
       {/* SEO & Structured Data */}
       <Head>
         <title>Sri Kanya Family Restaurants Menu</title>
@@ -89,8 +89,8 @@ export default function MenuPage() {
       <a href="#main-content" className="sr-only focus:not-sr-only absolute top-2 left-2 bg-white text-black px-4 py-2 rounded z-50">Skip to main content</a>
 
       {/* Premium Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-orange-100 shadow-lg">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-orange-200 shadow-lg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo & Brand */}
             <div className="flex items-center space-x-3">
@@ -113,28 +113,30 @@ export default function MenuPage() {
       </header>
 
       {/* Main Content */}
-      <main id="main-content" className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-6">
+      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center space-x-2 mb-4">
-            <Crown className="w-6 h-6 text-orange-600" />
-            <h2 className="text-3xl font-bold text-gray-900">Our Menu</h2>
-            <Sparkles className="w-6 h-6 text-orange-600" />
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center space-x-3 mb-6">
+            <Crown className="w-8 h-8 text-orange-600" />
+            <h2 className="text-4xl font-bold text-gray-900">Our Menu</h2>
+            <Sparkles className="w-8 h-8 text-orange-600" />
           </div>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <p className="text-gray-700 text-lg max-w-3xl mx-auto leading-relaxed">
             Discover our authentic Indian cuisine featuring signature biryanis, aromatic curries, and traditional favorites.
           </p>
         </div>
 
         {/* Category Tabs */}
-        <ElegantCategoryTabs
-          categories={menuCategories}
-          activeCategory={activeCategory}
-          onCategoryChange={setActiveCategory}
-        />
+        <div className="mb-10">
+          <ElegantCategoryTabs
+            categories={menuCategories}
+            activeCategory={activeCategory}
+            onCategoryChange={setActiveCategory}
+          />
+        </div>
 
         {/* Menu Items Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6" role="list" aria-label="Menu items">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6" role="list" aria-label="Menu items">
           {menuWithImages[activeCategory]?.map((item) => {
             const cartItem = state.items.find(cartItem => cartItem.id === item.id);
             const quantity = cartItem?.quantity || 0;
@@ -154,7 +156,7 @@ export default function MenuPage() {
 
         {/* Empty State */}
         {(!menuWithImages[activeCategory] || menuWithImages[activeCategory].length === 0) && (
-          <div className="text-center py-16">
+          <div className="text-center py-20">
             <div className="text-8xl mb-6">🍽️</div>
             <h3 className="font-playfair text-3xl font-semibold text-gray-800 mb-4">
               Coming Soon

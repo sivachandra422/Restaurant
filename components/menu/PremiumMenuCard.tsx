@@ -68,10 +68,10 @@ export function PremiumMenuCard({
   };
 
   return (
-    <Card className="group overflow-hidden bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+    <Card className="group overflow-hidden bg-white/90 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02]">
       <CardContent className="p-0">
         {/* Image Section */}
-        <div className="relative h-48 overflow-hidden">
+        <div className="relative h-56 overflow-hidden">
           {/* Loading Placeholder */}
           {imageLoading && (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse flex items-center justify-center">
@@ -83,9 +83,9 @@ export function PremiumMenuCard({
             src={imageError ? getFallbackImage(item.category) : imageUrl}
             alt={item.name}
             fill
-            className={`object-cover transition-all duration-500 ${
+            className={`object-cover transition-all duration-700 ${
               imageLoading ? 'opacity-0' : 'opacity-100'
-            }`}
+            } group-hover:scale-110`}
             onLoad={() => setImageLoading(false)}
             onError={() => {
               setImageError(true);
@@ -94,25 +94,25 @@ export function PremiumMenuCard({
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           />
           
-          {/* Overlay with category info */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          {/* Overlay with gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
           
           {/* Special Badges - Only Signature and Special */}
-          <div className="absolute top-3 right-3 flex flex-col gap-1">
+          <div className="absolute top-4 right-4 flex flex-col gap-2">
             {item.isSignature && (
-              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 font-medium text-xs px-2 py-1">
+              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 font-medium text-xs px-3 py-1.5 shadow-lg">
                 <Star className="w-3 h-3 mr-1" />
                 Signature
               </Badge>
             )}
             {item.isSpecial && (
-              <Badge className="bg-gradient-to-r from-purple-400 to-pink-500 text-white border-0 font-medium text-xs px-2 py-1">
+              <Badge className="bg-gradient-to-r from-purple-400 to-pink-500 text-white border-0 font-medium text-xs px-3 py-1.5 shadow-lg">
                 <Zap className="w-3 h-3 mr-1" />
                 Special
               </Badge>
             )}
             {item.isVeg && (
-              <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-white border-0 font-medium text-xs px-2 py-1">
+              <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-white border-0 font-medium text-xs px-3 py-1.5 shadow-lg">
                 <Leaf className="w-3 h-3 mr-1" />
                 Veg
               </Badge>
@@ -121,19 +121,19 @@ export function PremiumMenuCard({
         </div>
 
         {/* Content Section */}
-        <div className="p-4">
+        <div className="p-6">
           {/* Title and Description */}
-          <div className="mb-4">
-            <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-2 line-clamp-2">
+          <div className="mb-6">
+            <h3 className="font-bold text-gray-900 text-lg leading-tight mb-3 line-clamp-2">
               {item.name}
             </h3>
-            <p className="text-gray-600 text-xs leading-relaxed line-clamp-2 mb-3">
+            <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-4">
               {item.description}
             </p>
             
             {/* Price Display */}
             <div className="flex items-center justify-between">
-              <span className="font-bold text-lg text-gray-900">
+              <span className="font-bold text-2xl text-gray-900">
                 ₹{item.price}
               </span>
             </div>
@@ -144,39 +144,39 @@ export function PremiumMenuCard({
             {quantity === 0 ? (
               <Button
                 onClick={handleAddClick}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
                 disabled={isAtMaxQuantity}
               >
                 Add to Cart
               </Button>
             ) : (
-              <div className="flex items-center gap-3 w-full">
+              <div className="flex items-center gap-4 w-full">
                 <Button
                   onClick={handleDecreaseClick}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-full w-8 h-8 p-0 flex items-center justify-center transition-all duration-200"
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full w-10 h-10 p-0 flex items-center justify-center transition-all duration-300 shadow-md"
                 >
-                  <Minus className="w-4 h-4" />
+                  <Minus className="w-5 h-5" />
                 </Button>
                 
-                <span className="font-semibold text-gray-900 min-w-[2rem] text-center">
+                <span className="font-bold text-gray-900 min-w-[3rem] text-center text-lg">
                   {quantity}
                 </span>
                 
                 <Button
                   onClick={handleIncreaseClick}
-                  className={`rounded-full w-8 h-8 p-0 flex items-center justify-center transition-all duration-200 ${
+                  className={`rounded-full w-10 h-10 p-0 flex items-center justify-center transition-all duration-300 shadow-md ${
                     isAtMaxQuantity
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-orange-500 hover:bg-orange-600 text-white'
                   }`}
                   disabled={isAtMaxQuantity}
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-5 h-5" />
                 </Button>
                 
                 <Button
                   onClick={handleRemoveClick}
-                  className="ml-auto bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded-lg transition-all duration-200"
+                  className="ml-auto bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg transition-all duration-300 shadow-md"
                 >
                   Remove
                 </Button>
