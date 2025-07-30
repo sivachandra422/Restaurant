@@ -68,10 +68,10 @@ export function PremiumMenuCard({
   };
 
   return (
-    <Card className="group overflow-hidden bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02]">
-      <CardContent className="p-0">
-        {/* Image Section */}
-        <div className="relative h-40 sm:h-44 md:h-48 lg:h-52 overflow-hidden">
+    <Card className="group overflow-hidden bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02] h-full flex flex-col">
+      <CardContent className="p-0 flex flex-col h-full">
+        {/* Image Section - Fixed Height */}
+        <div className="relative h-48 overflow-hidden flex-shrink-0">
           {/* Loading Placeholder */}
           {imageLoading && (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse flex items-center justify-center">
@@ -120,63 +120,67 @@ export function PremiumMenuCard({
           </div>
         </div>
 
-        {/* Content Section */}
-        <div className="p-4 sm:p-5 lg:p-6">
-          {/* Title and Description */}
-          <div className="mb-4 sm:mb-5">
-            <h3 className="font-bold text-gray-900 text-base sm:text-lg lg:text-xl leading-tight mb-2 sm:mb-3 line-clamp-2">
+        {/* Content Section - Fixed Structure */}
+        <div className="p-4 flex flex-col flex-1">
+          {/* Title - Fixed Height */}
+          <div className="mb-2 h-12 flex items-start">
+            <h3 className="font-bold text-gray-900 text-base leading-tight line-clamp-2">
               {item.name}
             </h3>
-            <p className="text-gray-600 text-sm sm:text-base leading-relaxed line-clamp-2 mb-3 sm:mb-4">
+          </div>
+          
+          {/* Description - Fixed Height */}
+          <div className="mb-3 h-10 flex items-start">
+            <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
               {item.description}
             </p>
-            
-            {/* Price Display */}
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-lg sm:text-xl lg:text-2xl text-gray-900">
-                ₹{item.price}
-              </span>
-            </div>
+          </div>
+          
+          {/* Price - Fixed Position */}
+          <div className="mb-4 flex items-center justify-between">
+            <span className="font-bold text-lg text-gray-900">
+              ₹{item.price}
+            </span>
           </div>
 
-          {/* Quantity Controls */}
-          <div className="flex items-center justify-between">
+          {/* Quantity Controls - Fixed at Bottom */}
+          <div className="flex items-center justify-between mt-auto">
             {quantity === 0 ? (
               <Button
                 onClick={handleAddClick}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md text-sm sm:text-base"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-2.5 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md text-sm"
                 disabled={isAtMaxQuantity}
               >
                 Add to Cart
               </Button>
             ) : (
-              <div className="flex items-center gap-3 w-full">
+              <div className="flex items-center gap-2 w-full">
                 <Button
                   onClick={handleDecreaseClick}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full w-8 h-8 sm:w-9 sm:h-9 p-0 flex items-center justify-center transition-all duration-300 shadow-md"
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full w-8 h-8 p-0 flex items-center justify-center transition-all duration-300 shadow-md"
                 >
-                  <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Minus className="w-4 h-4" />
                 </Button>
                 
-                <span className="font-bold text-gray-900 min-w-[2rem] sm:min-w-[2.5rem] text-center text-base sm:text-lg">
+                <span className="font-bold text-gray-900 min-w-[2rem] text-center text-sm">
                   {quantity}
                 </span>
                 
                 <Button
                   onClick={handleIncreaseClick}
-                  className={`rounded-full w-8 h-8 sm:w-9 sm:h-9 p-0 flex items-center justify-center transition-all duration-300 shadow-md ${
+                  className={`rounded-full w-8 h-8 p-0 flex items-center justify-center transition-all duration-300 shadow-md ${
                     isAtMaxQuantity
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-orange-500 hover:bg-orange-600 text-white'
                   }`}
                   disabled={isAtMaxQuantity}
                 >
-                  <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Plus className="w-4 h-4" />
                 </Button>
                 
                 <Button
                   onClick={handleRemoveClick}
-                  className="ml-auto bg-red-500 hover:bg-red-600 text-white text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg transition-all duration-300 shadow-md"
+                  className="ml-auto bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-2 rounded-lg transition-all duration-300 shadow-md"
                 >
                   Remove
                 </Button>
