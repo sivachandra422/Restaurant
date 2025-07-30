@@ -27,64 +27,6 @@ export function PremiumMenuCard({
 }: PremiumMenuCardProps) {
   const { getMaxQuantity } = useCart();
   
-  const getImageByCategory = (category: string, itemName: string) => {
-    const categoryStyles: { [key: string]: { emoji: string; gradient: string; text: string; bgEmoji: string } } = {
-      biryanis: {
-        emoji: '🍛',
-        gradient: 'from-orange-200 to-amber-200',
-        text: 'Premium Biryani',
-        bgEmoji: '🍚'
-      },
-      vegCurries: {
-        emoji: '🥗',
-        gradient: 'from-green-200 to-emerald-200',
-        text: 'Fresh Veg Curry',
-        bgEmoji: '🥬'
-      },
-      nonVegCurries: {
-        emoji: '🍗',
-        gradient: 'from-red-200 to-orange-200',
-        text: 'Tender Meat Curry',
-        bgEmoji: '🥩'
-      },
-      friedRiceNoodles: {
-        emoji: '🍜',
-        gradient: 'from-yellow-200 to-orange-200',
-        text: 'Indo-Chinese',
-        bgEmoji: '🍚'
-      },
-      breadsRoti: {
-        emoji: '🫓',
-        gradient: 'from-amber-200 to-yellow-200',
-        text: 'Fresh Bread',
-        bgEmoji: '🌾'
-      }
-    };
-
-    const style = categoryStyles[category] || {
-      emoji: '🍽️',
-      gradient: 'from-gray-200 to-gray-300',
-      text: 'Delicious Dish',
-      bgEmoji: '🍽️'
-    };
-
-    // Create variety based on item name and category
-    const emojiVariations: { [key: string]: string[] } = {
-      biryanis: ['🍛', '🍲', '🥘', '🍱', '🍽️'],
-      vegCurries: ['🥗', '🥬', '🥦', '🥕', '🍆'],
-      nonVegCurries: ['🍗', '🥩', '🍖', '🦐', '🐟'],
-      friedRiceNoodles: ['🍜', '🍚', '🥢', '🍝', '🍲'],
-      breadsRoti: ['🫓', '🥖', '🥨', '🥯', '🍞']
-    };
-
-    const variations = emojiVariations[category] || ['🍽️', '🍲', '🥘', '🍱', '🍽️'];
-    const emojiIndex = itemName.length % variations.length;
-    const selectedEmoji = variations[emojiIndex];
-
-    return { ...style, emoji: selectedEmoji };
-  };
-
-  const imageStyle = getImageByCategory(item.category, item.name);
   const [imageError, setImageError] = React.useState(false);
   const [imageLoading, setImageLoading] = React.useState(true);
 
@@ -133,7 +75,7 @@ export function PremiumMenuCard({
           {/* Loading Placeholder */}
           {imageLoading && (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse flex items-center justify-center">
-              <div className="text-4xl">{imageStyle.bgEmoji}</div>
+              <div className="text-4xl">🍽️</div>
             </div>
           )}
           
@@ -155,14 +97,7 @@ export function PremiumMenuCard({
           {/* Overlay with category info */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
-          {/* Category Badge */}
-          <div className="absolute top-3 left-3">
-            <Badge className={`bg-gradient-to-r ${imageStyle.gradient} text-gray-800 border-0 font-medium text-xs px-2 py-1`}>
-              {imageStyle.emoji} {imageStyle.text}
-            </Badge>
-          </div>
-
-          {/* Special Badges */}
+          {/* Special Badges - Only Signature and Special */}
           <div className="absolute top-3 right-3 flex flex-col gap-1">
             {item.isSignature && (
               <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 font-medium text-xs px-2 py-1">
