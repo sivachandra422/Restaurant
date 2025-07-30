@@ -101,6 +101,7 @@ export function ElegantCheckoutForm() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-api-key': 'test-api-key-123', // Add API key header
         },
         body: JSON.stringify(orderData),
       });

@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
   try {
     // API key check (optional, but recommended)
     const apiKey = typeof process !== 'undefined' ? process.env.ORDER_API_KEY : undefined;
-    if (apiKey) {
+    if (apiKey && apiKey !== '') {
       const reqKey = request.headers.get('x-api-key');
       if (reqKey !== apiKey) {
         return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
