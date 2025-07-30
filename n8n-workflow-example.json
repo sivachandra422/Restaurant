@@ -1,0 +1,183 @@
+{
+  "name": "Sri Kanya Restaurant Orders",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "restaurant-orders",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "restaurant-orders"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process incoming order data\nconst orderData = $input.first().json;\n\n// Extract key information for Excel\nconst excelData = {\n  timestamp: orderData.timestamp,\n  orderId: orderData.orderId,\n  tableNumber: orderData.tableNumber,\n  customerName: orderData.customer.name,\n  customerPhone: orderData.customer.phone,\n  totalAmount: orderData.orderSummary.grandTotal,\n  itemCount: orderData.orderSummary.itemCount,\n  specialInstructions: orderData.specialInstructions || '',\n  estimatedTime: orderData.estimatedTime,\n  status: orderData.status\n};\n\n// Process items for Excel\nconst items = orderData.items.map(item => ({\n  orderId: orderData.orderId,\n  itemName: item.name,\n  quantity: item.quantity,\n  unitPrice: item.unitPrice,\n  subtotal: item.subtotal,\n  category: item.category,\n  isVeg: item.isVeg ? 'Yes' : 'No',\n  isSignature: item.isSignature ? 'Yes' : 'No'\n}));\n\nreturn {\n  excelData: [excelData],\n  itemsData: items\n};"
+      },
+      "id": "process-data",
+      "name": "Process Order Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "your-google-sheet-id",
+        "sheetName": "Orders",
+        "options": {}
+      },
+      "id": "excel-export",
+      "name": "Export to Excel",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": "your-google-sheet-id",
+        "sheetName": "Order Items",
+        "options": {}
+      },
+      "id": "items-export",
+      "name": "Export Items",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format order for kitchen printing\nconst orderData = $input.first().json;\n\nconst kitchenPrintData = {\n  orderId: orderData.orderId,\n  timestamp: new Date(orderData.timestamp).toLocaleString('en-IN'),\n  tableNumber: orderData.tableNumber,\n  customerName: orderData.customer.name,\n  customerPhone: orderData.customer.phone,\n  items: orderData.items.map(item => `${item.quantity}x ${item.name}`).join('\\n'),\n  specialInstructions: orderData.specialInstructions || 'None',\n  totalAmount: `₹${orderData.orderSummary.grandTotal}`,\n  estimatedTime: orderData.estimatedTime,\n  priority: orderData.items.some(item => item.isSignature) ? 'HIGH PRIORITY' : 'NORMAL'\n};\n\nreturn [kitchenPrintData];"
+      },
+      "id": "format-kitchen",
+      "name": "Format for Kitchen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://your-kitchen-printer.com/print",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "options": {}
+      },
+      "id": "kitchen-print",
+      "name": "Kitchen Printer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Order processed successfully\",\n  \"orderId\": $json.orderId,\n  \"timestamp\": $json.timestamp\n}"
+      },
+      "id": "success-response",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Process Order Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Order Data": {
+      "main": [
+        [
+          {
+            "node": "Export to Excel",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Export Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Export to Excel": {
+      "main": [
+        [
+          {
+            "node": "Format for Kitchen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Export Items": {
+      "main": [
+        [
+          {
+            "node": "Format for Kitchen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format for Kitchen": {
+      "main": [
+        [
+          {
+            "node": "Kitchen Printer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kitchen Printer": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-01-27T10:30:00.000Z",
+  "versionId": "1"
+} 
