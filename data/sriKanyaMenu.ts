@@ -650,14 +650,14 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
       id: 'pulka',
       name: 'Pulka',
       description: 'Soft whole wheat bread cooked on tawa',
-      price: 20,
+      price: 7,
       category: 'breadsRoti',
       isVeg: true,
       maxQuantity: 50, // High limit for bread items
       bulkPricing: [
-        { quantity: 5, price: 18 },
-        { quantity: 10, price: 16 },
-        { quantity: 20, price: 15 },
+        { quantity: 5, price: 6 },
+        { quantity: 10, price: 5 },
+        { quantity: 20, price: 4 },
       ],
     },
   ],
