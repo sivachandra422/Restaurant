@@ -19,7 +19,7 @@ export const foodImageMappings: { [key: string]: string } = {
   'mixed_veg_biryani': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/mixed_veg_biryani_jdlmp7',
 
   // Veg Curries - Rich vegetarian curries with consistent presentation
-  'kaju_tomato': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_tomato_jbm1vj',
+  'kaju_tomato': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_masala_yti9z5',
   'kaju_paneer': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_tomato_jbm1vj',
   'mushroom_curry': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/mushroom_curry_vyzob0',
   'paneer_butter_masala': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/paneer_butter_masala_htawqb',
