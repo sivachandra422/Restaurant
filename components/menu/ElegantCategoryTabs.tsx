@@ -74,7 +74,7 @@ export function ElegantCategoryTabs({
 
       {/* Desktop: Centered Layout */}
       <div className="hidden md:flex justify-center">
-        <div className="flex flex-wrap justify-center gap-3 max-w-4xl">
+        <div className="flex flex-wrap justify-center gap-4 lg:gap-6 max-w-6xl">
           {categories.map((category) => {
             const isActive = category.id === activeCategory;
             
@@ -82,26 +82,26 @@ export function ElegantCategoryTabs({
               <button
                 key={category.id}
                 onClick={() => onCategoryChange(category.id)}
-                className={`group relative px-6 py-4 rounded-xl transition-all duration-300 transform hover:scale-105 ${
+                className={`group relative px-6 py-4 lg:px-8 lg:py-6 rounded-xl transition-all duration-300 transform hover:scale-105 ${
                   isActive
-                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-200'
-                    : 'bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-white hover:shadow-md border border-gray-200'
+                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-xl shadow-orange-200'
+                    : 'bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-white hover:shadow-lg border border-gray-200'
                 }`}
               >
                 {/* Icon */}
-                <div className={`text-2xl mb-2 transition-transform duration-300 ${
+                <div className={`text-2xl lg:text-3xl mb-3 lg:mb-4 transition-transform duration-300 ${
                   isActive ? 'transform scale-110' : 'group-hover:scale-110'
                 }`}>
                   {category.icon}
                 </div>
                 
                 {/* Category Name */}
-                <div className="font-semibold text-sm mb-1">
+                <div className="font-semibold text-sm lg:text-base mb-2 lg:mb-3">
                   {category.name}
                 </div>
                 
                 {/* Description */}
-                <div className={`text-xs leading-tight max-w-[200px] ${
+                <div className={`text-xs lg:text-sm leading-tight max-w-[200px] lg:max-w-[250px] ${
                   isActive ? 'text-orange-100' : 'text-gray-500'
                 }`}>
                   {category.description}
@@ -109,7 +109,7 @@ export function ElegantCategoryTabs({
                 
                 {/* Active Indicator */}
                 {isActive && (
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow-sm" />
+                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-white rounded-full shadow-lg" />
                 )}
               </button>
             );
