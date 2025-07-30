@@ -68,14 +68,14 @@ export function PremiumMenuCard({
   };
 
   return (
-    <Card className="group overflow-hidden bg-white/90 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02]">
+    <Card className="group overflow-hidden bg-white/90 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 sm:hover:-translate-y-2 hover:scale-[1.01] sm:hover:scale-[1.02]">
       <CardContent className="p-0">
         {/* Image Section */}
-        <div className="relative h-56 overflow-hidden">
+        <div className="relative h-48 sm:h-56 overflow-hidden">
           {/* Loading Placeholder */}
           {imageLoading && (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse flex items-center justify-center">
-              <div className="text-4xl">🍽️</div>
+              <div className="text-3xl sm:text-4xl">🍽️</div>
             </div>
           )}
           
@@ -91,28 +91,28 @@ export function PremiumMenuCard({
               setImageError(true);
               setImageLoading(false);
             }}
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
           
           {/* Overlay with gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
           
           {/* Special Badges - Only Signature and Special */}
-          <div className="absolute top-4 right-4 flex flex-col gap-2">
+          <div className="absolute top-3 sm:top-4 right-3 sm:right-4 flex flex-col gap-1 sm:gap-2">
             {item.isSignature && (
-              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 font-medium text-xs px-3 py-1.5 shadow-lg">
+              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 font-medium text-xs px-2 sm:px-3 py-1 sm:py-1.5 shadow-lg">
                 <Star className="w-3 h-3 mr-1" />
                 Signature
               </Badge>
             )}
             {item.isSpecial && (
-              <Badge className="bg-gradient-to-r from-purple-400 to-pink-500 text-white border-0 font-medium text-xs px-3 py-1.5 shadow-lg">
+              <Badge className="bg-gradient-to-r from-purple-400 to-pink-500 text-white border-0 font-medium text-xs px-2 sm:px-3 py-1 sm:py-1.5 shadow-lg">
                 <Zap className="w-3 h-3 mr-1" />
                 Special
               </Badge>
             )}
             {item.isVeg && (
-              <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-white border-0 font-medium text-xs px-3 py-1.5 shadow-lg">
+              <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-white border-0 font-medium text-xs px-2 sm:px-3 py-1 sm:py-1.5 shadow-lg">
                 <Leaf className="w-3 h-3 mr-1" />
                 Veg
               </Badge>
@@ -121,19 +121,19 @@ export function PremiumMenuCard({
         </div>
 
         {/* Content Section */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* Title and Description */}
-          <div className="mb-6">
-            <h3 className="font-bold text-gray-900 text-lg leading-tight mb-3 line-clamp-2">
+          <div className="mb-4 sm:mb-6">
+            <h3 className="font-bold text-gray-900 text-base sm:text-lg leading-tight mb-2 sm:mb-3 line-clamp-2">
               {item.name}
             </h3>
-            <p className="text-gray-600 text-sm leading-relaxed line-clamp-3 mb-4">
+            <p className="text-gray-600 text-xs sm:text-sm leading-relaxed line-clamp-2 sm:line-clamp-3 mb-3 sm:mb-4">
               {item.description}
             </p>
             
             {/* Price Display */}
             <div className="flex items-center justify-between">
-              <span className="font-bold text-2xl text-gray-900">
+              <span className="font-bold text-xl sm:text-2xl text-gray-900">
                 ₹{item.price}
               </span>
             </div>
@@ -144,39 +144,39 @@ export function PremiumMenuCard({
             {quantity === 0 ? (
               <Button
                 onClick={handleAddClick}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-2 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg text-sm sm:text-base"
                 disabled={isAtMaxQuantity}
               >
                 Add to Cart
               </Button>
             ) : (
-              <div className="flex items-center gap-4 w-full">
+              <div className="flex items-center gap-2 sm:gap-4 w-full">
                 <Button
                   onClick={handleDecreaseClick}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full w-10 h-10 p-0 flex items-center justify-center transition-all duration-300 shadow-md"
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full w-8 h-8 sm:w-10 sm:h-10 p-0 flex items-center justify-center transition-all duration-300 shadow-md"
                 >
-                  <Minus className="w-5 h-5" />
+                  <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
                 
-                <span className="font-bold text-gray-900 min-w-[3rem] text-center text-lg">
+                <span className="font-bold text-gray-900 min-w-[2rem] sm:min-w-[3rem] text-center text-base sm:text-lg">
                   {quantity}
                 </span>
                 
                 <Button
                   onClick={handleIncreaseClick}
-                  className={`rounded-full w-10 h-10 p-0 flex items-center justify-center transition-all duration-300 shadow-md ${
+                  className={`rounded-full w-8 h-8 sm:w-10 sm:h-10 p-0 flex items-center justify-center transition-all duration-300 shadow-md ${
                     isAtMaxQuantity
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-orange-500 hover:bg-orange-600 text-white'
                   }`}
                   disabled={isAtMaxQuantity}
                 >
-                  <Plus className="w-5 h-5" />
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
                 
                 <Button
                   onClick={handleRemoveClick}
-                  className="ml-auto bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 rounded-lg transition-all duration-300 shadow-md"
+                  className="ml-auto bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2 rounded-lg transition-all duration-300 shadow-md"
                 >
                   Remove
                 </Button>
