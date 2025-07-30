@@ -26,10 +26,9 @@ async function getCollectionImages() {
       return;
     }
 
-    // Get all resources from your account
+    // Get all resources from your account (without prefix to find all images)
     const result = await cloudinary.api.resources({
       type: 'upload',
-      prefix: 'sri-kanya-menu/', // Adjust this based on your folder structure
       max_results: 100
     });
 
@@ -38,13 +37,19 @@ async function getCollectionImages() {
 
     const imageMappings = {};
 
-    result.resources.forEach(resource => {
-      const publicId = resource.public_id.split('/').pop(); // Get filename without folder
-      const optimizedUrl = `https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/${resource.public_id}`;
-      
-      console.log(`✅ ${publicId}: ${optimizedUrl}`);
-      imageMappings[publicId] = optimizedUrl;
-    });
+    if (result.resources && result.resources.length > 0) {
+      result.resources.forEach(resource => {
+        const publicId = resource.public_id.split('/').pop(); // Get filename without folder
+        const optimizedUrl = `https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/${resource.public_id}`;
+        
+        console.log(`✅ ${publicId}: ${optimizedUrl}`);
+        imageMappings[publicId] = optimizedUrl;
+      });
+    } else {
+      console.log('❌ No images found in your Cloudinary account');
+      console.log('📋 Please upload your images to Cloudinary first');
+      console.log('📋 Or check if your credentials are correct');
+    }
 
     // Generate the updated imageMappings.ts content
     generateImageMappingsFile(imageMappings);
