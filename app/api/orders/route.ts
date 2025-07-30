@@ -5,11 +5,12 @@ declare const process: {
   env: { [key: string]: string | undefined };
 };
 
-// Enhanced order data interface
+// Enhanced order data interface with session management
 interface OrderData {
   orderId: string;
   restaurantName: string;
   tableNumber: number;
+  sessionId: string; // Unique session ID for tracking
   timestamp: string;
   customer: {
     name: string;
@@ -24,6 +25,8 @@ interface OrderData {
     category: string;
     isVeg: boolean;
     isSignature: boolean;
+    maxQuantity?: number; // Item-specific quantity limit
+    bulkPricing?: { quantity: number; price: number }[]; // Bulk pricing info
   }>;
   orderSummary: {
     itemCount: number;
@@ -37,6 +40,12 @@ interface OrderData {
   orderType: 'dine-in' | 'takeaway' | 'delivery';
   estimatedTime: string;
   status: 'received' | 'preparing' | 'ready' | 'served' | 'completed';
+  quantityValidation: {
+    totalItems: number;
+    maxItemsPerOrder: number;
+    hasBulkItems: boolean;
+    bulkItemsCount: number;
+  };
 }
 
 // Simple validation function for order data
@@ -45,9 +54,19 @@ function validateOrder(data: any): string | null {
   if (typeof data.orderId !== 'string') return 'Invalid orderId';
   if (typeof data.restaurantName !== 'string') return 'Invalid restaurantName';
   if (typeof data.tableNumber !== 'number') return 'Invalid tableNumber';
+  if (typeof data.sessionId !== 'string') return 'Invalid sessionId';
   if (!data.customer || typeof data.customer.name !== 'string' || typeof data.customer.phone !== 'string') return 'Invalid customer info';
   if (!Array.isArray(data.items) || data.items.length === 0) return 'No items in order';
   if (!data.orderSummary || typeof data.orderSummary.grandTotal !== 'number') return 'Invalid order summary';
+  
+  // Validate quantity limits
+  for (const item of data.items) {
+    if (item.quantity <= 0) return `Invalid quantity for ${item.name}`;
+    if (item.maxQuantity && item.quantity > item.maxQuantity) {
+      return `Quantity exceeds limit for ${item.name} (max: ${item.maxQuantity})`;
+    }
+  }
+  
   return null;
 }
 
@@ -57,6 +76,7 @@ function formatWebhookPayload(orderData: OrderData) {
     // Kitchen notification format
     kitchen: {
       orderId: orderData.orderId,
+      sessionId: orderData.sessionId,
       timestamp: orderData.timestamp,
       tableNumber: orderData.tableNumber,
       customerName: orderData.customer.name,
@@ -68,15 +88,19 @@ function formatWebhookPayload(orderData: OrderData) {
         isVeg: item.isVeg,
         isSignature: item.isSignature,
         specialNotes: item.isSignature ? 'SIGNATURE DISH' : '',
+        maxQuantity: item.maxQuantity,
+        bulkPricing: item.bulkPricing,
       })),
       specialInstructions: orderData.specialInstructions,
       totalAmount: orderData.orderSummary.grandTotal,
       estimatedTime: orderData.estimatedTime,
       priority: orderData.items.some(item => item.isSignature) ? 'HIGH' : 'NORMAL',
+      quantityValidation: orderData.quantityValidation,
     },
     // POS system format
     pos: {
       orderId: orderData.orderId,
+      sessionId: orderData.sessionId,
       restaurantName: orderData.restaurantName,
       tableNumber: orderData.tableNumber,
       customer: orderData.customer,
@@ -87,19 +111,96 @@ function formatWebhookPayload(orderData: OrderData) {
       estimatedTime: orderData.estimatedTime,
       status: orderData.status,
       timestamp: orderData.timestamp,
+      quantityValidation: orderData.quantityValidation,
     },
     // Analytics format
     analytics: {
       orderId: orderData.orderId,
+      sessionId: orderData.sessionId,
       timestamp: orderData.timestamp,
+      tableNumber: orderData.tableNumber,
       totalAmount: orderData.orderSummary.grandTotal,
       itemCount: orderData.orderSummary.itemCount,
       categories: Array.from(new Set(orderData.items.map(item => item.category))),
       hasSignatureItems: orderData.items.some(item => item.isSignature),
       hasVegItems: orderData.items.some(item => item.isVeg),
+      hasBulkItems: orderData.quantityValidation.hasBulkItems,
+      bulkItemsCount: orderData.quantityValidation.bulkItemsCount,
       customerPhone: orderData.customer.phone, // For analytics only
-    }
+    },
+    // N8N format (for Excel export and kitchen printing)
+    n8n: {
+      orderId: orderData.orderId,
+      sessionId: orderData.sessionId,
+      timestamp: orderData.timestamp,
+      tableNumber: orderData.tableNumber,
+      customerName: orderData.customer.name,
+      customerPhone: orderData.customer.phone,
+      items: orderData.items.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        subtotal: item.subtotal,
+        category: item.category,
+        isVeg: item.isVeg,
+        isSignature: item.isSignature,
+        maxQuantity: item.maxQuantity,
+        bulkPricing: item.bulkPricing,
+      })),
+      orderSummary: orderData.orderSummary,
+      specialInstructions: orderData.specialInstructions,
+      estimatedTime: orderData.estimatedTime,
+      status: orderData.status,
+      quantityValidation: orderData.quantityValidation,
+    },
   };
+}
+
+// Function to send order data to webhook endpoints
+async function sendToWebhooks(orderData: OrderData, webhookPayloads: any) {
+  const webhookUrls = {
+    n8n: process.env.N8N_WEBHOOK_URL,
+    kitchen: process.env.KITCHEN_WEBHOOK_URL,
+    pos: process.env.POS_WEBHOOK_URL,
+    analytics: process.env.ANALYTICS_WEBHOOK_URL,
+  };
+
+  const results = [];
+
+  for (const [type, url] of Object.entries(webhookUrls)) {
+    if (url) {
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Order-ID': orderData.orderId,
+            'X-Session-ID': orderData.sessionId,
+            'X-Table-Number': orderData.tableNumber.toString(),
+          },
+          body: JSON.stringify(webhookPayloads[type]),
+        });
+
+        results.push({
+          type,
+          success: response.ok,
+          status: response.status,
+          statusText: response.statusText,
+        });
+
+        console.log(`Webhook ${type}: ${response.ok ? 'SUCCESS' : 'FAILED'} (${response.status})`);
+      } catch (error) {
+        console.error(`Webhook ${type} error:`, error);
+        results.push({
+          type,
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+  }
+
+  return results;
 }
 
 export async function POST(request: NextRequest) {
@@ -118,70 +219,54 @@ export async function POST(request: NextRequest) {
     // Validate order data
     const validationError = validateOrder(orderData);
     if (validationError) {
-      return NextResponse.json({ success: false, message: validationError }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: `Validation error: ${validationError}` },
+        { status: 400 }
+      );
     }
 
-    // Enhanced webhook integration
-    const webhookUrls = {
-      kitchen: typeof process !== 'undefined' ? process.env.KITCHEN_WEBHOOK_URL : undefined,
-      pos: typeof process !== 'undefined' ? process.env.POS_WEBHOOK_URL : undefined,
-      analytics: typeof process !== 'undefined' ? process.env.ANALYTICS_WEBHOOK_URL : undefined,
-      n8n: typeof process !== 'undefined' ? process.env.N8N_WEBHOOK_URL : undefined,
+    // Calculate quantity validation info
+    const totalItems = orderData.items.reduce((sum, item) => sum + item.quantity, 0);
+    const hasBulkItems = orderData.items.some(item => item.bulkPricing && item.bulkPricing.length > 0);
+    const bulkItemsCount = orderData.items.filter(item => item.bulkPricing && item.bulkPricing.length > 0).length;
+    
+    // Add quantity validation to order data
+    orderData.quantityValidation = {
+      totalItems,
+      maxItemsPerOrder: 50, // Configurable limit
+      hasBulkItems,
+      bulkItemsCount,
     };
 
-    const webhookPayload = formatWebhookPayload(orderData);
-    const webhookResults = [];
+    // Format webhook payloads
+    const webhookPayloads = formatWebhookPayload(orderData);
 
-    // Send to multiple webhook endpoints
-    for (const [type, url] of Object.entries(webhookUrls)) {
-      if (url) {
-        try {
-          const payload = type === 'n8n' ? orderData : webhookPayload[type as keyof typeof webhookPayload];
-          
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Webhook-Type': type,
-              'X-Order-ID': orderData.orderId,
-            },
-            body: JSON.stringify(payload),
-          });
+    // Send to webhooks
+    const webhookResults = await sendToWebhooks(orderData, webhookPayloads);
 
-          if (!response.ok) {
-            throw new Error(`Webhook ${type} failed with status ${response.status}`);
-          }
+    // Log order details
+    console.log('Order received:', {
+      orderId: orderData.orderId,
+      sessionId: orderData.sessionId,
+      tableNumber: orderData.tableNumber,
+      itemCount: orderData.items.length,
+      totalAmount: orderData.orderSummary.grandTotal,
+      webhookResults,
+    });
 
-          webhookResults.push({ type, status: 'success' });
-        } catch (err) {
-          console.error(`Webhook ${type} error:`, err);
-          webhookResults.push({ type, status: 'failed', error: err instanceof Error ? err.message : 'Unknown error' });
-        }
-      }
-    }
+    return NextResponse.json({
+      success: true,
+      message: 'Order received successfully',
+      orderId: orderData.orderId,
+      sessionId: orderData.sessionId,
+      tableNumber: orderData.tableNumber,
+      webhookResults,
+    });
 
-    // Log webhook results
-    console.log('Webhook results:', webhookResults);
-
-    // Return success response with webhook status
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Order received successfully',
-        orderId: orderData.orderId,
-        webhookStatus: webhookResults,
-        estimatedTime: orderData.estimatedTime,
-      },
-      { status: 200 }
-    );
   } catch (error) {
-    // Log error for debugging, but do not expose details to client
-    console.error('Error processing order:', error);
+    console.error('Order processing error:', error);
     return NextResponse.json(
-      {
-        success: false,
-        message: 'Failed to process order',
-      },
+      { success: false, message: 'Internal server error' },
       { status: 500 }
     );
   }

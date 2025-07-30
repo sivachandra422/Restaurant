@@ -15,6 +15,16 @@ interface CartState {
   isCartOpen: boolean;
   isCheckoutOpen: boolean;
   tableNumber: number | null;
+  sessionId: string | null; // Unique session ID for each table
+  orderHistory: OrderHistoryItem[]; // Track order history per table
+}
+
+interface OrderHistoryItem {
+  orderId: string;
+  timestamp: string;
+  items: CartItem[];
+  totalAmount: number;
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'served';
 }
 
 type CartAction =
@@ -25,6 +35,8 @@ type CartAction =
   | { type: 'SET_CART_OPEN'; payload: boolean }
   | { type: 'SET_CHECKOUT_OPEN'; payload: boolean }
   | { type: 'SET_TABLE_NUMBER'; payload: number }
+  | { type: 'SET_SESSION_ID'; payload: string }
+  | { type: 'ADD_ORDER_TO_HISTORY'; payload: OrderHistoryItem }
   | { type: 'LOAD_CART'; payload: CartState };
 
 const initialState: CartState = {
@@ -34,7 +46,33 @@ const initialState: CartState = {
   isCartOpen: false,
   isCheckoutOpen: false,
   tableNumber: null,
+  sessionId: null,
+  orderHistory: [],
 };
+
+// Helper function to get item-specific max quantity
+function getMaxQuantity(item: MenuItem): number {
+  return item.maxQuantity || 10; // Default to 10 if not specified
+}
+
+// Helper function to calculate bulk pricing
+function calculateBulkPrice(item: MenuItem, quantity: number): number {
+  if (!item.bulkPricing || item.bulkPricing.length === 0) {
+    return item.price * quantity;
+  }
+
+  // Sort bulk pricing by quantity (descending)
+  const sortedPricing = [...item.bulkPricing].sort((a, b) => b.quantity - a.quantity);
+  
+  // Find the applicable bulk pricing tier
+  for (const tier of sortedPricing) {
+    if (quantity >= tier.quantity) {
+      return tier.price * quantity;
+    }
+  }
+  
+  return item.price * quantity;
+}
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   console.log('CartReducer - Action:', action.type, 'payload:', 'payload' in action ? action.payload : 'no payload');
@@ -46,27 +84,35 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     case 'ADD_TO_CART': {
       const { item, quantity } = action.payload;
       const existingItemIndex = state.items.findIndex(cartItem => cartItem.id === item.id);
+      const maxQuantity = getMaxQuantity(item);
 
       let newItems: CartItem[];
       if (existingItemIndex >= 0) {
-        // Enforce max quantity per item
-        const newQuantity = Math.min(state.items[existingItemIndex].quantity + quantity, 10);
+        // Enforce item-specific max quantity
+        const currentQuantity = state.items[existingItemIndex].quantity;
+        const newQuantity = Math.min(currentQuantity + quantity, maxQuantity);
+        
+        if (newQuantity === currentQuantity) {
+          // Quantity didn't change (hit max limit)
+          return state;
+        }
+        
         newItems = state.items.map((cartItem, index) =>
           index === existingItemIndex
             ? {
                 ...cartItem,
                 quantity: newQuantity,
-                subtotal: newQuantity * cartItem.price,
+                subtotal: calculateBulkPrice(item, newQuantity),
               }
             : cartItem
         );
       } else {
-        // Enforce max quantity per item
-        const safeQuantity = Math.min(quantity, 10);
+        // Enforce item-specific max quantity for new items
+        const safeQuantity = Math.min(quantity, maxQuantity);
         const newItem: CartItem = {
           ...item,
           quantity: safeQuantity,
-          subtotal: item.price * safeQuantity,
+          subtotal: calculateBulkPrice(item, safeQuantity),
         };
         newItems = [...state.items, newItem];
       }
@@ -87,17 +133,22 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       const { itemId, quantity } = action.payload;
       console.log('UPDATE_QUANTITY - itemId:', itemId, 'quantity:', quantity);
       
-      // Enforce min 1, max 10
+      const item = state.items.find(item => item.id === itemId);
+      if (!item) return state;
+      
+      // Enforce min 1, max item-specific limit
       if (quantity < 1) {
         return cartReducer(state, { type: 'REMOVE_FROM_CART', payload: itemId });
       }
-      if (quantity > 10) {
+      
+      const maxQuantity = getMaxQuantity(item);
+      if (quantity > maxQuantity) {
         return state; // Ignore if above max
       }
 
       const newItems = state.items.map(item =>
         item.id === itemId
-          ? { ...item, quantity, subtotal: item.price * quantity }
+          ? { ...item, quantity, subtotal: calculateBulkPrice(item, quantity) }
           : item
       );
 
@@ -114,7 +165,8 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     }
 
     case 'REMOVE_FROM_CART': {
-      const newItems = state.items.filter(item => item.id !== action.payload);
+      const itemId = action.payload;
+      const newItems = state.items.filter(item => item.id !== itemId);
       const totalItems = newItems.reduce((sum, item) => sum + item.quantity, 0);
       const totalAmount = newItems.reduce((sum, item) => sum + item.subtotal, 0);
 
@@ -127,7 +179,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       break;
     }
 
-    case 'CLEAR_CART':
+    case 'CLEAR_CART': {
       newState = {
         ...state,
         items: [],
@@ -135,22 +187,63 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         totalAmount: 0,
       };
       break;
+    }
 
-    case 'SET_CART_OPEN':
-      newState = { ...state, isCartOpen: action.payload };
+    case 'SET_CART_OPEN': {
+      newState = {
+        ...state,
+        isCartOpen: action.payload,
+      };
       break;
+    }
 
-    case 'SET_CHECKOUT_OPEN':
-      newState = { ...state, isCheckoutOpen: action.payload };
+    case 'SET_CHECKOUT_OPEN': {
+      newState = {
+        ...state,
+        isCheckoutOpen: action.payload,
+      };
       break;
+    }
 
-    case 'SET_TABLE_NUMBER':
-      newState = { ...state, tableNumber: action.payload };
+    case 'SET_TABLE_NUMBER': {
+      const tableNumber = action.payload;
+      // Generate new session ID when table number changes
+      const sessionId = `table-${tableNumber}-${Date.now()}`;
+      
+      newState = {
+        ...state,
+        tableNumber,
+        sessionId,
+        // Clear cart when table changes
+        items: [],
+        totalItems: 0,
+        totalAmount: 0,
+        isCartOpen: false,
+        isCheckoutOpen: false,
+      };
       break;
+    }
 
-    case 'LOAD_CART':
+    case 'SET_SESSION_ID': {
+      newState = {
+        ...state,
+        sessionId: action.payload,
+      };
+      break;
+    }
+
+    case 'ADD_ORDER_TO_HISTORY': {
+      newState = {
+        ...state,
+        orderHistory: [...state.orderHistory, action.payload],
+      };
+      break;
+    }
+
+    case 'LOAD_CART': {
       newState = action.payload;
       break;
+    }
 
     default:
       return state;
@@ -169,6 +262,9 @@ interface CartContextType {
   setCartOpen: (open: boolean) => void;
   setCheckoutOpen: (open: boolean) => void;
   setTableNumber: (table: number) => void;
+  getMaxQuantity: (item: MenuItem) => number;
+  getBulkPrice: (item: MenuItem, quantity: number) => number;
+  addOrderToHistory: (order: OrderHistoryItem) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -176,55 +272,37 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, initialState);
 
-  // Debug log for state changes within provider
-  useEffect(() => {
-    console.log('CartProvider - Internal State Changed:', state);
-  }, [state]);
-
   // Load cart from localStorage on mount
   useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem('sriKanyaCart');
-      if (savedCart) {
-        try {
-          const parsedCart = JSON.parse(savedCart);
-          dispatch({ type: 'LOAD_CART', payload: parsedCart });
-        } catch (error) {
-          console.warn('Cart: Error parsing cart from localStorage:', error);
-          localStorage.removeItem('sriKanyaCart'); // Remove corrupted cart
-        }
+    const savedCart = localStorage.getItem('restaurant-cart');
+    if (savedCart) {
+      try {
+        const parsedCart = JSON.parse(savedCart);
+        dispatch({ type: 'LOAD_CART', payload: parsedCart });
+      } catch (error) {
+        console.error('Error loading cart from localStorage:', error);
       }
-    } catch (error) {
-      console.warn('Cart: Error accessing localStorage:', error);
     }
   }, []);
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
-    try {
-      localStorage.setItem('sriKanyaCart', JSON.stringify(state));
-    } catch (error) {
-      console.warn('Cart: Error saving cart to localStorage (maybe quota exceeded):', error);
-    }
+    localStorage.setItem('restaurant-cart', JSON.stringify(state));
   }, [state]);
 
   const addToCart = (item: MenuItem, quantity: number) => {
-    console.log('CartProvider - addToCart called:', item.name, quantity);
     dispatch({ type: 'ADD_TO_CART', payload: { item, quantity } });
   };
 
   const updateQuantity = (itemId: string, quantity: number) => {
-    console.log('CartProvider - updateQuantity called:', itemId, quantity);
     dispatch({ type: 'UPDATE_QUANTITY', payload: { itemId, quantity } });
   };
 
   const removeFromCart = (itemId: string) => {
-    console.log('CartProvider - removeFromCart called:', itemId);
     dispatch({ type: 'REMOVE_FROM_CART', payload: itemId });
   };
 
   const clearCart = () => {
-    console.log('CartProvider - clearCart called');
     dispatch({ type: 'CLEAR_CART' });
   };
 
@@ -240,6 +318,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_TABLE_NUMBER', payload: table });
   };
 
+  const getMaxQuantity = (item: MenuItem): number => {
+    return getMaxQuantity(item);
+  };
+
+  const getBulkPrice = (item: MenuItem, quantity: number): number => {
+    return calculateBulkPrice(item, quantity);
+  };
+
+  const addOrderToHistory = (order: OrderHistoryItem) => {
+    dispatch({ type: 'ADD_ORDER_TO_HISTORY', payload: order });
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -251,6 +341,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCartOpen,
         setCheckoutOpen,
         setTableNumber,
+        getMaxQuantity,
+        getBulkPrice,
+        addOrderToHistory,
       }}
     >
       {children}
