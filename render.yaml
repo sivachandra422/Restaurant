@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: sri-kanya-restaurant-menu
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: N8N_WEBHOOK_URL
+        sync: false
+      - key: KITCHEN_WEBHOOK_URL
+        sync: false
+      - key: POS_WEBHOOK_URL
+        sync: false
+      - key: ANALYTICS_WEBHOOK_URL
+        sync: false
+      - key: ORDER_API_KEY
+        sync: false 
