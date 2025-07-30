@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { Plus, Minus, Star, Leaf, Zap, AlertCircle } from 'lucide-react';
+import { Plus, Minus, Star, Leaf, Zap } from 'lucide-react';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ export function PremiumMenuCard({
   onRemove, 
   onUpdateQuantity 
 }: PremiumMenuCardProps) {
-  const { getMaxQuantity, getBulkPrice } = useCart();
+  const { getMaxQuantity } = useCart();
   
   const getImageByCategory = (category: string, itemName: string) => {
     const categoryStyles: { [key: string]: { emoji: string; gradient: string; text: string; bgEmoji: string } } = {
@@ -91,38 +91,25 @@ export function PremiumMenuCard({
   // Get the proper image URL for this item
   const imageUrl = getFoodImage(item.id);
 
-  // Get item-specific limits and pricing
+  // Get item-specific limits
   const maxQuantity = getMaxQuantity(item);
-  const currentPrice = getBulkPrice(item, quantity || 1);
   const isAtMaxQuantity = quantity >= maxQuantity;
-  const hasBulkPricing = item.bulkPricing && item.bulkPricing.length > 0;
 
-  // Debug logging
-  console.log(`PremiumMenuCard ${item.name}: quantity = ${quantity}, maxQuantity = ${maxQuantity}`);
-
-  useEffect(() => {
-    console.log(`PremiumMenuCard ${item.name}: Quantity prop changed to ${quantity}`);
-  }, [quantity, item.name]);
-
-  // Handle button clicks with proper event handling
   const handleAddClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log(`PremiumMenuCard ${item.name}: Add button clicked`);
     onAdd();
   };
 
   const handleRemoveClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log(`PremiumMenuCard ${item.name}: Remove button clicked`);
     onRemove();
   };
 
   const handleIncreaseClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log(`PremiumMenuCard ${item.name}: Increase button clicked`);
     if (!isAtMaxQuantity) {
       onUpdateQuantity(quantity + 1);
     }
@@ -131,7 +118,6 @@ export function PremiumMenuCard({
   const handleDecreaseClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log(`PremiumMenuCard ${item.name}: Decrease button clicked`);
     if (quantity > 1) {
       onUpdateQuantity(quantity - 1);
     } else {
@@ -140,12 +126,13 @@ export function PremiumMenuCard({
   };
 
   return (
-    <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02] border-0 bg-gradient-to-br from-white to-gray-50">
+    <Card className="group overflow-hidden bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
       <CardContent className="p-0">
         {/* Image Section */}
         <div className="relative h-48 overflow-hidden">
+          {/* Loading Placeholder */}
           {imageLoading && (
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse flex items-center justify-center">
               <div className="text-4xl">{imageStyle.bgEmoji}</div>
             </div>
           )}
@@ -196,52 +183,24 @@ export function PremiumMenuCard({
               </Badge>
             )}
           </div>
-
-          {/* Quantity Limit Warning */}
-          {isAtMaxQuantity && (
-            <div className="absolute bottom-3 right-3">
-              <Badge className="bg-red-500 text-white border-0 font-medium text-xs px-2 py-1">
-                <AlertCircle className="w-3 h-3 mr-1" />
-                Max {maxQuantity}
-              </Badge>
-            </div>
-          )}
         </div>
 
         {/* Content Section */}
         <div className="p-4">
-          {/* Title and Price */}
-          <div className="mb-3">
-            <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-1 line-clamp-2">
+          {/* Title and Description */}
+          <div className="mb-4">
+            <h3 className="font-semibold text-gray-900 text-sm leading-tight mb-2 line-clamp-2">
               {item.name}
             </h3>
-            <p className="text-gray-600 text-xs leading-relaxed line-clamp-2 mb-2">
+            <p className="text-gray-600 text-xs leading-relaxed line-clamp-2 mb-3">
               {item.description}
             </p>
             
             {/* Price Display */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-lg text-gray-900">
-                  ₹{currentPrice}
-                </span>
-                {quantity > 1 && (
-                  <span className="text-xs text-gray-500">
-                    (₹{item.price} each)
-                  </span>
-                )}
-              </div>
-              
-              {/* Bulk Pricing Info */}
-              {hasBulkPricing && (
-                <div className="text-xs text-gray-500">
-                  {item.bulkPricing!.map((tier, index) => (
-                    <div key={index}>
-                      {tier.quantity}+: ₹{tier.price}
-                    </div>
-                  ))}
-                </div>
-              )}
+              <span className="font-bold text-lg text-gray-900">
+                ₹{item.price}
+              </span>
             </div>
           </div>
 
@@ -253,7 +212,7 @@ export function PremiumMenuCard({
                 className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 transform hover:scale-105"
                 disabled={isAtMaxQuantity}
               >
-                {isAtMaxQuantity ? `Max ${maxQuantity}` : 'Add to Cart'}
+                Add to Cart
               </Button>
             ) : (
               <div className="flex items-center gap-3 w-full">
@@ -289,13 +248,6 @@ export function PremiumMenuCard({
               </div>
             )}
           </div>
-
-          {/* Quantity Limit Info */}
-          {maxQuantity < 10 && (
-            <div className="mt-2 text-xs text-gray-500 text-center">
-              Max {maxQuantity} per order
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

@@ -654,11 +654,6 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
       category: 'breadsRoti',
       isVeg: true,
       maxQuantity: 50, // High limit for bread items
-      bulkPricing: [
-        { quantity: 5, price: 6 },
-        { quantity: 10, price: 5 },
-        { quantity: 20, price: 4 },
-      ],
     },
   ],
 };
