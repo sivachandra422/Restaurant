@@ -84,7 +84,66 @@ export const foodImageMappings: { [key: string]: string } = {
 
 // Function to get the appropriate image for a menu item
 export function getFoodImage(itemId: string): string {
-  return foodImageMappings[itemId] || 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_biryani_hpabwk';
+  // First try to get the exact mapping
+  if (foodImageMappings[itemId]) {
+    return foodImageMappings[itemId];
+  }
+  
+  // If not found, try to find a similar image based on the item name
+  const itemName = itemId.toLowerCase();
+  
+  // Biryani items
+  if (itemName.includes('biryani')) {
+    if (itemName.includes('chicken')) {
+      return foodImageMappings['chicken_biryani'];
+    } else if (itemName.includes('mutton')) {
+      return foodImageMappings['mutton_biryani'];
+    } else if (itemName.includes('prawn')) {
+      return foodImageMappings['prawns_biryani'];
+    } else if (itemName.includes('paneer') || itemName.includes('kaju') || itemName.includes('mushroom')) {
+      return foodImageMappings['kaju_biryani'];
+    } else {
+      return foodImageMappings['chicken_biryani']; // Default biryani
+    }
+  }
+  
+  // Curry items
+  if (itemName.includes('curry') || itemName.includes('masala')) {
+    if (itemName.includes('chicken')) {
+      return foodImageMappings['chicken_bone'];
+    } else if (itemName.includes('mutton')) {
+      return foodImageMappings['mutton_curry'];
+    } else if (itemName.includes('paneer')) {
+      return foodImageMappings['paneer_butter_masala'];
+    } else {
+      return foodImageMappings['chicken_bone']; // Default curry
+    }
+  }
+  
+  // Fried rice items
+  if (itemName.includes('fried_rice') || itemName.includes('rice')) {
+    if (itemName.includes('chicken')) {
+      return foodImageMappings['chicken_fried_rice'];
+    } else if (itemName.includes('paneer')) {
+      return foodImageMappings['paneer_fried_rice'];
+    } else if (itemName.includes('mushroom')) {
+      return foodImageMappings['mushroom_fried_rice'];
+    } else {
+      return foodImageMappings['veg_fried_rice']; // Default fried rice
+    }
+  }
+  
+  // Noodle items
+  if (itemName.includes('noodle')) {
+    if (itemName.includes('chicken')) {
+      return foodImageMappings['chicken_noodles'];
+    } else {
+      return foodImageMappings['veg_noodles']; // Default noodles
+    }
+  }
+  
+  // Default fallback
+  return foodImageMappings['chicken_biryani'];
 }
 
 // Function to get fallback image based on category

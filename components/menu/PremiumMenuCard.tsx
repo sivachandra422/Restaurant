@@ -30,13 +30,22 @@ export function PremiumMenuCard({
   const [imageError, setImageError] = React.useState(false);
   const [imageLoading, setImageLoading] = React.useState(true);
   const [isFavorite, setIsFavorite] = React.useState(false);
+  const [currentImageUrl, setCurrentImageUrl] = React.useState('');
 
   // Get the proper image URL for this item
-  const imageUrl = getFoodImage(item.id);
+  const primaryImageUrl = getFoodImage(item.id);
+  const fallbackImageUrl = getFallbackImage(item.category);
 
   // Get item-specific limits
   const maxQuantity = getMaxQuantity(item);
   const isAtMaxQuantity = quantity >= maxQuantity;
+
+  useEffect(() => {
+    // Reset image state when item changes
+    setImageError(false);
+    setImageLoading(true);
+    setCurrentImageUrl(primaryImageUrl);
+  }, [item.id, primaryImageUrl]);
 
   const handleAddClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -74,6 +83,22 @@ export function PremiumMenuCard({
     setIsFavorite(!isFavorite);
   };
 
+  const handleImageError = () => {
+    if (!imageError) {
+      // Try fallback image
+      setImageError(true);
+      setCurrentImageUrl(fallbackImageUrl);
+      setImageLoading(true);
+    } else {
+      // If fallback also fails, show placeholder
+      setImageLoading(false);
+    }
+  };
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+  };
+
   return (
     <Card className="group overflow-hidden bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] h-full flex flex-col animate-fadeInUp">
       <CardContent className="p-0 flex flex-col h-full">
@@ -86,19 +111,19 @@ export function PremiumMenuCard({
             </div>
           )}
           
+          {/* Main Image */}
           <Image
-            src={imageError ? getFallbackImage(item.category) : imageUrl}
+            src={currentImageUrl}
             alt={item.name}
             fill
             className={`object-cover transition-all duration-700 ${
               imageLoading ? 'opacity-0' : 'opacity-100'
             } group-hover:scale-110`}
-            onLoad={() => setImageLoading(false)}
-            onError={() => {
-              setImageError(true);
-              setImageLoading(false);
-            }}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
             sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            priority={false}
+            quality={85}
           />
           
           {/* Overlay with gradient */}
