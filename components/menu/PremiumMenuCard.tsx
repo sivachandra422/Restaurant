@@ -32,7 +32,7 @@ export function PremiumMenuCard({
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [currentImageUrl, setCurrentImageUrl] = React.useState('');
 
-  // Get the proper image URL for this item
+  // Get the proper image URL for this item with consistent styling
   const primaryImageUrl = getFoodImage(item.id);
   const fallbackImageUrl = getFallbackImage(item.category);
 
@@ -41,7 +41,7 @@ export function PremiumMenuCard({
   const isAtMaxQuantity = quantity >= maxQuantity;
 
   useEffect(() => {
-    // Reset image state when item changes
+    // Reset image state when item changes for consistent loading
     setImageError(false);
     setImageLoading(true);
     setCurrentImageUrl(primaryImageUrl);
@@ -85,7 +85,7 @@ export function PremiumMenuCard({
 
   const handleImageError = () => {
     if (!imageError) {
-      // Try fallback image
+      // Try fallback image with consistent styling
       setImageError(true);
       setCurrentImageUrl(fallbackImageUrl);
       setImageLoading(true);
@@ -102,16 +102,16 @@ export function PremiumMenuCard({
   return (
     <Card className="group overflow-hidden bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] h-full flex flex-col animate-fadeInUp">
       <CardContent className="p-0 flex flex-col h-full">
-        {/* Image Section - Fixed Height */}
+        {/* Image Section - Fixed Height with Consistent Styling */}
         <div className="relative h-48 overflow-hidden flex-shrink-0">
-          {/* Loading Placeholder */}
+          {/* Loading Placeholder with Consistent Styling */}
           {imageLoading && (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse flex items-center justify-center">
               <div className="text-3xl sm:text-4xl lg:text-5xl animate-bounce">🍽️</div>
             </div>
           )}
           
-          {/* Main Image */}
+          {/* Main Image with Consistent Quality and Styling */}
           <Image
             src={currentImageUrl}
             alt={item.name}
@@ -123,10 +123,12 @@ export function PremiumMenuCard({
             onError={handleImageError}
             sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             priority={false}
-            quality={85}
+            quality={90}
+            placeholder="blur"
+            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
           />
           
-          {/* Overlay with gradient */}
+          {/* Overlay with Consistent Gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
           {/* Favorite Button */}
@@ -141,7 +143,7 @@ export function PremiumMenuCard({
             />
           </button>
           
-          {/* Special Badges - Only Signature and Special */}
+          {/* Special Badges - Only Signature and Special with Consistent Styling */}
           <div className="absolute top-3 right-3 flex flex-col gap-1">
             {item.isSignature && (
               <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 font-medium text-xs px-2 py-1 shadow-md animate-pulse">
@@ -164,30 +166,30 @@ export function PremiumMenuCard({
           </div>
         </div>
 
-        {/* Content Section - Fixed Structure */}
+        {/* Content Section - Fixed Structure with Consistent Typography */}
         <div className="p-4 flex flex-col flex-1">
-          {/* Title - Fixed Height */}
+          {/* Title - Fixed Height with Consistent Font */}
           <div className="mb-2 h-12 flex items-start">
             <h3 className="font-bold text-gray-900 text-base leading-tight line-clamp-2 group-hover:text-orange-600 transition-colors duration-300">
               {item.name}
             </h3>
           </div>
           
-          {/* Description - Fixed Height */}
+          {/* Description - Fixed Height with Consistent Font */}
           <div className="mb-3 h-10 flex items-start">
             <p className="text-gray-600 text-sm leading-relaxed line-clamp-2">
               {item.description}
             </p>
           </div>
           
-          {/* Price - Fixed Position */}
+          {/* Price - Fixed Position with Consistent Styling */}
           <div className="mb-4 flex items-center justify-between">
             <span className="font-bold text-lg text-gray-900 group-hover:text-orange-600 transition-colors duration-300">
               ₹{item.price.toLocaleString()}
             </span>
           </div>
 
-          {/* Quantity Controls - Fixed at Bottom */}
+          {/* Quantity Controls - Fixed at Bottom with Consistent Styling */}
           <div className="flex items-center justify-between mt-auto">
             {quantity === 0 ? (
               <Button

@@ -2,7 +2,7 @@
 // Generated from Cloudinary collection: https://collection.cloudinary.com/dklpiguqs/a7929dc14ac74d52a008e57053c387a6
 
 export const foodImageMappings: { [key: string]: string } = {
-  // Biryanis - Premium biryani images
+  // Biryanis - Premium biryani images with consistent styling
   'chicken_dum_biryani_half': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_dum_biryani_half_tk7c4i',
   'chicken_dum_biryani_full': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_dum_biryani_half_tk7c4i',
   'chicken_biryani': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_biryani_hpabwk',
@@ -18,7 +18,7 @@ export const foodImageMappings: { [key: string]: string } = {
   'mushroom_biryani': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_biryani_hmsekh',
   'mixed_veg_biryani': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/mixed_veg_biryani_jdlmp7',
 
-  // Veg Curries - Rich vegetarian curries
+  // Veg Curries - Rich vegetarian curries with consistent presentation
   'kaju_tomato': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_tomato_jbm1vj',
   'kaju_paneer': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_tomato_jbm1vj',
   'mushroom_curry': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/mushroom_curry_vyzob0',
@@ -33,7 +33,7 @@ export const foodImageMappings: { [key: string]: string } = {
   'kaju_fry': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_fry_davndh',
   '65_paneer_mushroom': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/65_paneer_mushroom_ralhgb',
 
-  // Non-Veg Curries - Tender meat curries
+  // Non-Veg Curries - Tender meat curries with consistent styling
   'chilly_chicken': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chilly_chicken_owi5su',
   'manchurian_chicken': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/manchurian_chicken_wbtgvn',
   'dragon_chicken': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/dragon_chicken_ujeume',
@@ -60,7 +60,7 @@ export const foodImageMappings: { [key: string]: string } = {
   'egg_keema': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/egg_keema_soseqb',
   'egg_bhurji': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/egg_bhurji_ghzuch',
 
-  // Fried Rice & Noodles - Indo-Chinese favorites
+  // Fried Rice & Noodles - Indo-Chinese favorites with consistent presentation
   'veg_fried_rice': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/veg_fried_rice_ufpjbt',
   'paneer_fried_rice': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/paneer_fried_rice_njjdbf',
   'mushroom_fried_rice': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/mushroom_fried_rice_ri42pq',
@@ -82,71 +82,71 @@ export const foodImageMappings: { [key: string]: string } = {
   'pulka': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/pulka_dddf21',
 };
 
-// Function to get the appropriate image for a menu item
+// Function to get the appropriate image for a menu item with consistent styling
 export function getFoodImage(itemId: string): string {
   // First try to get the exact mapping
   if (foodImageMappings[itemId]) {
     return foodImageMappings[itemId];
   }
   
-  // If not found, try to find a similar image based on the item name
+  // If not found, use intelligent fallback based on item type and category
   const itemName = itemId.toLowerCase();
   
-  // Biryani items
+  // Biryani items - Use consistent biryani styling
   if (itemName.includes('biryani')) {
     if (itemName.includes('chicken')) {
-      return foodImageMappings['chicken_biryani'];
+      return foodImageMappings['chicken_biryani']; // Consistent chicken biryani style
     } else if (itemName.includes('mutton')) {
-      return foodImageMappings['mutton_biryani'];
+      return foodImageMappings['mutton_biryani']; // Consistent mutton biryani style
     } else if (itemName.includes('prawn')) {
-      return foodImageMappings['prawns_biryani'];
+      return foodImageMappings['prawns_biryani']; // Consistent prawn biryani style
     } else if (itemName.includes('paneer') || itemName.includes('kaju') || itemName.includes('mushroom')) {
-      return foodImageMappings['kaju_biryani'];
+      return foodImageMappings['kaju_biryani']; // Consistent veg biryani style
     } else {
-      return foodImageMappings['chicken_biryani']; // Default biryani
+      return foodImageMappings['chicken_biryani']; // Default consistent biryani style
     }
   }
   
-  // Curry items
+  // Curry items - Use consistent curry styling
   if (itemName.includes('curry') || itemName.includes('masala')) {
     if (itemName.includes('chicken')) {
-      return foodImageMappings['chicken_bone'];
+      return foodImageMappings['chicken_bone']; // Consistent chicken curry style
     } else if (itemName.includes('mutton')) {
-      return foodImageMappings['mutton_curry'];
+      return foodImageMappings['mutton_curry']; // Consistent mutton curry style
     } else if (itemName.includes('paneer')) {
-      return foodImageMappings['paneer_butter_masala'];
+      return foodImageMappings['paneer_butter_masala']; // Consistent paneer curry style
     } else {
-      return foodImageMappings['chicken_bone']; // Default curry
+      return foodImageMappings['chicken_bone']; // Default consistent curry style
     }
   }
   
-  // Fried rice items
+  // Fried rice items - Use consistent rice styling
   if (itemName.includes('fried_rice') || itemName.includes('rice')) {
     if (itemName.includes('chicken')) {
-      return foodImageMappings['chicken_fried_rice'];
+      return foodImageMappings['chicken_fried_rice']; // Consistent chicken rice style
     } else if (itemName.includes('paneer')) {
-      return foodImageMappings['paneer_fried_rice'];
+      return foodImageMappings['paneer_fried_rice']; // Consistent paneer rice style
     } else if (itemName.includes('mushroom')) {
-      return foodImageMappings['mushroom_fried_rice'];
+      return foodImageMappings['mushroom_fried_rice']; // Consistent mushroom rice style
     } else {
-      return foodImageMappings['veg_fried_rice']; // Default fried rice
+      return foodImageMappings['veg_fried_rice']; // Default consistent rice style
     }
   }
   
-  // Noodle items
+  // Noodle items - Use consistent noodle styling
   if (itemName.includes('noodle')) {
     if (itemName.includes('chicken')) {
-      return foodImageMappings['chicken_noodles'];
+      return foodImageMappings['chicken_noodles']; // Consistent chicken noodle style
     } else {
-      return foodImageMappings['veg_noodles']; // Default noodles
+      return foodImageMappings['veg_noodles']; // Default consistent noodle style
     }
   }
   
-  // Default fallback
+  // Default fallback with consistent styling
   return foodImageMappings['chicken_biryani'];
 }
 
-// Function to get fallback image based on category
+// Function to get fallback image based on category with consistent styling
 export function getFallbackImage(category: string): string {
   const categoryImages: { [key: string]: string } = {
     biryanis: 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_biryani_hpabwk',
