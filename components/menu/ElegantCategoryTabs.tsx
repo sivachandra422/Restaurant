@@ -34,7 +34,7 @@ export function ElegantCategoryTabs({
               <button
                 key={category.id}
                 onClick={() => onCategoryChange(category.id)}
-                className={`group relative px-6 py-4 rounded-xl transition-all duration-300 transform hover:scale-105 flex-shrink-0 min-w-[200px] max-w-[220px] ${
+                className={`group relative px-6 py-4 rounded-xl transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation flex-shrink-0 min-w-[200px] max-w-[220px] ${
                   isActive
                     ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
                     : 'bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-white hover:shadow-md border border-gray-200'

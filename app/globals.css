@@ -263,6 +263,43 @@
   @apply text-lg sm:text-xl lg:text-2xl;
 }
 
+/* Performance optimizations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Touch optimizations for mobile */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Reduced motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .bg-white\/90 {
+    background-color: white;
+  }
+  
+  .text-gray-600 {
+    color: black;
+  }
+}
+
 /* Print styles */
 @media print {
   .no-print {

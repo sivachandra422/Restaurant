@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { ArrowLeft, ChefHat, Sparkles, Crown } from 'lucide-react';
+import { ArrowLeft, ChefHat, Sparkles, Crown, Search, Filter, SortAsc } from 'lucide-react';
 import Link from 'next/link';
 import Head from 'next/head';
 import { sriKanyaMenu, menuCategories } from '@/data/sriKanyaMenu';
@@ -13,9 +13,15 @@ import { ElegantCheckoutForm } from '@/components/checkout/ElegantCheckoutForm';
 import { useCart } from '@/contexts/CartContext';
 import { getFoodImage } from '@/lib/imageMappings';
 import { MenuItem } from '@/data/sriKanyaMenu';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function MenuPage() {
   const [activeCategory, setActiveCategory] = useState('biryanis');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('name');
+  const [filterVeg, setFilterVeg] = useState('all');
   const { state, addToCart, removeFromCart, updateQuantity, setTableNumber } = useCart();
 
   useEffect(() => {
@@ -34,6 +40,44 @@ export default function MenuPage() {
       return acc;
     }, {} as { [key: string]: MenuItem[] });
   }, [sriKanyaMenu]);
+
+  // Filter and sort menu items
+  const filteredAndSortedItems = useMemo(() => {
+    let items = menuWithImages[activeCategory] || [];
+
+    // Filter by search query
+    if (searchQuery) {
+      items = items.filter(item => 
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Filter by dietary preference
+    if (filterVeg === 'veg') {
+      items = items.filter(item => item.isVeg);
+    } else if (filterVeg === 'non-veg') {
+      items = items.filter(item => !item.isVeg);
+    }
+
+    // Sort items
+    items.sort((a, b) => {
+      switch (sortBy) {
+        case 'price-low':
+          return a.price - b.price;
+        case 'price-high':
+          return b.price - a.price;
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'popularity':
+          return (b.isSignature ? 1 : 0) - (a.isSignature ? 1 : 0);
+        default:
+          return 0;
+      }
+    });
+
+    return items;
+  }, [menuWithImages, activeCategory, searchQuery, sortBy, filterVeg]);
 
   const handleAddToCart = (item: any) => {
     try {
@@ -135,9 +179,55 @@ export default function MenuPage() {
           />
         </div>
 
+        {/* Search and Filter Section */}
+        <div className="mb-6 sm:mb-8 lg:mb-10">
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+            {/* Search Bar */}
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search menu items..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 border-gray-200 focus:border-orange-500 focus:ring-orange-500"
+              />
+            </div>
+
+            {/* Filter and Sort Controls */}
+            <div className="flex gap-3 w-full sm:w-auto">
+              {/* Dietary Filter */}
+              <Select value={filterVeg} onValueChange={setFilterVeg}>
+                <SelectTrigger className="w-32">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Filter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Items</SelectItem>
+                  <SelectItem value="veg">Vegetarian</SelectItem>
+                  <SelectItem value="non-veg">Non-Vegetarian</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Sort Options */}
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-40">
+                  <SortAsc className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name A-Z</SelectItem>
+                  <SelectItem value="price-low">Price: Low to High</SelectItem>
+                  <SelectItem value="price-high">Price: High to Low</SelectItem>
+                  <SelectItem value="popularity">Popularity</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
         {/* Menu Items Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8" role="list" aria-label="Menu items">
-          {menuWithImages[activeCategory]?.map((item) => {
+          {filteredAndSortedItems.map((item) => {
             const cartItem = state.items.find(cartItem => cartItem.id === item.id);
             const quantity = cartItem?.quantity || 0;
 
@@ -155,14 +245,17 @@ export default function MenuPage() {
         </div>
 
         {/* Empty State */}
-        {(!menuWithImages[activeCategory] || menuWithImages[activeCategory].length === 0) && (
+        {filteredAndSortedItems.length === 0 && (
           <div className="text-center py-16 sm:py-20 lg:py-24">
             <div className="text-6xl sm:text-8xl lg:text-9xl mb-6">🍽️</div>
             <h3 className="font-playfair text-2xl sm:text-3xl lg:text-4xl font-semibold text-gray-800 mb-4">
-              Coming Soon
+              {searchQuery ? 'No items found' : 'Coming Soon'}
             </h3>
             <p className="text-gray-600 text-base sm:text-lg lg:text-xl">
-              We&apos;re preparing something special for this category.
+              {searchQuery 
+                ? `No items match "${searchQuery}". Try a different search term.`
+                : "We're preparing something special for this category."
+              }
             </p>
           </div>
         )}
