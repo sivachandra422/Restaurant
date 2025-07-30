@@ -319,7 +319,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const getMaxQuantity = (item: MenuItem): number => {
-    return getMaxQuantity(item);
+    return item.maxQuantity || 10; // Default to 10 if not specified
   };
 
   const getBulkPrice = (item: MenuItem, quantity: number): number => {
