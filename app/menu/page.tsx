@@ -91,19 +91,19 @@ export default function MenuPage() {
       {/* Premium Header */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-orange-200 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 lg:h-16">
+          <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo & Brand */}
             <div className="flex items-center space-x-3">
               <Link href="/" className="flex items-center space-x-2 text-orange-600 hover:text-orange-700 transition-colors">
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-5 h-5 lg:w-6 lg:h-6" />
                 <span className="font-semibold text-sm lg:text-base">Back to Home</span>
               </Link>
             </div>
 
             {/* Restaurant Name */}
             <div className="flex items-center space-x-2 lg:space-x-3">
-              <ChefHat className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-orange-600" />
-              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">Sri Kanya Family Restaurants</h1>
+              <ChefHat className="w-6 h-6 lg:w-8 lg:h-8 text-orange-600" />
+              <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Sri Kanya Family Restaurants</h1>
             </div>
 
             {/* Cart Icon */}
@@ -113,15 +113,15 @@ export default function MenuPage() {
       </header>
 
       {/* Main Content */}
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         {/* Hero Section */}
-        <div className="text-center mb-8 sm:mb-10 lg:mb-12">
-          <div className="flex items-center justify-center space-x-3 sm:space-x-4 lg:space-x-5 mb-4 sm:mb-6">
-            <Crown className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-orange-600" />
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Our Menu</h2>
-            <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-orange-600" />
+        <div className="text-center mb-8 sm:mb-12 lg:mb-16">
+          <div className="flex items-center justify-center space-x-2 sm:space-x-3 lg:space-x-4 mb-4 sm:mb-6 lg:mb-8">
+            <Crown className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-orange-600" />
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900">Our Menu</h2>
+            <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-orange-600" />
           </div>
-          <p className="text-gray-700 text-sm sm:text-base lg:text-lg max-w-4xl mx-auto leading-relaxed px-4 lg:px-8">
+          <p className="text-gray-700 text-base sm:text-lg lg:text-xl max-w-4xl mx-auto leading-relaxed px-4 lg:px-8">
             Discover our authentic Indian cuisine featuring signature biryanis, aromatic curries, and traditional favorites.
           </p>
         </div>
@@ -156,12 +156,12 @@ export default function MenuPage() {
 
         {/* Empty State */}
         {(!menuWithImages[activeCategory] || menuWithImages[activeCategory].length === 0) && (
-          <div className="text-center py-12 sm:py-16 lg:py-20">
-            <div className="text-4xl sm:text-6xl lg:text-8xl mb-4 sm:mb-6">🍽️</div>
-            <h3 className="font-playfair text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-800 mb-3 sm:mb-4">
+          <div className="text-center py-16 sm:py-20 lg:py-24">
+            <div className="text-6xl sm:text-8xl lg:text-9xl mb-6">🍽️</div>
+            <h3 className="font-playfair text-2xl sm:text-3xl lg:text-4xl font-semibold text-gray-800 mb-4">
               Coming Soon
             </h3>
-            <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
+            <p className="text-gray-600 text-base sm:text-lg lg:text-xl">
               We&apos;re preparing something special for this category.
             </p>
           </div>

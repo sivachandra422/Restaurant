@@ -68,14 +68,14 @@ export function PremiumMenuCard({
   };
 
   return (
-    <Card className="group overflow-hidden bg-white/90 backdrop-blur-sm border-0 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02] h-full flex flex-col">
-      <CardContent className="p-0 flex flex-col h-full">
+    <Card className="group overflow-hidden bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02]">
+      <CardContent className="p-0">
         {/* Image Section */}
-        <div className="relative h-28 sm:h-32 md:h-36 lg:h-40 overflow-hidden flex-shrink-0">
+        <div className="relative h-40 sm:h-44 md:h-48 lg:h-52 overflow-hidden">
           {/* Loading Placeholder */}
           {imageLoading && (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse flex items-center justify-center">
-              <div className="text-xl sm:text-2xl lg:text-3xl">🍽️</div>
+              <div className="text-3xl sm:text-4xl lg:text-5xl">🍽️</div>
             </div>
           )}
           
@@ -98,21 +98,21 @@ export function PremiumMenuCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
           {/* Special Badges - Only Signature and Special */}
-          <div className="absolute top-2 right-2 flex flex-col gap-1">
+          <div className="absolute top-3 right-3 flex flex-col gap-1">
             {item.isSignature && (
-              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 font-medium text-xs px-2 py-1 shadow-sm">
+              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 font-medium text-xs px-2 py-1 shadow-md">
                 <Star className="w-3 h-3 mr-1" />
                 Signature
               </Badge>
             )}
             {item.isSpecial && (
-              <Badge className="bg-gradient-to-r from-purple-400 to-pink-500 text-white border-0 font-medium text-xs px-2 py-1 shadow-sm">
+              <Badge className="bg-gradient-to-r from-purple-400 to-pink-500 text-white border-0 font-medium text-xs px-2 py-1 shadow-md">
                 <Zap className="w-3 h-3 mr-1" />
                 Special
               </Badge>
             )}
             {item.isVeg && (
-              <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-white border-0 font-medium text-xs px-2 py-1 shadow-sm">
+              <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-white border-0 font-medium text-xs px-2 py-1 shadow-md">
                 <Leaf className="w-3 h-3 mr-1" />
                 Veg
               </Badge>
@@ -121,62 +121,62 @@ export function PremiumMenuCard({
         </div>
 
         {/* Content Section */}
-        <div className="p-3 sm:p-4 flex flex-col flex-1">
+        <div className="p-4 sm:p-5 lg:p-6">
           {/* Title and Description */}
-          <div className="mb-3 sm:mb-4 flex-1">
-            <h3 className="font-bold text-gray-900 text-sm sm:text-base leading-tight mb-1 sm:mb-2 line-clamp-2">
+          <div className="mb-4 sm:mb-5">
+            <h3 className="font-bold text-gray-900 text-base sm:text-lg lg:text-xl leading-tight mb-2 sm:mb-3 line-clamp-2">
               {item.name}
             </h3>
-            <p className="text-gray-600 text-xs sm:text-sm leading-relaxed line-clamp-2 mb-2 sm:mb-3">
+            <p className="text-gray-600 text-sm sm:text-base leading-relaxed line-clamp-2 mb-3 sm:mb-4">
               {item.description}
             </p>
             
             {/* Price Display */}
             <div className="flex items-center justify-between">
-              <span className="font-bold text-base sm:text-lg lg:text-xl text-gray-900">
+              <span className="font-bold text-lg sm:text-xl lg:text-2xl text-gray-900">
                 ₹{item.price}
               </span>
             </div>
           </div>
 
           {/* Quantity Controls */}
-          <div className="flex items-center justify-between mt-auto">
+          <div className="flex items-center justify-between">
             {quantity === 0 ? (
               <Button
                 onClick={handleAddClick}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-2 px-3 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-sm text-sm"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md text-sm sm:text-base"
                 disabled={isAtMaxQuantity}
               >
                 Add to Cart
               </Button>
             ) : (
-              <div className="flex items-center gap-2 w-full">
+              <div className="flex items-center gap-3 w-full">
                 <Button
                   onClick={handleDecreaseClick}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full w-7 h-7 p-0 flex items-center justify-center transition-all duration-300 shadow-sm"
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full w-8 h-8 sm:w-9 sm:h-9 p-0 flex items-center justify-center transition-all duration-300 shadow-md"
                 >
-                  <Minus className="w-3.5 h-3.5" />
+                  <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
                 
-                <span className="font-bold text-gray-900 min-w-[1.5rem] text-center text-sm">
+                <span className="font-bold text-gray-900 min-w-[2rem] sm:min-w-[2.5rem] text-center text-base sm:text-lg">
                   {quantity}
                 </span>
                 
                 <Button
                   onClick={handleIncreaseClick}
-                  className={`rounded-full w-7 h-7 p-0 flex items-center justify-center transition-all duration-300 shadow-sm ${
+                  className={`rounded-full w-8 h-8 sm:w-9 sm:h-9 p-0 flex items-center justify-center transition-all duration-300 shadow-md ${
                     isAtMaxQuantity
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-orange-500 hover:bg-orange-600 text-white'
                   }`}
                   disabled={isAtMaxQuantity}
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 </Button>
                 
                 <Button
                   onClick={handleRemoveClick}
-                  className="ml-auto bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1.5 rounded-lg transition-all duration-300 shadow-sm"
+                  className="ml-auto bg-red-500 hover:bg-red-600 text-white text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg transition-all duration-300 shadow-md"
                 >
                   Remove
                 </Button>
