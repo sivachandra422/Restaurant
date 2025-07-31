@@ -134,18 +134,18 @@ export default function MenuPage() {
       {/* Premium Header - Balanced Design */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-orange-200 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center h-24 lg:h-28">
-            {/* Restaurant Name & Logo - Centered and Balanced */}
-            <div className="flex items-center space-x-4 lg:space-x-5">
+          <div className="flex items-center justify-between h-20 sm:h-24 lg:h-28">
+            {/* Restaurant Name & Logo - Responsive Design */}
+            <div className="flex items-center space-x-2 sm:space-x-3 lg:space-x-4 xl:space-x-5">
               <div className="relative">
-                <ChefHat className="w-10 h-10 lg:w-12 lg:h-12 text-orange-600" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
+                <ChefHat className="w-7 h-7 sm:w-8 sm:h-8 lg:w-10 lg:h-10 xl:w-12 xl:h-12 text-orange-600" />
+                <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-orange-500 rounded-full animate-pulse"></div>
               </div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">Sri Kanya Restaurant</h1>
+              <h1 className="text-lg sm:text-xl lg:text-3xl xl:text-4xl font-bold text-gray-900">Sri Kanya Restaurant</h1>
             </div>
 
-            {/* Cart Icon - Positioned on the right */}
-            <div className="absolute right-4 sm:right-6 lg:right-8">
+            {/* Cart Icon - Positioned on the right with proper spacing */}
+            <div className="flex-shrink-0">
               <PremiumCartIcon />
             </div>
           </div>
