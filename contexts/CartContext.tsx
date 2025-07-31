@@ -207,6 +207,11 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 
     case 'SET_TABLE_NUMBER': {
       const tableNumber = action.payload;
+      const currentTableNumber = state.tableNumber;
+      
+      // Only clear cart if table number actually changes (not on initial set)
+      const shouldClearCart = currentTableNumber !== null && currentTableNumber !== tableNumber;
+      
       // Generate new session ID when table number changes
       const sessionId = `table-${tableNumber}-${Date.now()}`;
       
@@ -214,12 +219,14 @@ function cartReducer(state: CartState, action: CartAction): CartState {
         ...state,
         tableNumber,
         sessionId,
-        // Clear cart when table changes
-        items: [],
-        totalItems: 0,
-        totalAmount: 0,
-        isCartOpen: false,
-        isCheckoutOpen: false,
+        // Only clear cart if table actually changes
+        ...(shouldClearCart && {
+          items: [],
+          totalItems: 0,
+          totalAmount: 0,
+          isCartOpen: false,
+          isCheckoutOpen: false,
+        }),
       };
       break;
     }

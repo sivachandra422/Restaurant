@@ -25,8 +25,15 @@ export default function MenuPage() {
 
   useEffect(() => {
     const tableNumber = new URLSearchParams(window.location.search).get('table');
+    console.log('Table number from URL:', tableNumber);
+    
     if (tableNumber && !isNaN(parseInt(tableNumber))) {
-      setTableNumber(parseInt(tableNumber));
+      const parsedTableNumber = parseInt(tableNumber);
+      console.log('Setting table number:', parsedTableNumber);
+      setTableNumber(parsedTableNumber);
+    } else {
+      console.log('No valid table number found in URL, using default table 0');
+      setTableNumber(0); // Set default table for QR access
     }
   }, [setTableNumber]);
 
@@ -80,7 +87,9 @@ export default function MenuPage() {
 
   const handleAddToCart = (item: any) => {
     try {
+      console.log('Adding to cart:', item.name, 'Table:', state.tableNumber);
       addToCart(item, 1);
+      console.log('Cart after adding:', state.items.length, 'items, Total:', state.totalItems);
     } catch (error) {
       console.error('Error adding to cart:', error);
     }
@@ -88,6 +97,7 @@ export default function MenuPage() {
 
   const handleRemoveFromCart = (itemId: string) => {
     try {
+      console.log('Removing from cart:', itemId);
       removeFromCart(itemId);
     } catch (error) {
       console.error('Error removing from cart:', error);
@@ -96,6 +106,7 @@ export default function MenuPage() {
 
   const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
     try {
+      console.log('Updating quantity:', itemId, 'to', newQuantity);
       updateQuantity(itemId, newQuantity);
     } catch (error) {
       console.error('Error updating quantity:', error);
