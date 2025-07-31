@@ -161,10 +161,10 @@ function formatWebhookPayload(orderData: OrderData) {
 // Function to send order data to webhook endpoints
 async function sendToWebhooks(orderData: OrderData, webhookPayloads: any) {
   const webhookUrls = {
-    n8n: process.env.N8N_WEBHOOK_URL,
-    kitchen: process.env.KITCHEN_WEBHOOK_URL,
-    pos: process.env.POS_WEBHOOK_URL,
-    analytics: process.env.ANALYTICS_WEBHOOK_URL,
+    n8n: process.env.N8N_WEBHOOK_URL || 'https://akshaya-dev.app.n8n.cloud/webhook/sri-kanya-order',
+    kitchen: process.env.KITCHEN_WEBHOOK_URL || 'https://akshaya-dev.app.n8n.cloud/webhook/sri-kanya-order',
+    pos: process.env.POS_WEBHOOK_URL || 'https://akshaya-dev.app.n8n.cloud/webhook/sri-kanya-order',
+    analytics: process.env.ANALYTICS_WEBHOOK_URL || 'https://akshaya-dev.app.n8n.cloud/webhook/sri-kanya-order',
   };
 
   const results = [];
@@ -179,6 +179,7 @@ async function sendToWebhooks(orderData: OrderData, webhookPayloads: any) {
             'X-Order-ID': orderData.orderId,
             'X-Session-ID': orderData.sessionId,
             'X-Table-Number': orderData.tableNumber.toString(),
+            'X-Webhook-Type': type,
           },
           body: JSON.stringify(webhookPayloads[type]),
         });
