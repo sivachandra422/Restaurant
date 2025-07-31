@@ -16,10 +16,10 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: 'Sri Kanya Family Restaurants - Authentic Indian Cuisine',
+  title: 'Sri Kanya Restaurant - Authentic Indian Cuisine',
   description: 'Experience the finest Indian culinary traditions with our signature biryanis, rich curries, and time-honored recipes. Premium dining experience for families.',
   keywords: 'Sri Kanya, Indian restaurant, biryani, curry, family restaurant, authentic Indian food',
-  authors: [{ name: 'Sri Kanya Family Restaurants' }],
+  authors: [{ name: 'Sri Kanya Restaurant' }],
   viewport: 'width=device-width, initial-scale=1',
   themeColor: '#D4A574',
 };

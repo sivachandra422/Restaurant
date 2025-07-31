@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { ArrowLeft, ChefHat, Sparkles, Crown, Search, Filter, SortAsc } from 'lucide-react';
-import Link from 'next/link';
+import { ChefHat, Sparkles, Crown, Search, Filter, SortAsc } from 'lucide-react';
 import Head from 'next/head';
 import { sriKanyaMenu, menuCategories } from '@/data/sriKanyaMenu';
 import { PremiumMenuCard } from '@/components/menu/PremiumMenuCard';
@@ -107,17 +106,17 @@ export default function MenuPage() {
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
       {/* SEO & Structured Data */}
       <Head>
-        <title>Sri Kanya Family Restaurants Menu</title>
-        <meta name="description" content="Browse the authentic Indian menu at Sri Kanya Family Restaurants. Signature biryanis, curries, fried rice, and more." />
-        <meta property="og:title" content="Sri Kanya Family Restaurants Menu" />
-        <meta property="og:description" content="Browse the authentic Indian menu at Sri Kanya Family Restaurants. Signature biryanis, curries, fried rice, and more." />
+        <title>Sri Kanya Restaurant Menu</title>
+        <meta name="description" content="Browse the authentic Indian menu at Sri Kanya Restaurant. Signature biryanis, curries, fried rice, and more." />
+        <meta property="og:title" content="Sri Kanya Restaurant Menu" />
+        <meta property="og:description" content="Browse the authentic Indian menu at Sri Kanya Restaurant. Signature biryanis, curries, fried rice, and more." />
         <meta property="og:type" content="restaurant.menu" />
-        <meta property="og:site_name" content="Sri Kanya Family Restaurants" />
+        <meta property="og:site_name" content="Sri Kanya Restaurant" />
         <meta property="og:locale" content="en_IN" />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'Restaurant',
-          name: 'Sri Kanya Family Restaurants',
+          name: 'Sri Kanya Restaurant',
           servesCuisine: 'Indian',
           address: {
             '@type': 'PostalAddress',
@@ -132,40 +131,37 @@ export default function MenuPage() {
       {/* Skip to Content Link for Accessibility */}
       <a href="#main-content" className="sr-only focus:not-sr-only absolute top-2 left-2 bg-white text-black px-4 py-2 rounded z-50">Skip to main content</a>
 
-      {/* Premium Header */}
+      {/* Premium Header - Balanced Design */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-orange-200 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-20">
-            {/* Logo & Brand */}
-            <div className="flex items-center space-x-3">
-              <Link href="/" className="flex items-center space-x-2 text-orange-600 hover:text-orange-700 transition-colors">
-                <ArrowLeft className="w-5 h-5 lg:w-6 lg:h-6" />
-                <span className="font-semibold text-sm lg:text-base">Back to Home</span>
-              </Link>
+          <div className="flex items-center justify-center h-20 lg:h-24">
+            {/* Restaurant Name & Logo - Centered and Balanced */}
+            <div className="flex items-center space-x-3 lg:space-x-4">
+              <div className="relative">
+                <ChefHat className="w-8 h-8 lg:w-10 lg:h-10 text-orange-600" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
+              </div>
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Sri Kanya Restaurant</h1>
             </div>
 
-            {/* Restaurant Name */}
-            <div className="flex items-center space-x-2 lg:space-x-3">
-              <ChefHat className="w-6 h-6 lg:w-8 lg:h-8 text-orange-600" />
-              <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Sri Kanya Family Restaurants</h1>
+            {/* Cart Icon - Positioned on the right */}
+            <div className="absolute right-4 sm:right-6 lg:right-8">
+              <PremiumCartIcon />
             </div>
-
-            {/* Cart Icon */}
-            <PremiumCartIcon />
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-        {/* Hero Section */}
+        {/* Hero Section - Balanced with Header */}
         <div className="text-center mb-8 sm:mb-12 lg:mb-16">
-          <div className="flex items-center justify-center space-x-2 sm:space-x-3 lg:space-x-4 mb-4 sm:mb-6 lg:mb-8">
-            <Crown className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-orange-600" />
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900">Our Menu</h2>
-            <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-orange-600" />
+          <div className="flex items-center justify-center space-x-3 sm:space-x-4 lg:space-x-5 mb-6 sm:mb-8 lg:mb-10">
+            <Crown className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-orange-600" />
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900">Our Menu</h2>
+            <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-orange-600" />
           </div>
-          <p className="text-gray-700 text-base sm:text-lg lg:text-xl max-w-4xl mx-auto leading-relaxed px-4 lg:px-8">
+          <p className="text-gray-700 text-lg sm:text-xl lg:text-2xl max-w-4xl mx-auto leading-relaxed px-4 lg:px-8">
             Discover our authentic Indian cuisine featuring signature biryanis, aromatic curries, and traditional favorites.
           </p>
         </div>
