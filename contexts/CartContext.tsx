@@ -241,7 +241,54 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     }
 
     case 'LOAD_CART': {
-      newState = action.payload;
+      // Validate the loaded cart data to prevent corruption
+      const loadedCart = action.payload;
+      
+      // Validate cart structure
+      if (!loadedCart || typeof loadedCart !== 'object') {
+        console.warn('Invalid cart data loaded, using initial state');
+        return initialState;
+      }
+      
+      // Validate items array
+      if (!Array.isArray(loadedCart.items)) {
+        console.warn('Invalid items array in cart data, using initial state');
+        return initialState;
+      }
+      
+      // Validate and sanitize items
+      const validItems = loadedCart.items.filter(item => 
+        item && 
+        typeof item === 'object' && 
+        typeof item.id === 'string' &&
+        typeof item.quantity === 'number' &&
+        item.quantity > 0 &&
+        item.quantity <= 100 && // Sanity check for max quantity
+        typeof item.subtotal === 'number' &&
+        item.subtotal >= 0
+      );
+      
+      // Recalculate totals to ensure consistency
+      const totalItems = validItems.reduce((sum, item) => sum + item.quantity, 0);
+      const totalAmount = validItems.reduce((sum, item) => sum + item.subtotal, 0);
+      
+      // Sanity check for totals
+      if (totalItems > 1000 || totalAmount > 100000) {
+        console.warn('Cart totals exceed reasonable limits, clearing cart');
+        return initialState;
+      }
+      
+      newState = {
+        ...state,
+        items: validItems,
+        totalItems,
+        totalAmount,
+        tableNumber: loadedCart.tableNumber || null,
+        sessionId: loadedCart.sessionId || null,
+        orderHistory: Array.isArray(loadedCart.orderHistory) ? loadedCart.orderHistory : [],
+        isCartOpen: false,
+        isCheckoutOpen: false,
+      };
       break;
     }
 
@@ -259,6 +306,7 @@ interface CartContextType {
   updateQuantity: (itemId: string, quantity: number) => void;
   removeFromCart: (itemId: string) => void;
   clearCart: () => void;
+  resetCart: () => void;
   setCartOpen: (open: boolean) => void;
   setCheckoutOpen: (open: boolean) => void;
   setTableNumber: (table: number) => void;
@@ -271,6 +319,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, initialState);
+  const [isInitialized, setIsInitialized] = React.useState(false);
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -281,14 +330,32 @@ export function CartProvider({ children }: { children: ReactNode }) {
         dispatch({ type: 'LOAD_CART', payload: parsedCart });
       } catch (error) {
         console.error('Error loading cart from localStorage:', error);
+        // Clear corrupted localStorage data
+        localStorage.removeItem('restaurant-cart');
       }
     }
+    setIsInitialized(true);
   }, []);
 
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage whenever it changes (only after initialization)
   useEffect(() => {
-    localStorage.setItem('restaurant-cart', JSON.stringify(state));
-  }, [state]);
+    if (!isInitialized) return;
+    
+    try {
+      // Only save if cart is not empty or if we're clearing it
+      if (state.items.length > 0 || state.totalItems === 0) {
+        localStorage.setItem('restaurant-cart', JSON.stringify(state));
+      }
+    } catch (error) {
+      console.error('Error saving cart to localStorage:', error);
+    }
+  }, [state, isInitialized]);
+
+  // Add a function to reset cart completely
+  const resetCart = () => {
+    localStorage.removeItem('restaurant-cart');
+    dispatch({ type: 'CLEAR_CART' });
+  };
 
   const addToCart = (item: MenuItem, quantity: number) => {
     dispatch({ type: 'ADD_TO_CART', payload: { item, quantity } });
@@ -338,6 +405,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         updateQuantity,
         removeFromCart,
         clearCart,
+        resetCart,
         setCartOpen,
         setCheckoutOpen,
         setTableNumber,

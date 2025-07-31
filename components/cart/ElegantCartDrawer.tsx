@@ -8,13 +8,19 @@ import { PremiumButton } from '@/components/ui/PremiumButton';
 import { PremiumBadge } from '@/components/ui/PremiumBadge';
 
 export function ElegantCartDrawer() {
-  const { state, setCartOpen, setCheckoutOpen, updateQuantity, removeFromCart } = useCart();
+  const { state, setCartOpen, setCheckoutOpen, updateQuantity, removeFromCart, resetCart } = useCart();
 
   if (!state.isCartOpen) return null;
 
   const handleCheckout = () => {
     setCartOpen(false);
     setCheckoutOpen(true);
+  };
+
+  const handleResetCart = () => {
+    if (confirm('Are you sure you want to reset your cart? This will clear all items.')) {
+      resetCart();
+    }
   };
 
   return (
@@ -125,6 +131,17 @@ export function ElegantCartDrawer() {
                 ₹{state.totalAmount}
               </span>
             </div>
+            
+            {/* Reset Cart Button (Emergency) */}
+            {state.totalItems > 50 && (
+              <button
+                onClick={handleResetCart}
+                className="w-full mb-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                🚨 Reset Cart (Emergency)
+              </button>
+            )}
+            
             <PremiumButton
               onClick={handleCheckout}
               className="w-full"
