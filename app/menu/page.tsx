@@ -134,14 +134,14 @@ export default function MenuPage() {
       {/* Premium Header - Balanced Design */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-orange-200 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center h-20 lg:h-24">
+          <div className="flex items-center justify-center h-24 lg:h-28">
             {/* Restaurant Name & Logo - Centered and Balanced */}
-            <div className="flex items-center space-x-3 lg:space-x-4">
+            <div className="flex items-center space-x-4 lg:space-x-5">
               <div className="relative">
-                <ChefHat className="w-8 h-8 lg:w-10 lg:h-10 text-orange-600" />
+                <ChefHat className="w-10 h-10 lg:w-12 lg:h-12 text-orange-600" />
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
               </div>
-              <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Sri Kanya Restaurant</h1>
+              <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">Sri Kanya Restaurant</h1>
             </div>
 
             {/* Cart Icon - Positioned on the right */}
@@ -155,13 +155,13 @@ export default function MenuPage() {
       {/* Main Content */}
       <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
         {/* Hero Section - Balanced with Header */}
-        <div className="text-center mb-8 sm:mb-12 lg:mb-16">
-          <div className="flex items-center justify-center space-x-3 sm:space-x-4 lg:space-x-5 mb-6 sm:mb-8 lg:mb-10">
-            <Crown className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-orange-600" />
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900">Our Menu</h2>
-            <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-orange-600" />
+        <div className="text-center mb-8 sm:mb-10 lg:mb-12">
+          <div className="flex items-center justify-center space-x-3 sm:space-x-4 mb-4 sm:mb-6">
+            <Crown className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-orange-600" />
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Our Menu</h2>
+            <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-orange-600" />
           </div>
-          <p className="text-gray-700 text-lg sm:text-xl lg:text-2xl max-w-4xl mx-auto leading-relaxed px-4 lg:px-8">
+          <p className="text-gray-700 text-base sm:text-lg lg:text-xl max-w-3xl mx-auto leading-relaxed px-4 lg:px-8">
             Discover our authentic Indian cuisine featuring signature biryanis, aromatic curries, and traditional favorites.
           </p>
         </div>
