@@ -237,7 +237,7 @@ export default function MenuPage() {
         </div>
 
         {/* Menu Items Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 lg:gap-8" role="list" aria-label="Menu items">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6 lg:gap-8" role="list" aria-label="Menu items">
           {filteredAndSortedItems.map((item) => {
             const cartItem = state.items.find(cartItem => cartItem.id === item.id);
             const quantity = cartItem?.quantity || 0;
