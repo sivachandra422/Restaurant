@@ -209,11 +209,14 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       const tableNumber = action.payload;
       const currentTableNumber = state.tableNumber;
       
-      // Only clear cart if table number actually changes (not on initial set)
+      // Only clear cart and generate new session if table number actually changes
       const shouldClearCart = currentTableNumber !== null && currentTableNumber !== tableNumber;
       
-      // Generate new session ID when table number changes
-      const sessionId = `table-${tableNumber}-${Date.now()}`;
+      // Only generate new session ID if table actually changes or if no session exists
+      let sessionId = state.sessionId;
+      if (shouldClearCart || !sessionId) {
+        sessionId = `table-${tableNumber}-${Date.now()}`;
+      }
       
       newState = {
         ...state,
@@ -317,6 +320,7 @@ interface CartContextType {
   setCartOpen: (open: boolean) => void;
   setCheckoutOpen: (open: boolean) => void;
   setTableNumber: (table: number) => void;
+  setSessionId: (sessionId: string) => void;
   getMaxQuantity: (item: MenuItem) => number;
   getBulkPrice: (item: MenuItem, quantity: number) => number;
   addOrderToHistory: (order: OrderHistoryItem) => void;
@@ -392,6 +396,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_TABLE_NUMBER', payload: table });
   };
 
+  const setSessionId = (sessionId: string) => {
+    dispatch({ type: 'SET_SESSION_ID', payload: sessionId });
+  };
+
   const getMaxQuantity = (item: MenuItem): number => {
     return item.maxQuantity || 10; // Default to 10 if not specified
   };
@@ -416,6 +424,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         setCartOpen,
         setCheckoutOpen,
         setTableNumber,
+        setSessionId,
         getMaxQuantity,
         getBulkPrice,
         addOrderToHistory,

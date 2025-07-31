@@ -30,12 +30,16 @@ export default function MenuPage() {
     if (tableNumber && !isNaN(parseInt(tableNumber))) {
       const parsedTableNumber = parseInt(tableNumber);
       console.log('Setting table number:', parsedTableNumber);
-      setTableNumber(parsedTableNumber);
-    } else {
+      
+      // Only set table number if it's different from current
+      if (state.tableNumber !== parsedTableNumber) {
+        setTableNumber(parsedTableNumber);
+      }
+    } else if (state.tableNumber === null) {
       console.log('No valid table number found in URL, using default table 0');
-      setTableNumber(0); // Set default table for QR access
+      setTableNumber(0); // Set default table for QR access only if not already set
     }
-  }, [setTableNumber]);
+  }, [setTableNumber, state.tableNumber]);
 
   const menuWithImages = useMemo(() => {
     return Object.keys(sriKanyaMenu).reduce((acc, category) => {
