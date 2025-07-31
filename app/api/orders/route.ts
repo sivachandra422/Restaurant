@@ -84,6 +84,8 @@ function formatWebhookPayload(orderData: OrderData) {
       items: orderData.items.map(item => ({
         name: item.name,
         quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        subtotal: item.subtotal,
         category: item.category,
         isVeg: item.isVeg,
         isSignature: item.isSignature,

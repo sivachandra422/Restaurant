@@ -82,7 +82,7 @@ export function ElegantCheckoutForm() {
 
     const orderData = {
       orderId: `SRK-${Date.now()}`,
-      restaurantName: 'Sri Kanya Family Restaurants',
+      restaurantName: 'Sri Kanya Restaurant',
       tableNumber: state.tableNumber || 0,
       sessionId: state.sessionId || `table-${state.tableNumber}-${Date.now()}`,
       timestamp: new Date().toISOString(),
