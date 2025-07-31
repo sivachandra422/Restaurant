@@ -1,0 +1,32 @@
+{
+  "name": "Sri Kanya Restaurant",
+  "short_name": "Sri Kanya",
+  "description": "Authentic Indian cuisine - Signature biryanis, curries, and more",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["food", "restaurant", "lifestyle"],
+  "lang": "en",
+  "dir": "ltr"
+} 

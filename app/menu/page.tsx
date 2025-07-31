@@ -9,7 +9,11 @@ import { ElegantCategoryTabs } from '@/components/menu/ElegantCategoryTabs';
 import { PremiumCartIcon } from '@/components/cart/PremiumCartIcon';
 import { ElegantCartDrawer } from '@/components/cart/ElegantCartDrawer';
 import { ElegantCheckoutForm } from '@/components/checkout/ElegantCheckoutForm';
+import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
+import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { useCart } from '@/contexts/CartContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { t } from '@/lib/translations';
 import { getFoodImage } from '@/lib/imageMappings';
 import { MenuItem } from '@/data/sriKanyaMenu';
 import { Button } from '@/components/ui/button';
@@ -22,6 +26,7 @@ export default function MenuPage() {
   const [sortBy, setSortBy] = useState('name');
   const [filterVeg, setFilterVeg] = useState('all');
   const { state, addToCart, removeFromCart, updateQuantity, setTableNumber } = useCart();
+  const { language } = useLanguage();
 
   useEffect(() => {
     const tableNumber = new URLSearchParams(window.location.search).get('table');
@@ -159,9 +164,12 @@ export default function MenuPage() {
               <h1 className="text-lg sm:text-xl lg:text-3xl xl:text-4xl font-bold text-gray-900">Sri Kanya Restaurant</h1>
             </div>
 
-            {/* Cart Icon - Positioned on the right with proper spacing */}
-            <div className="flex-shrink-0">
-              <PremiumCartIcon />
+            {/* Right side controls */}
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <LanguageSwitcher />
+              <div className="flex-shrink-0">
+                <PremiumCartIcon />
+              </div>
             </div>
           </div>
         </div>
@@ -197,7 +205,7 @@ export default function MenuPage() {
             <div className="relative w-full sm:w-80">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="Search menu items..."
+                placeholder={t('search', language)}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 py-2 border-gray-200 focus:border-orange-500 focus:ring-orange-500"
@@ -210,12 +218,12 @@ export default function MenuPage() {
               <Select value={filterVeg} onValueChange={setFilterVeg}>
                 <SelectTrigger className="w-32">
                   <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Filter" />
+                  <SelectValue placeholder={t('filter', language)} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Items</SelectItem>
-                  <SelectItem value="veg">Vegetarian</SelectItem>
-                  <SelectItem value="non-veg">Non-Vegetarian</SelectItem>
+                  <SelectItem value="all">{t('all_items', language)}</SelectItem>
+                  <SelectItem value="veg">{t('vegetarian', language)}</SelectItem>
+                  <SelectItem value="non-veg">{t('non_vegetarian', language)}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -223,13 +231,13 @@ export default function MenuPage() {
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-40">
                   <SortAsc className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Sort by" />
+                  <SelectValue placeholder={t('sort', language)} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="name">Name A-Z</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
-                  <SelectItem value="popularity">Popularity</SelectItem>
+                  <SelectItem value="name">{t('name_az', language)}</SelectItem>
+                  <SelectItem value="price-low">{t('price_low', language)}</SelectItem>
+                  <SelectItem value="price-high">{t('price_high', language)}</SelectItem>
+                  <SelectItem value="popularity">{t('popularity', language)}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -260,12 +268,12 @@ export default function MenuPage() {
           <div className="text-center py-16 sm:py-20 lg:py-24">
             <div className="text-6xl sm:text-8xl lg:text-9xl mb-6">🍽️</div>
             <h3 className="font-playfair text-2xl sm:text-3xl lg:text-4xl font-semibold text-gray-800 mb-4">
-              {searchQuery ? 'No items found' : 'Coming Soon'}
+              {searchQuery ? t('no_items_found', language) : t('coming_soon', language)}
             </h3>
             <p className="text-gray-600 text-base sm:text-lg lg:text-xl">
               {searchQuery 
-                ? `No items match "${searchQuery}". Try a different search term.`
-                : "We're preparing something special for this category."
+                ? `${t('no_items_found', language)} "${searchQuery}". ${t('try_different_search', language)}`
+                : t('preparing_special', language)
               }
             </p>
           </div>
@@ -277,6 +285,9 @@ export default function MenuPage() {
 
       {/* Checkout Form */}
       <ElegantCheckoutForm />
+      
+      {/* Offline Indicator */}
+      <OfflineIndicator />
     </div>
   );
 }

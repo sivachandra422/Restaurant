@@ -9,6 +9,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { MenuItem } from '@/data/sriKanyaMenu';
 import { getFoodImage, getFallbackImage } from '@/lib/imageMappings';
 import { useCart } from '@/contexts/CartContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { t } from '@/lib/translations';
 
 interface PremiumMenuCardProps {
   item: MenuItem;
@@ -26,6 +28,7 @@ export function PremiumMenuCard({
   onUpdateQuantity 
 }: PremiumMenuCardProps) {
   const { getMaxQuantity } = useCart();
+  const { language } = useLanguage();
   
   const [imageError, setImageError] = React.useState(false);
   const [imageLoading, setImageLoading] = React.useState(true);
@@ -148,19 +151,19 @@ export function PremiumMenuCard({
             {item.isSignature && (
               <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 font-medium text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 shadow-md animate-pulse">
                 <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />
-                Signature
+                {t('signature', language)}
               </Badge>
             )}
             {item.isSpecial && (
               <Badge className="bg-gradient-to-r from-purple-400 to-pink-500 text-white border-0 font-medium text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 shadow-md animate-pulse">
                 <Zap className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />
-                Special
+                {t('special', language)}
               </Badge>
             )}
             {item.isVeg && (
-              <Badge className="bg-gradient-to-r from-green-400 to-emerald-500 text-white border-0 font-medium text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 shadow-md">
+              <Badge className="bg-gradient-0-r from-green-400 to-emerald-500 text-white border-0 font-medium text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 shadow-md">
                 <Leaf className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />
-                Veg
+                {t('veg', language)}
               </Badge>
             )}
           </div>
@@ -192,13 +195,13 @@ export function PremiumMenuCard({
           {/* Quantity Controls - Responsive at Bottom */}
           <div className="flex items-center justify-between mt-auto">
             {quantity === 0 ? (
-              <Button
-                onClick={handleAddClick}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md text-xs sm:text-sm hover:shadow-lg"
-                disabled={isAtMaxQuantity}
-              >
-                Add to Cart
-              </Button>
+                              <Button
+                  onClick={handleAddClick}
+                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md text-xs sm:text-sm hover:shadow-lg"
+                  disabled={isAtMaxQuantity}
+                >
+                  {t('add_to_cart', language)}
+                </Button>
             ) : (
               <div className="flex items-center gap-2 w-full">
                 <Button
@@ -224,12 +227,12 @@ export function PremiumMenuCard({
                   <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                 </Button>
                 
-                <Button
-                  onClick={handleRemoveClick}
-                  className="ml-auto bg-red-500 hover:bg-red-600 text-white text-xs px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
-                >
-                  Remove
-                </Button>
+                                  <Button
+                    onClick={handleRemoveClick}
+                    className="ml-auto bg-red-500 hover:bg-red-600 text-white text-xs px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+                  >
+                    {t('remove', language)}
+                  </Button>
               </div>
             )}
           </div>

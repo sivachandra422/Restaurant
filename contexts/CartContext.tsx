@@ -356,6 +356,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // Only save if cart is not empty or if we're clearing it
       if (state.items.length > 0 || state.totalItems === 0) {
         localStorage.setItem('restaurant-cart', JSON.stringify(state));
+        
+        // Cache menu data for offline use
+        if (state.items.length > 0) {
+          import('@/data/sriKanyaMenu').then(({ sriKanyaMenu }) => {
+            localStorage.setItem('sriKanyaMenuData', JSON.stringify(sriKanyaMenu));
+          }).catch(error => {
+            console.error('Error caching menu data:', error);
+          });
+        }
       }
     } catch (error) {
       console.error('Error saving cart to localStorage:', error);
