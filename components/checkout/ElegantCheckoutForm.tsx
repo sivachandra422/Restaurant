@@ -5,7 +5,6 @@ import { X, User, Phone, MessageSquare, AlertCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAnalytics } from '@/contexts/AnalyticsContext';
 import { PremiumButton } from '@/components/ui/PremiumButton';
-import { OrderFeedback } from '@/components/ui/OrderFeedback';
 
 interface CheckoutFormData {
   customerName: string;
@@ -23,7 +22,6 @@ export function ElegantCheckoutForm() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string>('');
   const [formError, setFormError] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -165,11 +163,8 @@ export function ElegantCheckoutForm() {
         setCurrentOrderId(orderData.orderId);
         clearCart();
         
-        // Show feedback after a delay
-        setTimeout(() => {
-          setOrderPlaced(false);
-          setShowFeedback(true);
-        }, 3000);
+        // Don't show feedback immediately - customer should receive order first
+        // Feedback will be available in order history later
       } else {
         setApiError(result.message || 'Failed to place order. Please try again.');
       }
@@ -187,20 +182,7 @@ export function ElegantCheckoutForm() {
     setApiError(null);
   };
 
-  const handleFeedbackSubmit = async (rating: number, feedback?: string) => {
-    try {
-      addRating(currentOrderId, rating, feedback);
-      setShowFeedback(false);
-      setCheckoutOpen(false);
-    } catch (error) {
-      console.error('Error submitting feedback:', error);
-    }
-  };
 
-  const handleFeedbackClose = () => {
-    setShowFeedback(false);
-    setCheckoutOpen(false);
-  };
 
   if (orderPlaced) {
     return (
@@ -233,15 +215,7 @@ export function ElegantCheckoutForm() {
     );
   }
 
-  if (showFeedback) {
-    return (
-      <OrderFeedback
-        orderId={currentOrderId}
-        onSubmit={handleFeedbackSubmit}
-        onClose={handleFeedbackClose}
-      />
-    );
-  }
+
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { ChefHat, Sparkles, Crown, Search, Filter, SortAsc } from 'lucide-react';
+import { ChefHat, Sparkles, Crown, Search, Filter, SortAsc, Clock } from 'lucide-react';
 import Head from 'next/head';
 import { sriKanyaMenu, menuCategories } from '@/data/sriKanyaMenu';
 import { PremiumMenuCard } from '@/components/menu/PremiumMenuCard';
@@ -12,6 +12,7 @@ import { ElegantCheckoutForm } from '@/components/checkout/ElegantCheckoutForm';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
+import { OrderHistory } from '@/components/ui/OrderHistory';
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAnalytics } from '@/contexts/AnalyticsContext';
@@ -27,6 +28,7 @@ export default function MenuPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [filterVeg, setFilterVeg] = useState('all');
+  const [showOrderHistory, setShowOrderHistory] = useState(false);
   const { state, addToCart, removeFromCart, updateQuantity, setTableNumber } = useCart();
   const { language } = useLanguage();
 
@@ -169,6 +171,15 @@ export default function MenuPage() {
             {/* Right side controls */}
             <div className="flex items-center space-x-2 sm:space-x-3">
               <LanguageSwitcher />
+              <Button
+                onClick={() => setShowOrderHistory(true)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <Clock className="w-4 h-4" />
+                <span className="hidden sm:inline">Orders</span>
+              </Button>
               <div className="flex-shrink-0">
                 <PremiumCartIcon />
               </div>
@@ -293,6 +304,11 @@ export default function MenuPage() {
       
       {/* Analytics Dashboard */}
       <AnalyticsDashboard />
+
+      {/* Order History Modal */}
+      {showOrderHistory && (
+        <OrderHistory onClose={() => setShowOrderHistory(false)} />
+      )}
     </div>
   );
 }
