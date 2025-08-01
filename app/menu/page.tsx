@@ -11,7 +11,7 @@ import { ElegantCartDrawer } from '@/components/cart/ElegantCartDrawer';
 import { ElegantCheckoutForm } from '@/components/checkout/ElegantCheckoutForm';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
-import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
+
 import { OrderHistory } from '@/components/ui/OrderHistory';
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -302,8 +302,7 @@ export default function MenuPage() {
       {/* Offline Indicator */}
       <OfflineIndicator />
       
-      {/* Analytics Dashboard */}
-      <AnalyticsDashboard />
+      
 
       {/* Order History Modal */}
       {showOrderHistory && (
