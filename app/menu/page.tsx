@@ -11,7 +11,6 @@ import { ElegantCartDrawer } from '@/components/cart/ElegantCartDrawer';
 import { ElegantCheckoutForm } from '@/components/checkout/ElegantCheckoutForm';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
-import { PopularItemsSection } from '@/components/menu/PopularItemsSection';
 import { AnalyticsDashboard } from '@/components/analytics/AnalyticsDashboard';
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -191,9 +190,6 @@ export default function MenuPage() {
             Discover our authentic Indian cuisine featuring signature biryanis, aromatic curries, and traditional favorites.
           </p>
         </div>
-
-        {/* Popular Items Section */}
-        <PopularItemsSection allMenuItems={Object.values(menuWithImages).flat()} />
 
         {/* Category Tabs */}
         <div className="mb-8 sm:mb-10 lg:mb-12">
