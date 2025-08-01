@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { CreditCard, Cash, Smartphone, CheckCircle, XCircle } from 'lucide-react';
+import { CreditCard, DollarSign, Smartphone, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -146,14 +146,14 @@ export function PaymentConfirmation({ onClose }: PaymentConfirmationProps) {
                        Payment Method
                      </label>
                      <div className="grid grid-cols-2 gap-3">
-                       <Button
-                         variant={paymentMethod === 'cash' ? 'default' : 'outline'}
-                         onClick={() => setPaymentMethod('cash')}
-                         className="flex items-center gap-2"
-                       >
-                         <Cash className="w-4 h-4" />
-                         Cash
-                       </Button>
+                                               <Button
+                          variant={paymentMethod === 'cash' ? 'default' : 'outline'}
+                          onClick={() => setPaymentMethod('cash')}
+                          className="flex items-center gap-2"
+                        >
+                          <DollarSign className="w-4 h-4" />
+                          Cash
+                        </Button>
                        <Button
                          variant={paymentMethod === 'phonepe' ? 'default' : 'outline'}
                          onClick={() => setPaymentMethod('phonepe')}
