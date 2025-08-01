@@ -1,19 +1,31 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BarChart3, TrendingUp, DollarSign, Clock, Star, Users } from 'lucide-react';
+import { BarChart3, TrendingUp, DollarSign, Clock, Star, Users, CreditCard } from 'lucide-react';
 import { useAnalytics } from '@/contexts/AnalyticsContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { PaymentConfirmation } from '@/components/ui/PaymentConfirmation';
 
 export function AnalyticsDashboard() {
-  const { analytics, resetAnalytics } = useAnalytics();
+  const { analytics, resetAnalytics, getPendingOrders } = useAnalytics();
   const [isVisible, setIsVisible] = useState(false);
+  const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false);
 
   if (!isVisible) {
+    const pendingOrders = getPendingOrders();
     return (
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-4 right-4 z-50 flex gap-2">
+        {pendingOrders.length > 0 && (
+          <Button
+            onClick={() => setShowPaymentConfirmation(true)}
+            className="bg-green-600 hover:bg-green-700 text-white rounded-full p-3 shadow-lg"
+          >
+            <CreditCard className="w-5 h-5" />
+            <span className="ml-1 text-xs">{pendingOrders.length}</span>
+          </Button>
+        )}
         <Button
           onClick={() => setIsVisible(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg"
@@ -142,23 +154,42 @@ export function AnalyticsDashboard() {
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end space-x-3">
-            <Button
-              onClick={resetAnalytics}
-              variant="outline"
-              className="text-red-600 border-red-600 hover:bg-red-50"
-            >
-              Reset Analytics
-            </Button>
-            <Button
-              onClick={() => setIsVisible(false)}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Close
-            </Button>
+          <div className="flex justify-between items-center">
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowPaymentConfirmation(true)}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Payment Confirmation
+              </Button>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                onClick={resetAnalytics}
+                variant="outline"
+                className="text-red-600 border-red-600 hover:bg-red-50"
+              >
+                Reset Analytics
+              </Button>
+              <Button
+                onClick={() => setIsVisible(false)}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Close
+              </Button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
+
+  if (showPaymentConfirmation) {
+    return (
+      <PaymentConfirmation
+        onClose={() => setShowPaymentConfirmation(false)}
+      />
+    );
+  }
 } 

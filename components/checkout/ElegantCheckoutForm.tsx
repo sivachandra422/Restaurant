@@ -143,7 +143,7 @@ export function ElegantCheckoutForm() {
           status: 'pending',
         });
 
-        // Add order to analytics
+        // Add order to analytics with pending status
         addOrder({
           orderId: orderData.orderId,
           timestamp: orderData.timestamp,
@@ -157,6 +157,8 @@ export function ElegantCheckoutForm() {
           tableNumber: state.tableNumber || 0,
           customerName: formData.customerName,
           preparationTime: Math.max(15, Math.floor(Math.random() * 30) + 15), // Simulated prep time
+          status: 'pending',
+          paymentStatus: 'pending',
         });
 
         setOrderPlaced(true);
