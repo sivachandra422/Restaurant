@@ -4,6 +4,7 @@ import React, { useState, useRef, ChangeEvent, FormEvent } from 'react';
 import { X, User, Phone, MessageSquare, AlertCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useAnalytics } from '@/contexts/AnalyticsContext';
+import { useCustomerExperience } from '@/contexts/CustomerExperienceContext';
 import { PremiumButton } from '@/components/ui/PremiumButton';
 
 interface CheckoutFormData {
@@ -13,8 +14,9 @@ interface CheckoutFormData {
 }
 
 export function ElegantCheckoutForm() {
-  const { state, setCheckoutOpen, clearCart, addOrderToHistory } = useCart();
+  const { state, setCheckoutOpen, clearCart } = useCart();
   const { addOrder, addRating } = useAnalytics();
+  const { addToOrderHistory } = useCustomerExperience();
   const [formData, setFormData] = useState<CheckoutFormData>({
     customerName: '',
     customerPhone: '',
@@ -133,11 +135,12 @@ export function ElegantCheckoutForm() {
 
       if (result.success) {
         // Add order to history
-        addOrderToHistory({
+        addToOrderHistory({
           orderId: orderData.orderId,
           timestamp: orderData.timestamp,
           items: state.items,
           totalAmount: state.totalAmount,
+          tableNumber: state.tableNumber || 0,
           status: 'pending',
         });
 
