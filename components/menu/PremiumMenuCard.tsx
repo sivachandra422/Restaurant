@@ -168,7 +168,7 @@ export function PremiumMenuCard({
               </Badge>
             )}
             {item.isVeg && (
-              <Badge className="bg-gradient-0-r from-green-400 to-emerald-500 text-white border-0 font-medium text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 shadow-md">
+              <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 font-medium text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 shadow-md">
                 <Leaf className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />
                 {t('veg', language)}
               </Badge>
