@@ -15,6 +15,7 @@ export interface MenuItem {
   preparationTime?: number; // Preparation time in minutes
   popularity?: number; // Popularity score (1-10)
   trending?: boolean; // Is this item trending
+  isDisabled?: boolean; // Whether item is disabled/hidden from customers
 }
 
 export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
