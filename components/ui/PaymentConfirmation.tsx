@@ -14,7 +14,7 @@ interface PaymentConfirmationProps {
 export function PaymentConfirmation({ onClose }: PaymentConfirmationProps) {
   const { getPendingOrders, updateOrderStatus } = useAnalytics();
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'upi' | 'online'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'phonepe'>('cash');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const pendingOrders = getPendingOrders();
@@ -24,7 +24,7 @@ export function PaymentConfirmation({ onClose }: PaymentConfirmationProps) {
     
     setIsProcessing(true);
     try {
-      // Simulate payment processing
+      // Simulate payment processing delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Update order status to paid
@@ -140,71 +140,68 @@ export function PaymentConfirmation({ onClose }: PaymentConfirmationProps) {
               <h3 className="text-lg font-semibold mb-4">Payment Details</h3>
               {selectedOrderId ? (
                 <div className="space-y-6">
-                  {/* Payment Method Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Payment Method
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button
-                        variant={paymentMethod === 'cash' ? 'default' : 'outline'}
-                        onClick={() => setPaymentMethod('cash')}
-                        className="flex items-center gap-2"
-                      >
-                        <Cash className="w-4 h-4" />
-                        Cash
-                      </Button>
-                      <Button
-                        variant={paymentMethod === 'card' ? 'default' : 'outline'}
-                        onClick={() => setPaymentMethod('card')}
-                        className="flex items-center gap-2"
-                      >
-                        <CreditCard className="w-4 h-4" />
-                        Card
-                      </Button>
-                      <Button
-                        variant={paymentMethod === 'upi' ? 'default' : 'outline'}
-                        onClick={() => setPaymentMethod('upi')}
-                        className="flex items-center gap-2"
-                      >
-                        <Smartphone className="w-4 h-4" />
-                        UPI
-                      </Button>
-                      <Button
-                        variant={paymentMethod === 'online' ? 'default' : 'outline'}
-                        onClick={() => setPaymentMethod('online')}
-                        className="flex items-center gap-2"
-                      >
-                        <CreditCard className="w-4 h-4" />
-                        Online
-                      </Button>
-                    </div>
-                  </div>
+                                     {/* Payment Method Selection */}
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-3">
+                       Payment Method
+                     </label>
+                     <div className="grid grid-cols-2 gap-3">
+                       <Button
+                         variant={paymentMethod === 'cash' ? 'default' : 'outline'}
+                         onClick={() => setPaymentMethod('cash')}
+                         className="flex items-center gap-2"
+                       >
+                         <Cash className="w-4 h-4" />
+                         Cash
+                       </Button>
+                       <Button
+                         variant={paymentMethod === 'phonepe' ? 'default' : 'outline'}
+                         onClick={() => setPaymentMethod('phonepe')}
+                         className="flex items-center gap-2"
+                       >
+                         <Smartphone className="w-4 h-4" />
+                         PhonePe QR
+                       </Button>
+                     </div>
+                   </div>
 
-                  {/* Order Details */}
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h4 className="font-medium mb-3">Order Summary</h4>
-                    {pendingOrders.find(o => o.orderId === selectedOrderId) && (
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Order ID:</span>
-                          <span className="font-mono">#{selectedOrderId.slice(-6)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Customer:</span>
-                          <span>{pendingOrders.find(o => o.orderId === selectedOrderId)?.customerName}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span>Table:</span>
-                          <span>{pendingOrders.find(o => o.orderId === selectedOrderId)?.tableNumber}</span>
-                        </div>
-                        <div className="flex justify-between text-sm font-medium">
-                          <span>Total Amount:</span>
-                          <span>₹{pendingOrders.find(o => o.orderId === selectedOrderId)?.totalAmount}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                                     {/* Order Details */}
+                   <div className="bg-gray-50 rounded-lg p-4">
+                     <h4 className="font-medium mb-3">Order Summary</h4>
+                     {pendingOrders.find(o => o.orderId === selectedOrderId) && (
+                       <div className="space-y-2">
+                         <div className="flex justify-between text-sm">
+                           <span>Order ID:</span>
+                           <span className="font-mono">#{selectedOrderId.slice(-6)}</span>
+                         </div>
+                         <div className="flex justify-between text-sm">
+                           <span>Customer:</span>
+                           <span>{pendingOrders.find(o => o.orderId === selectedOrderId)?.customerName}</span>
+                         </div>
+                         <div className="flex justify-between text-sm">
+                           <span>Table:</span>
+                           <span>{pendingOrders.find(o => o.orderId === selectedOrderId)?.tableNumber}</span>
+                         </div>
+                         <div className="flex justify-between text-sm font-medium">
+                           <span>Total Amount:</span>
+                           <span>₹{pendingOrders.find(o => o.orderId === selectedOrderId)?.totalAmount}</span>
+                         </div>
+                       </div>
+                     )}
+                   </div>
+
+                   {/* Payment Instructions */}
+                   {paymentMethod === 'phonepe' && (
+                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                       <h4 className="font-medium mb-2 text-blue-800">PhonePe Payment Instructions</h4>
+                       <div className="space-y-2 text-sm text-blue-700">
+                         <p>1. Ask customer to scan your PhonePe QR code</p>
+                         <p>2. Enter amount: ₹{pendingOrders.find(o => o.orderId === selectedOrderId)?.totalAmount}</p>
+                         <p>3. Verify payment received on your PhonePe app</p>
+                         <p>4. Click "Confirm Payment" below</p>
+                       </div>
+                     </div>
+                   )}
 
                   {/* Action Buttons */}
                   <div className="flex gap-3">

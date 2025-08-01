@@ -12,7 +12,7 @@ interface OrderAnalytics {
   customerName: string;
   preparationTime: number;
   status: 'pending' | 'confirmed' | 'paid' | 'completed' | 'cancelled';
-  paymentMethod?: 'cash' | 'card' | 'upi' | 'online';
+  paymentMethod?: 'cash' | 'phonepe';
   paymentStatus: 'pending' | 'paid' | 'failed';
   rating?: number;
   feedback?: string;
