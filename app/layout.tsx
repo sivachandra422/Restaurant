@@ -6,6 +6,7 @@ import { OfflineProvider } from '@/contexts/OfflineContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { AnalyticsProvider } from '@/contexts/AnalyticsContext';
 import { CustomerExperienceProvider } from '@/contexts/CustomerExperienceContext';
+import { MenuProvider } from '@/contexts/MenuContext';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -45,13 +46,15 @@ export default function RootLayout({
       <body className={`${inter.className} antialiased`}>
         <OfflineProvider>
           <LanguageProvider>
-            <AnalyticsProvider>
-              <CustomerExperienceProvider>
-                <CartProvider>
-                  {children}
-                </CartProvider>
-              </CustomerExperienceProvider>
-            </AnalyticsProvider>
+            <MenuProvider>
+              <AnalyticsProvider>
+                <CustomerExperienceProvider>
+                  <CartProvider>
+                    {children}
+                  </CartProvider>
+                </CustomerExperienceProvider>
+              </AnalyticsProvider>
+            </MenuProvider>
           </LanguageProvider>
         </OfflineProvider>
       </body>

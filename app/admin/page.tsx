@@ -22,8 +22,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAnalytics } from '@/contexts/AnalyticsContext';
-import { sriKanyaMenu, menuCategories } from '@/data/sriKanyaMenu';
-import { MenuItem } from '@/data/sriKanyaMenu';
+import { useMenu } from '@/contexts/MenuContext';
+import { menuCategories } from '@/data/sriKanyaMenu';
 
 interface AdminState {
   isAuthenticated: boolean;
@@ -37,18 +37,12 @@ interface EditModalState {
 
 export default function AdminPage() {
   const { analytics } = useAnalytics();
+  const { menuItems, updateMenuItem, toggleItemVisibility } = useMenu();
   const [adminState, setAdminState] = useState<AdminState>({
     isAuthenticated: false,
     currentSection: 'dashboard'
   });
   const [password, setPassword] = useState('');
-  const [menuItems, setMenuItems] = useState<any[]>(() => {
-    // Flatten all menu items from all categories and add image property
-    return Object.values(sriKanyaMenu).flat().map(item => ({
-      ...item,
-      image: `/api/food-image?item=${item.id}` // Default image URL
-    }));
-  });
   const [editModal, setEditModal] = useState<EditModalState>({
     isOpen: false,
     item: null
@@ -70,16 +64,6 @@ export default function AdminPage() {
     setPassword('');
   };
 
-  const toggleItemVisibility = (itemId: string) => {
-    setMenuItems(prev => 
-      prev.map(item => 
-        item.id === itemId 
-          ? { ...item, isDisabled: !item.isDisabled }
-          : item
-      )
-    );
-  };
-
   const openEditModal = (item: any) => {
     setEditModal({
       isOpen: true,
@@ -96,13 +80,8 @@ export default function AdminPage() {
 
   const handleSaveEdit = () => {
     if (editModal.item) {
-      setMenuItems(prev => 
-        prev.map(item => 
-          item.id === editModal.item.id 
-            ? editModal.item
-            : item
-        )
-      );
+      // Update the item using the shared context
+      updateMenuItem(editModal.item.id, editModal.item);
       closeEditModal();
     }
   };
