@@ -10,7 +10,9 @@ import { MenuItem } from '@/data/sriKanyaMenu';
 import { getFoodImage, getFallbackImage } from '@/lib/imageMappings';
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCustomerExperience } from '@/contexts/CustomerExperienceContext';
 import { t } from '@/lib/translations';
+import { WaitTimeIndicator } from '@/components/ui/WaitTimeIndicator';
 
 interface PremiumMenuCardProps {
   item: MenuItem;
@@ -29,6 +31,7 @@ export function PremiumMenuCard({
 }: PremiumMenuCardProps) {
   const { getMaxQuantity } = useCart();
   const { language } = useLanguage();
+  const { isFavorite: isItemFavorite, addToFavorites, removeFromFavorites } = useCustomerExperience();
   
   const [imageError, setImageError] = React.useState(false);
   const [imageLoading, setImageLoading] = React.useState(true);
@@ -83,7 +86,11 @@ export function PremiumMenuCard({
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsFavorite(!isFavorite);
+    if (isItemFavorite(item.id)) {
+      removeFromFavorites(item.id);
+    } else {
+      addToFavorites(item.id);
+    }
   };
 
   const handleImageError = () => {
@@ -141,7 +148,7 @@ export function PremiumMenuCard({
           >
             <Heart 
               className={`w-3 h-3 sm:w-4 sm:h-4 transition-all duration-300 ${
-                isFavorite ? 'text-red-500 fill-red-500' : 'text-white'
+                isItemFavorite(item.id) ? 'text-red-500 fill-red-500' : 'text-white'
               }`} 
             />
           </button>
@@ -185,11 +192,12 @@ export function PremiumMenuCard({
             </p>
           </div>
           
-          {/* Price - Responsive Styling */}
+          {/* Price and Wait Time - Responsive Styling */}
           <div className="mb-3 sm:mb-4 flex items-center justify-between">
             <span className="font-bold text-base sm:text-lg text-gray-900 group-hover:text-orange-600 transition-colors duration-300">
               ₹{item.price.toLocaleString()}
             </span>
+            <WaitTimeIndicator item={item} showTrending={false} />
           </div>
 
           {/* Quantity Controls - Responsive at Bottom */}

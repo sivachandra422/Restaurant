@@ -12,6 +12,9 @@ export interface MenuItem {
   maxQuantity?: number; // Maximum quantity allowed per order
   minQuantity?: number; // Minimum quantity required
   bulkPricing?: { quantity: number; price: number }[]; // Bulk pricing tiers
+  preparationTime?: number; // Preparation time in minutes
+  popularity?: number; // Popularity score (1-10)
+  trending?: boolean; // Is this item trending
 }
 
 export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
@@ -25,6 +28,9 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
       isVeg: false,
       isSignature: true,
       maxQuantity: 5, // Limit biryanis to 5 per order
+      preparationTime: 25,
+      popularity: 9,
+      trending: true,
     },
     {
       id: 'chicken_dum_biryani_full',
@@ -35,6 +41,9 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
       isVeg: false,
       isSignature: true,
       maxQuantity: 5,
+      preparationTime: 30,
+      popularity: 8,
+      trending: true,
     },
     {
       id: 'chicken_biryani',

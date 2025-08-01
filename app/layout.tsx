@@ -4,6 +4,8 @@ import { Inter, Playfair_Display } from 'next/font/google';
 import { CartProvider } from '@/contexts/CartContext';
 import { OfflineProvider } from '@/contexts/OfflineContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
+import { AnalyticsProvider } from '@/contexts/AnalyticsContext';
+import { CustomerExperienceProvider } from '@/contexts/CustomerExperienceContext';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -43,9 +45,13 @@ export default function RootLayout({
       <body className={`${inter.className} antialiased`}>
         <OfflineProvider>
           <LanguageProvider>
-            <CartProvider>
-              {children}
-            </CartProvider>
+            <AnalyticsProvider>
+              <CustomerExperienceProvider>
+                <CartProvider>
+                  {children}
+                </CartProvider>
+              </CustomerExperienceProvider>
+            </AnalyticsProvider>
           </LanguageProvider>
         </OfflineProvider>
       </body>
