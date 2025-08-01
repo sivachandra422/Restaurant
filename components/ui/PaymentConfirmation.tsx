@@ -198,7 +198,7 @@ export function PaymentConfirmation({ onClose }: PaymentConfirmationProps) {
                          <p>1. Ask customer to scan your PhonePe QR code</p>
                          <p>2. Enter amount: ₹{pendingOrders.find(o => o.orderId === selectedOrderId)?.totalAmount}</p>
                          <p>3. Verify payment received on your PhonePe app</p>
-                         <p>4. Click "Confirm Payment" below</p>
+                         <p>4. Click &quot;Confirm Payment&quot; below</p>
                        </div>
                      </div>
                    )}
