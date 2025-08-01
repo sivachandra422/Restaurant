@@ -57,7 +57,7 @@ export default function MenuPage() {
       }));
       return acc;
     }, {} as { [key: string]: MenuItem[] });
-  }, [sriKanyaMenu]);
+  }, []);
 
   // Filter and sort menu items
   const filteredAndSortedItems = useMemo(() => {

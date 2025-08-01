@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { TrendingUp, Star, Fire } from 'lucide-react';
+import { TrendingUp, Star, Flame } from 'lucide-react';
 import { MenuItem } from '@/data/sriKanyaMenu';
 import { useAnalytics } from '@/contexts/AnalyticsContext';
 import { useCustomerExperience } from '@/contexts/CustomerExperienceContext';
@@ -37,7 +37,7 @@ export function PopularItemsSection({ allMenuItems }: PopularItemsSectionProps) 
       {/* Section Header */}
       <div className="text-center mb-6 sm:mb-8">
         <div className="flex items-center justify-center space-x-2 mb-3">
-          <Fire className="w-6 h-6 text-orange-500" />
+          <Flame className="w-6 h-6 text-orange-500" />
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">
             Popular & Trending
           </h2>
