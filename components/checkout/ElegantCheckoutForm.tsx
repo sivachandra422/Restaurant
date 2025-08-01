@@ -3,7 +3,9 @@
 import React, { useState, useRef, ChangeEvent, FormEvent } from 'react';
 import { X, User, Phone, MessageSquare, AlertCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
+import { useAnalytics } from '@/contexts/AnalyticsContext';
 import { PremiumButton } from '@/components/ui/PremiumButton';
+import { OrderFeedback } from '@/components/ui/OrderFeedback';
 
 interface CheckoutFormData {
   customerName: string;
@@ -13,6 +15,7 @@ interface CheckoutFormData {
 
 export function ElegantCheckoutForm() {
   const { state, setCheckoutOpen, clearCart, addOrderToHistory } = useCart();
+  const { addOrder, addRating } = useAnalytics();
   const [formData, setFormData] = useState<CheckoutFormData>({
     customerName: '',
     customerPhone: '',
@@ -20,6 +23,8 @@ export function ElegantCheckoutForm() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState<string>('');
   const [formError, setFormError] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -138,13 +143,30 @@ export function ElegantCheckoutForm() {
           status: 'pending',
         });
 
+        // Add order to analytics
+        addOrder({
+          orderId: orderData.orderId,
+          timestamp: orderData.timestamp,
+          items: state.items.map(item => ({
+            id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+          totalAmount: state.totalAmount,
+          tableNumber: state.tableNumber || 0,
+          customerName: formData.customerName,
+          preparationTime: Math.max(15, Math.floor(Math.random() * 30) + 15), // Simulated prep time
+        });
+
         setOrderPlaced(true);
+        setCurrentOrderId(orderData.orderId);
         clearCart();
         
-        // Close checkout after a delay
+        // Show feedback after a delay
         setTimeout(() => {
-          setCheckoutOpen(false);
           setOrderPlaced(false);
+          setShowFeedback(true);
         }, 3000);
       } else {
         setApiError(result.message || 'Failed to place order. Please try again.');
@@ -163,6 +185,21 @@ export function ElegantCheckoutForm() {
     setApiError(null);
   };
 
+  const handleFeedbackSubmit = async (rating: number, feedback?: string) => {
+    try {
+      addRating(currentOrderId, rating, feedback);
+      setShowFeedback(false);
+      setCheckoutOpen(false);
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    }
+  };
+
+  const handleFeedbackClose = () => {
+    setShowFeedback(false);
+    setCheckoutOpen(false);
+  };
+
   if (orderPlaced) {
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -174,7 +211,7 @@ export function ElegantCheckoutForm() {
           </p>
           <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
             <p className="text-sm text-green-800">
-              <strong>Order ID:</strong> {`SRK-${Date.now()}`}
+              <strong>Order ID:</strong> {currentOrderId}
             </p>
             <p className="text-sm text-green-800">
               <strong>Table:</strong> {state.tableNumber}
@@ -191,6 +228,16 @@ export function ElegantCheckoutForm() {
           </button>
         </div>
       </div>
+    );
+  }
+
+  if (showFeedback) {
+    return (
+      <OrderFeedback
+        orderId={currentOrderId}
+        onSubmit={handleFeedbackSubmit}
+        onClose={handleFeedbackClose}
+      />
     );
   }
 
