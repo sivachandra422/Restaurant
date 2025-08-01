@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Clock, Star, MessageSquare, CheckCircle, XCircle } from 'lucide-react';
+import { Clock, Star, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,13 +13,13 @@ interface OrderHistoryProps {
 }
 
 export function OrderHistory({ onClose }: OrderHistoryProps) {
-  const { orderHistory } = useCustomerExperience();
+  const { orderHistory, submitFeedback } = useCustomerExperience();
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
   const [showFeedback, setShowFeedback] = useState(false);
 
   const handleFeedbackSubmit = async (rating: number, feedback?: string) => {
     try {
-      // Feedback will be handled by the OrderFeedback component
+      submitFeedback(selectedOrderId, rating, feedback);
       setShowFeedback(false);
       setSelectedOrderId('');
     } catch (error) {
@@ -30,21 +30,6 @@ export function OrderHistory({ onClose }: OrderHistoryProps) {
   const handleFeedbackClose = () => {
     setShowFeedback(false);
     setSelectedOrderId('');
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-100 text-green-800';
-      case 'paid':
-        return 'bg-blue-100 text-blue-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
   };
 
   if (showFeedback) {
@@ -97,8 +82,8 @@ export function OrderHistory({ onClose }: OrderHistoryProps) {
                         <CardTitle className="text-sm font-medium">
                           Order #{order.orderId.slice(-6)}
                         </CardTitle>
-                        <Badge className={`text-xs ${getStatusColor(order.status)}`}>
-                          {order.status}
+                        <Badge variant="outline" className="text-xs">
+                          Table {order.tableNumber}
                         </Badge>
                       </div>
                       <div className="text-right">
@@ -130,16 +115,10 @@ export function OrderHistory({ onClose }: OrderHistoryProps) {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-gray-600">
-                            <strong>Table:</strong> {order.tableNumber}
-                          </p>
-                          <p className="text-gray-600">
                             <strong>Time:</strong> {new Date(order.timestamp).toLocaleTimeString()}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-600">
-                            <strong>Status:</strong> {order.status}
-                          </p>
                           {order.rating && (
                             <p className="text-gray-600">
                               <strong>Rating:</strong> {order.rating}/5 ⭐
@@ -150,7 +129,7 @@ export function OrderHistory({ onClose }: OrderHistoryProps) {
 
                       {/* Action Buttons */}
                       <div className="flex gap-2 pt-2">
-                        {order.status === 'completed' && !order.rating && (
+                        {!order.rating && (
                           <Button
                             onClick={() => {
                               setSelectedOrderId(order.orderId);

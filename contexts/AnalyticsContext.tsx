@@ -11,9 +11,6 @@ interface OrderAnalytics {
   tableNumber: number;
   customerName: string;
   preparationTime: number;
-  status: 'pending' | 'confirmed' | 'paid' | 'completed' | 'cancelled';
-  paymentMethod?: 'cash' | 'phonepe';
-  paymentStatus: 'pending' | 'paid' | 'failed';
   rating?: number;
   feedback?: string;
 }
@@ -27,17 +24,16 @@ interface AnalyticsData {
   customerSatisfaction: number;
   averagePreparationTime: number;
   trendingItems: string[];
+  recentOrders: OrderAnalytics[];
 }
 
 interface AnalyticsContextType {
   analytics: AnalyticsData;
   addOrder: (order: OrderAnalytics) => void;
-  updateOrderStatus: (orderId: string, status: OrderAnalytics['status'], paymentStatus?: OrderAnalytics['paymentStatus'], paymentMethod?: OrderAnalytics['paymentMethod']) => void;
   addRating: (orderId: string, rating: number, feedback?: string) => void;
   getPopularItems: () => { id: string; name: string; count: number; revenue: number }[];
   getTrendingItems: () => string[];
   getPeakHours: () => { hour: number; orders: number }[];
-  getPendingOrders: () => OrderAnalytics[];
   resetAnalytics: () => void;
 }
 
@@ -52,6 +48,7 @@ const initialAnalytics: AnalyticsData = {
   customerSatisfaction: 0,
   averagePreparationTime: 0,
   trendingItems: [],
+  recentOrders: [],
 };
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
@@ -88,18 +85,13 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const calculateAnalytics = (orders: OrderAnalytics[]): AnalyticsData => {
     if (orders.length === 0) return initialAnalytics;
 
-    // Only count confirmed/paid/completed orders for analytics
-    const confirmedOrders = orders.filter(order => 
-      order.status === 'confirmed' || order.status === 'paid' || order.status === 'completed'
-    );
+      const totalOrders = orders.length;
+  const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+  const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
-    const totalOrders = confirmedOrders.length;
-    const totalRevenue = confirmedOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-
-    // Calculate popular items (only from confirmed orders)
+    // Calculate popular items
     const itemCounts: { [key: string]: { count: number; revenue: number; name: string } } = {};
-    confirmedOrders.forEach(order => {
+    orders.forEach(order => {
       order.items.forEach(item => {
         if (!itemCounts[item.id]) {
           itemCounts[item.id] = { count: 0, revenue: 0, name: item.name };
@@ -119,31 +111,31 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
-    // Calculate peak hours (only from confirmed orders)
+    // Calculate peak hours
     const hourCounts = Array.from({ length: 24 }, () => 0);
-    confirmedOrders.forEach(order => {
+    orders.forEach(order => {
       const hour = new Date(order.timestamp).getHours();
       hourCounts[hour]++;
     });
 
     const peakHours = hourCounts.map((orders, hour) => ({ hour, orders }));
 
-    // Calculate customer satisfaction (only from confirmed orders)
-    const ratedOrders = confirmedOrders.filter(order => order.rating !== undefined);
+    // Calculate customer satisfaction
+    const ratedOrders = orders.filter(order => order.rating !== undefined);
     const customerSatisfaction = ratedOrders.length > 0 
       ? ratedOrders.reduce((sum, order) => sum + (order.rating || 0), 0) / ratedOrders.length 
       : 0;
 
-    // Calculate average preparation time (only from confirmed orders)
-    const averagePreparationTime = confirmedOrders.length > 0 
-      ? confirmedOrders.reduce((sum, order) => sum + order.preparationTime, 0) / confirmedOrders.length 
+    // Calculate average preparation time
+    const averagePreparationTime = orders.length > 0 
+      ? orders.reduce((sum, order) => sum + order.preparationTime, 0) / orders.length 
       : 0;
 
-    // Calculate trending items (items ordered in last 7 days, only confirmed orders)
+    // Calculate trending items (items ordered in last 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
-    const recentOrders = confirmedOrders.filter(order => new Date(order.timestamp) > sevenDaysAgo);
+    const recentOrders = orders.filter(order => new Date(order.timestamp) > sevenDaysAgo);
     const recentItemCounts: { [key: string]: number } = {};
     
     recentOrders.forEach(order => {
@@ -167,6 +159,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
       customerSatisfaction,
       averagePreparationTime,
       trendingItems,
+      recentOrders: orders.slice(0, 10), // Keep last 10 orders
     };
   };
 
@@ -174,22 +167,6 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     const newOrders = [...orders, order];
     setOrders(newOrders);
     const newAnalytics = calculateAnalytics(newOrders);
-    setAnalytics(newAnalytics);
-  };
-
-  const updateOrderStatus = (orderId: string, status: OrderAnalytics['status'], paymentStatus?: OrderAnalytics['paymentStatus'], paymentMethod?: OrderAnalytics['paymentMethod']) => {
-    const updatedOrders = orders.map(order => 
-      order.orderId === orderId 
-        ? { 
-            ...order, 
-            status, 
-            ...(paymentStatus && { paymentStatus }),
-            ...(paymentMethod && { paymentMethod })
-          }
-        : order
-    );
-    setOrders(updatedOrders);
-    const newAnalytics = calculateAnalytics(updatedOrders);
     setAnalytics(newAnalytics);
   };
 
@@ -207,7 +184,6 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const getPopularItems = () => analytics.popularItems;
   const getTrendingItems = () => analytics.trendingItems;
   const getPeakHours = () => analytics.peakHours;
-  const getPendingOrders = () => orders.filter(order => order.status === 'pending');
 
   const resetAnalytics = () => {
     setAnalytics(initialAnalytics);
@@ -217,12 +193,10 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const value: AnalyticsContextType = {
     analytics,
     addOrder,
-    updateOrderStatus,
     addRating,
     getPopularItems,
     getTrendingItems,
     getPeakHours,
-    getPendingOrders,
     resetAnalytics,
   };
 

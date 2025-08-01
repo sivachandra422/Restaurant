@@ -1,195 +1,73 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BarChart3, TrendingUp, DollarSign, Clock, Star, Users, CreditCard } from 'lucide-react';
-import { useAnalytics } from '@/contexts/AnalyticsContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Printer, FileText, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { PaymentConfirmation } from '@/components/ui/PaymentConfirmation';
+import { useAnalytics } from '@/contexts/AnalyticsContext';
 
 export function AnalyticsDashboard() {
-  const { analytics, resetAnalytics, getPendingOrders } = useAnalytics();
-  const [isVisible, setIsVisible] = useState(false);
-  const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false);
+  const { analytics } = useAnalytics();
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
-  if (!isVisible) {
-    const pendingOrders = getPendingOrders();
-    return (
-      <div className="fixed bottom-4 right-4 z-50 flex gap-2">
-        {pendingOrders.length > 0 && (
-          <Button
-            onClick={() => setShowPaymentConfirmation(true)}
-            className="bg-green-600 hover:bg-green-700 text-white rounded-full p-3 shadow-lg"
-          >
-            <CreditCard className="w-5 h-5" />
-            <span className="ml-1 text-xs">{pendingOrders.length}</span>
-          </Button>
-        )}
-        <Button
-          onClick={() => setIsVisible(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg"
-        >
-          <BarChart3 className="w-5 h-5" />
-        </Button>
-      </div>
-    );
+  const handlePrintOrders = () => {
+    setShowPrintModal(true);
+    // Print functionality will be implemented here
+    setTimeout(() => {
+      window.print();
+      setShowPrintModal(false);
+    }, 100);
+  };
+
+  if (analytics.totalOrders === 0) {
+    return null; // Don't show anything if no orders
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <div className="flex items-center space-x-3">
-            <BarChart3 className="w-6 h-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Business Analytics</h2>
-          </div>
-          <Button
-            onClick={() => setIsVisible(false)}
-            variant="ghost"
-            size="sm"
-            className="text-gray-500 hover:text-gray-700"
-          >
-            ✕
-          </Button>
-        </div>
-
-        {/* Analytics Content */}
-        <div className="p-6">
-          {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{analytics.totalOrders}</div>
-                <p className="text-xs text-muted-foreground">
-                  All time orders
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">₹{analytics.totalRevenue.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">
-                  Total earnings
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Avg Order Value</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">₹{analytics.averageOrderValue.toFixed(0)}</div>
-                <p className="text-xs text-muted-foreground">
-                  Per order average
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Customer Rating</CardTitle>
-                <Star className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{analytics.customerSatisfaction.toFixed(1)}/5</div>
-                <p className="text-xs text-muted-foreground">
-                  Average rating
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Popular Items */}
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold mb-4">Popular Items</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {analytics.popularItems.slice(0, 6).map((item, index) => (
-                <Card key={item.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-sm">{item.name}</p>
-                        <p className="text-xs text-gray-500">
-                          {item.count} orders • ₹{item.revenue.toLocaleString()}
-                        </p>
-                      </div>
-                      <Badge variant="secondary" className="text-xs">
-                        #{index + 1}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          {/* Peak Hours */}
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold mb-4">Peak Hours</h3>
-            <div className="grid grid-cols-6 md:grid-cols-12 gap-2">
-              {analytics.peakHours.map((hour) => (
-                <div key={hour.hour} className="text-center">
-                  <div className="text-xs text-gray-500 mb-1">
-                    {hour.hour}:00
-                  </div>
-                  <div className="bg-blue-100 rounded p-2">
-                    <div className="text-sm font-medium">{hour.orders}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-between items-center">
-            <div className="flex gap-3">
-              <Button
-                onClick={() => setShowPaymentConfirmation(true)}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <CreditCard className="w-4 h-4 mr-2" />
-                Payment Confirmation
-              </Button>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                onClick={resetAnalytics}
-                variant="outline"
-                className="text-red-600 border-red-600 hover:bg-red-50"
-              >
-                Reset Analytics
-              </Button>
-              <Button
-                onClick={() => setIsVisible(false)}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
+    <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-800">Recent Orders</h3>
+        <Button
+          onClick={handlePrintOrders}
+          size="sm"
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          <Printer className="w-4 h-4 mr-2" />
+          Print Orders
+        </Button>
       </div>
+      
+      <div className="space-y-3">
+        {analytics.recentOrders.slice(0, 5).map((order) => (
+          <Card key={order.orderId} className="text-sm">
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Order #{order.orderId.slice(-6)}</p>
+                  <p className="text-gray-600">Table {order.tableNumber} • ₹{order.totalAmount}</p>
+                  <p className="text-gray-500 text-xs">
+                    {new Date(order.timestamp).toLocaleString()}
+                  </p>
+                </div>
+                <Badge variant="outline" className="text-xs">
+                  {order.items.length} items
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {showPrintModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 text-center">
+            <FileText className="w-12 h-12 mx-auto mb-4 text-blue-600" />
+            <h3 className="text-lg font-semibold mb-2">Printing Orders...</h3>
+            <p className="text-gray-600">Orders will be sent to your printer</p>
+          </div>
+        </div>
+      )}
     </div>
   );
-
-  if (showPaymentConfirmation) {
-    return (
-      <PaymentConfirmation
-        onClose={() => setShowPaymentConfirmation(false)}
-      />
-    );
-  }
 } 

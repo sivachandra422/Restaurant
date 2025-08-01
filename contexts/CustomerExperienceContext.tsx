@@ -22,7 +22,6 @@ interface OrderHistoryItem {
   items: { id: string; name: string; quantity: number; price: number }[];
   totalAmount: number;
   tableNumber: number;
-  status: 'pending' | 'paid' | 'completed' | 'cancelled';
   rating?: number;
   feedback?: string;
 }
