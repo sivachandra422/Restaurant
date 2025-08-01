@@ -14,7 +14,9 @@ import {
   Eye,
   EyeOff,
   LogOut,
-  Lock
+  Lock,
+  X,
+  Save
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +28,11 @@ import { MenuItem } from '@/data/sriKanyaMenu';
 interface AdminState {
   isAuthenticated: boolean;
   currentSection: 'dashboard' | 'menu' | 'analytics' | 'feedback' | 'settings';
+}
+
+interface EditModalState {
+  isOpen: boolean;
+  item: any | null;
 }
 
 export default function AdminPage() {
@@ -41,6 +48,10 @@ export default function AdminPage() {
       ...item,
       image: `/api/food-image?item=${item.id}` // Default image URL
     }));
+  });
+  const [editModal, setEditModal] = useState<EditModalState>({
+    isOpen: false,
+    item: null
   });
 
   // Simple authentication (you can change this password)
@@ -67,6 +78,45 @@ export default function AdminPage() {
           : item
       )
     );
+  };
+
+  const openEditModal = (item: any) => {
+    setEditModal({
+      isOpen: true,
+      item: { ...item }
+    });
+  };
+
+  const closeEditModal = () => {
+    setEditModal({
+      isOpen: false,
+      item: null
+    });
+  };
+
+  const handleSaveEdit = () => {
+    if (editModal.item) {
+      setMenuItems(prev => 
+        prev.map(item => 
+          item.id === editModal.item.id 
+            ? editModal.item
+            : item
+        )
+      );
+      closeEditModal();
+    }
+  };
+
+  const updateEditItem = (field: string, value: any) => {
+    if (editModal.item) {
+      setEditModal({
+        ...editModal,
+        item: {
+          ...editModal.item,
+          [field]: value
+        }
+      });
+    }
   };
 
   if (!adminState.isAuthenticated) {
@@ -151,10 +201,167 @@ export default function AdminPage() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {adminState.currentSection === 'dashboard' && <DashboardSection analytics={analytics} />}
-        {adminState.currentSection === 'menu' && <MenuManagementSection menuItems={menuItems} onToggleVisibility={toggleItemVisibility} />}
+        {adminState.currentSection === 'menu' && <MenuManagementSection menuItems={menuItems} onToggleVisibility={toggleItemVisibility} onEditItem={openEditModal} />}
         {adminState.currentSection === 'analytics' && <AnalyticsSection analytics={analytics} />}
         {adminState.currentSection === 'feedback' && <FeedbackSection analytics={analytics} />}
         {adminState.currentSection === 'settings' && <SettingsSection />}
+      </div>
+
+      {/* Edit Modal */}
+      {editModal.isOpen && (
+        <EditItemModal 
+          item={editModal.item}
+          onClose={closeEditModal}
+          onSave={handleSaveEdit}
+          onUpdate={updateEditItem}
+        />
+      )}
+    </div>
+  );
+}
+
+// Edit Item Modal Component
+function EditItemModal({ item, onClose, onSave, onUpdate }: { 
+  item: any, 
+  onClose: () => void, 
+  onSave: () => void,
+  onUpdate: (field: string, value: any) => void 
+}) {
+  if (!item) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b">
+          <h2 className="text-xl font-bold text-gray-900">Edit Menu Item</h2>
+          <Button onClick={onClose} variant="ghost" size="sm">
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Basic Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Item Name</label>
+              <input
+                type="text"
+                value={item.name}
+                onChange={(e) => onUpdate('name', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹)</label>
+              <input
+                type="number"
+                value={item.price}
+                onChange={(e) => onUpdate('price', parseInt(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <textarea
+              value={item.description}
+              onChange={(e) => onUpdate('description', e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <select
+                value={item.category}
+                onChange={(e) => onUpdate('category', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              >
+                {menuCategories.map(category => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Max Quantity</label>
+              <input
+                type="number"
+                value={item.maxQuantity || ''}
+                onChange={(e) => onUpdate('maxQuantity', e.target.value ? parseInt(e.target.value) : undefined)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Preparation Time (min)</label>
+              <input
+                type="number"
+                value={item.preparationTime || ''}
+                onChange={(e) => onUpdate('preparationTime', e.target.value ? parseInt(e.target.value) : undefined)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+          </div>
+
+          {/* Checkboxes */}
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="isVeg"
+                checked={item.isVeg}
+                onChange={(e) => onUpdate('isVeg', e.target.checked)}
+                className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+              />
+              <label htmlFor="isVeg" className="text-sm font-medium text-gray-700">Vegetarian</label>
+            </div>
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="isSignature"
+                checked={item.isSignature || false}
+                onChange={(e) => onUpdate('isSignature', e.target.checked)}
+                className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+              />
+              <label htmlFor="isSignature" className="text-sm font-medium text-gray-700">Signature Item</label>
+            </div>
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="isSpecial"
+                checked={item.isSpecial || false}
+                onChange={(e) => onUpdate('isSpecial', e.target.checked)}
+                className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+              />
+              <label htmlFor="isSpecial" className="text-sm font-medium text-gray-700">Special Item</label>
+            </div>
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="isDisabled"
+                checked={item.isDisabled || false}
+                onChange={(e) => onUpdate('isDisabled', e.target.checked)}
+                className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+              />
+              <label htmlFor="isDisabled" className="text-sm font-medium text-gray-700">Disabled (Hide from customers)</label>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-3 pt-6 border-t">
+            <Button onClick={onClose} variant="outline">
+              Cancel
+            </Button>
+            <Button onClick={onSave} className="bg-gradient-to-r from-orange-500 to-red-500">
+              <Save className="w-4 h-4 mr-2" />
+              Save Changes
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -238,7 +445,11 @@ function DashboardSection({ analytics }: { analytics: any }) {
 }
 
 // Menu Management Section
-function MenuManagementSection({ menuItems, onToggleVisibility }: { menuItems: MenuItem[], onToggleVisibility: (id: string) => void }) {
+function MenuManagementSection({ menuItems, onToggleVisibility, onEditItem }: { 
+  menuItems: any[], 
+  onToggleVisibility: (id: string) => void,
+  onEditItem: (item: any) => void
+}) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -270,7 +481,11 @@ function MenuManagementSection({ menuItems, onToggleVisibility }: { menuItems: M
                   <p className="text-xs text-gray-500">{item.category}</p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Button size="sm" variant="outline">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => onEditItem(item)}
+                  >
                     <Edit className="w-3 h-3" />
                   </Button>
                   <Button 
