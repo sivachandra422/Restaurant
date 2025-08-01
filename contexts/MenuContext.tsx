@@ -10,20 +10,47 @@ interface MenuContextType {
   toggleItemVisibility: (id: string) => void;
   getVisibleItems: () => MenuItem[];
   getItemsByCategory: (category: string) => MenuItem[];
+  refreshMenu: () => Promise<void>;
+  loading: boolean;
 }
 
 const MenuContext = createContext<MenuContextType | undefined>(undefined);
 
 export function MenuProvider({ children }: { children: React.ReactNode }) {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
-    // Initialize from static data
-    return Object.values(sriKanyaMenu).flat().map(item => ({
-      ...item,
-      image: `/api/food-image?item=${item.id}` // Default image URL
-    }));
-  });
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Load from localStorage on mount
+  // Load menu items from database
+  const loadMenuItems = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/menu');
+      if (response.ok) {
+        const data = await response.json();
+        setMenuItems(data);
+      } else {
+        // Fallback to static data if API fails
+        console.warn('Failed to load menu from API, using static data');
+        const staticItems = Object.values(sriKanyaMenu).flat().map(item => ({
+          ...item,
+          image: `/api/food-image?item=${item.id}`
+        }));
+        setMenuItems(staticItems);
+      }
+    } catch (error) {
+      console.error('Error loading menu items:', error);
+      // Fallback to static data
+      const staticItems = Object.values(sriKanyaMenu).flat().map(item => ({
+        ...item,
+        image: `/api/food-image?item=${item.id}`
+      }));
+      setMenuItems(staticItems);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load from localStorage on mount (for offline capability)
   useEffect(() => {
     const savedMenu = localStorage.getItem('sriKanyaMenu');
     if (savedMenu) {
@@ -34,31 +61,66 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
         console.error('Error loading menu from localStorage:', error);
       }
     }
+    
+    // Then load from database
+    loadMenuItems();
   }, []);
 
   // Save to localStorage whenever menu changes
   useEffect(() => {
-    localStorage.setItem('sriKanyaMenu', JSON.stringify(menuItems));
+    if (menuItems.length > 0) {
+      localStorage.setItem('sriKanyaMenu', JSON.stringify(menuItems));
+    }
   }, [menuItems]);
 
-  const updateMenuItem = (id: string, updates: Partial<MenuItem>) => {
-    setMenuItems(prev => 
-      prev.map(item => 
-        item.id === id 
-          ? { ...item, ...updates }
-          : item
-      )
-    );
+  const updateMenuItem = async (id: string, updates: Partial<MenuItem>) => {
+    try {
+      // Update in database
+      const response = await fetch(`/api/menu/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (response.ok) {
+        const updatedItem = await response.json();
+        setMenuItems(prev => 
+          prev.map(item => 
+            item.id === id 
+              ? { ...item, ...updatedItem }
+              : item
+          )
+        );
+      } else {
+        // Fallback: update local state only
+        setMenuItems(prev => 
+          prev.map(item => 
+            item.id === id 
+              ? { ...item, ...updates }
+              : item
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error updating menu item:', error);
+      // Fallback: update local state only
+      setMenuItems(prev => 
+        prev.map(item => 
+          item.id === id 
+            ? { ...item, ...updates }
+            : item
+        )
+      );
+    }
   };
 
-  const toggleItemVisibility = (id: string) => {
-    setMenuItems(prev => 
-      prev.map(item => 
-        item.id === id 
-          ? { ...item, isDisabled: !item.isDisabled }
-          : item
-      )
-    );
+  const toggleItemVisibility = async (id: string) => {
+    const item = menuItems.find(item => item.id === id);
+    if (item) {
+      await updateMenuItem(id, { isDisabled: !item.isDisabled });
+    }
   };
 
   const getVisibleItems = () => {
@@ -71,13 +133,19 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const refreshMenu = async () => {
+    await loadMenuItems();
+  };
+
   return (
     <MenuContext.Provider value={{
       menuItems,
       updateMenuItem,
       toggleItemVisibility,
       getVisibleItems,
-      getItemsByCategory
+      getItemsByCategory,
+      refreshMenu,
+      loading
     }}>
       {children}
     </MenuContext.Provider>
