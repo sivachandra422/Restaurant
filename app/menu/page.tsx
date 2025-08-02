@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, ChefHat, Sparkles, Crown, Search, Filter, SortAsc, Clock } from 'lucide-react';
+import { ArrowLeft, ChefHat, Sparkles, Crown, Search, Filter, SortAsc, Clock, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -27,13 +27,14 @@ export default function MenuPage() {
   const { isOnline } = useOffline();
   const { language } = useLanguage();
   const { orderHistory } = useCustomerExperience();
-  const { getVisibleItems, getItemsByCategory, refreshMenu } = useMenu();
+  const { getVisibleItems, getItemsByCategory, refreshMenu, loading } = useMenu();
   
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [showOrderHistory, setShowOrderHistory] = useState(false);
   const [lastMenuUpdate, setLastMenuUpdate] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   // Get visible menu items (filtered by disabled status)
   const allMenuItems = getVisibleItems();
@@ -42,7 +43,8 @@ export default function MenuPage() {
   useEffect(() => {
     const handleMenuUpdate = () => {
       setLastMenuUpdate(Date.now());
-      refreshMenu();
+      setIsSyncing(true);
+      refreshMenu().finally(() => setIsSyncing(false));
     };
 
     window.addEventListener('menuUpdated', handleMenuUpdate);
@@ -123,6 +125,13 @@ export default function MenuPage() {
 
             {/* Header Actions */}
             <div className="flex items-center space-x-2 sm:space-x-3">
+              {/* Real-time sync indicator */}
+              {isSyncing && (
+                <div className="flex items-center space-x-1 text-xs text-orange-600">
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  <span className="hidden sm:inline">Syncing...</span>
+                </div>
+              )}
               <LanguageSwitcher />
               <Button
                 onClick={() => setShowOrderHistory(true)}
@@ -150,6 +159,13 @@ export default function MenuPage() {
           <p className="text-sm sm:text-lg opacity-90 max-w-2xl mx-auto">
             Discover our authentic Indian dishes, crafted with traditional recipes and fresh ingredients
           </p>
+          {/* Real-time indicator */}
+          {isSyncing && (
+            <div className="mt-3 flex items-center justify-center space-x-2 text-orange-100">
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              <span className="text-sm">Updating menu in real-time...</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -203,7 +219,13 @@ export default function MenuPage() {
       {/* Menu Items */}
       <div className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-          {filteredItems.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-12">
+              <RefreshCw className="w-8 h-8 mx-auto mb-4 text-orange-500 animate-spin" />
+              <h3 className="text-lg font-semibold text-gray-600 mb-2">Loading menu...</h3>
+              <p className="text-gray-500">Fetching latest menu items</p>
+            </div>
+          ) : filteredItems.length === 0 ? (
             <div className="text-center py-12">
               <ChefHat className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-gray-300" />
               <h3 className="text-lg sm:text-xl font-semibold text-gray-600 mb-2">No items found</h3>
