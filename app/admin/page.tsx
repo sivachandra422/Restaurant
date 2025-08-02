@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   ChefHat, 
   BarChart3, 
@@ -14,53 +15,45 @@ import {
   Eye,
   EyeOff,
   LogOut,
+  Bell,
+  User,
+  Clock,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
   Lock,
-  X,
-  Save
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useAdmin } from '@/contexts/AdminContext';
 import { useAnalytics } from '@/contexts/AnalyticsContext';
 import { useMenu } from '@/contexts/MenuContext';
 import { menuCategories } from '@/data/sriKanyaMenu';
-
-interface AdminState {
-  isAuthenticated: boolean;
-  currentSection: 'dashboard' | 'menu' | 'analytics' | 'feedback' | 'settings';
-}
 
 interface EditModalState {
   isOpen: boolean;
   item: any | null;
 }
 
+interface OrderDetailsModalState {
+  isOpen: boolean;
+  order: any | null;
+}
+
 export default function AdminPage() {
+  const router = useRouter();
+  const { state: adminState, logout, setSection, checkAuth } = useAdmin();
   const { analytics } = useAnalytics();
   const { getAllItems, updateMenuItem, toggleItemVisibility } = useMenu();
-  const [adminState, setAdminState] = useState<AdminState>(() => {
-    // Check localStorage for existing session
-    if (typeof window !== 'undefined') {
-      const savedAuth = localStorage.getItem('adminAuthenticated');
-      return {
-        isAuthenticated: savedAuth === 'true',
-        currentSection: 'dashboard'
-      };
-    }
-    return {
-      isAuthenticated: false,
-      currentSection: 'dashboard'
-    };
-  });
-  const [password, setPassword] = useState('');
+  
   const [editModal, setEditModal] = useState<EditModalState>({
     isOpen: false,
     item: null
   });
-  const [orderDetailsModal, setOrderDetailsModal] = useState<{
-    isOpen: boolean;
-    order: any | null;
-  }>({
+  const [orderDetailsModal, setOrderDetailsModal] = useState<OrderDetailsModalState>({
     isOpen: false,
     order: null
   });
@@ -68,9 +61,15 @@ export default function AdminPage() {
   // Real-time orders state
   const [realOrders, setRealOrders] = useState<any[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
-  // Simple authentication (you can change this password)
-  const ADMIN_PASSWORD = 'srikanya2024';
+  // Check authentication on mount
+  useEffect(() => {
+    if (!checkAuth()) {
+      router.push('/admin/login');
+      return;
+    }
+  }, [checkAuth, router]);
 
   // Fetch real orders from database
   const fetchRealOrders = async () => {
@@ -80,6 +79,7 @@ export default function AdminPage() {
       if (response.ok) {
         const orders = await response.json();
         setRealOrders(orders);
+        setLastRefresh(new Date());
         console.log('Fetched real orders from database:', orders);
       } else {
         console.error('Failed to fetch orders');
@@ -96,29 +96,16 @@ export default function AdminPage() {
     if (adminState.isAuthenticated) {
       fetchRealOrders();
       
-      // Poll for new orders every 30 seconds
-      const interval = setInterval(fetchRealOrders, 30000);
-      
-      return () => clearInterval(interval);
+      // Poll for new orders every 30 seconds if auto-refresh is enabled
+      if (adminState.preferences.autoRefresh) {
+        const interval = setInterval(fetchRealOrders, 30000);
+        return () => clearInterval(interval);
+      }
     }
-  }, [adminState.isAuthenticated]);
-
-  const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) {
-      const newState = { ...adminState, isAuthenticated: true };
-      setAdminState(newState);
-      // Save to localStorage
-      localStorage.setItem('adminAuthenticated', 'true');
-    } else {
-      alert('Incorrect password!');
-    }
-  };
+  }, [adminState.isAuthenticated, adminState.preferences.autoRefresh]);
 
   const handleLogout = () => {
-    setAdminState({ isAuthenticated: false, currentSection: 'dashboard' });
-    setPassword('');
-    // Clear from localStorage
-    localStorage.removeItem('adminAuthenticated');
+    logout();
   };
 
   const openEditModal = (item: any) => {
@@ -137,7 +124,6 @@ export default function AdminPage() {
 
   const handleSaveEdit = () => {
     if (editModal.item) {
-      // Update the item using the shared context
       updateMenuItem(editModal.item.id, editModal.item);
       closeEditModal();
     }
@@ -155,34 +141,13 @@ export default function AdminPage() {
     }
   };
 
+  // If not authenticated, show loading
   if (!adminState.isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Access</h1>
-            <p className="text-gray-600">Enter password to access admin dashboard</p>
-          </div>
-          
-          <div className="space-y-4">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter admin password"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-            />
-            <Button 
-              onClick={handleLogin}
-              className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-            >
-              Login to Admin
-            </Button>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading admin dashboard...</p>
         </div>
       </div>
     );
@@ -196,12 +161,26 @@ export default function AdminPage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
               <ChefHat className="w-8 h-8 text-orange-500" />
-              <h1 className="text-xl font-bold text-gray-900">Sri Kanya Restaurant Admin</h1>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Sri Kanya Restaurant Admin</h1>
+                <p className="text-sm text-gray-500">Welcome back, {adminState.user?.username}</p>
+              </div>
             </div>
-            <Button onClick={handleLogout} variant="outline" size="sm">
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex items-center space-x-4">
+              <Button 
+                onClick={fetchRealOrders} 
+                variant="outline" 
+                size="sm"
+                disabled={ordersLoading}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${ordersLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+              <Button onClick={handleLogout} variant="outline" size="sm">
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -212,6 +191,7 @@ export default function AdminPage() {
           <nav className="flex space-x-8 overflow-x-auto">
             {[
               { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+              { id: 'orders', label: 'Orders', icon: Users },
               { id: 'menu', label: 'Menu Management', icon: ChefHat },
               { id: 'analytics', label: 'Analytics', icon: TrendingUp },
               { id: 'feedback', label: 'Customer Feedback', icon: Star },
@@ -219,8 +199,8 @@ export default function AdminPage() {
             ].map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
-                onClick={() => setAdminState({ ...adminState, currentSection: id as any })}
-                className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm ${
+                onClick={() => setSection(id as any)}
+                className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
                   adminState.currentSection === id
                     ? 'border-orange-500 text-orange-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -239,14 +219,35 @@ export default function AdminPage() {
         {adminState.currentSection === 'dashboard' && (
           <DashboardSection 
             realOrders={realOrders} 
-            ordersLoading={ordersLoading} 
+            ordersLoading={ordersLoading}
+            lastRefresh={lastRefresh}
             onOrderClick={(order) => setOrderDetailsModal({ isOpen: true, order })} 
           />
         )}
-        {adminState.currentSection === 'menu' && <MenuManagementSection menuItems={getAllItems()} onToggleVisibility={toggleItemVisibility} onEditItem={openEditModal} />}
-        {adminState.currentSection === 'analytics' && <AnalyticsSection analytics={analytics} />}
-        {adminState.currentSection === 'feedback' && <FeedbackSection analytics={analytics} />}
-        {adminState.currentSection === 'settings' && <SettingsSection />}
+        {adminState.currentSection === 'orders' && (
+          <OrdersSection 
+            orders={realOrders}
+            loading={ordersLoading}
+            onOrderClick={(order) => setOrderDetailsModal({ isOpen: true, order })}
+            onRefresh={fetchRealOrders}
+          />
+        )}
+        {adminState.currentSection === 'menu' && (
+          <MenuManagementSection 
+            menuItems={getAllItems()} 
+            onToggleVisibility={toggleItemVisibility} 
+            onEditItem={openEditModal} 
+          />
+        )}
+        {adminState.currentSection === 'analytics' && (
+          <AnalyticsSection analytics={analytics} />
+        )}
+        {adminState.currentSection === 'feedback' && (
+          <FeedbackSection analytics={analytics} />
+        )}
+        {adminState.currentSection === 'settings' && (
+          <SettingsSection />
+        )}
       </div>
 
       {/* Edit Modal */}
@@ -261,251 +262,25 @@ export default function AdminPage() {
 
       {/* Order Details Modal */}
       {orderDetailsModal.isOpen && orderDetailsModal.order && (
-        <OrderDetailsModal order={orderDetailsModal.order} onClose={() => setOrderDetailsModal({ isOpen: false, order: null })} />
+        <OrderDetailsModal 
+          order={orderDetailsModal.order} 
+          onClose={() => setOrderDetailsModal({ isOpen: false, order: null })} 
+        />
       )}
     </div>
   );
 }
 
-// Edit Item Modal Component
-function EditItemModal({ item, onClose, onSave, onUpdate }: { 
-  item: any, 
-  onClose: () => void, 
-  onSave: () => void,
-  onUpdate: (field: string, value: any) => void 
-}) {
-  if (!item) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-900">Edit Menu Item</h2>
-          <Button onClick={onClose} variant="ghost" size="sm">
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
-
-        <div className="p-6 space-y-6">
-          {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Item Name</label>
-              <input
-                type="text"
-                value={item.name}
-                onChange={(e) => onUpdate('name', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹)</label>
-              <input
-                type="number"
-                value={item.price}
-                onChange={(e) => onUpdate('price', parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-            <textarea
-              value={item.description}
-              onChange={(e) => onUpdate('description', e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-              <select
-                value={item.category}
-                onChange={(e) => onUpdate('category', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-              >
-                {menuCategories.map(category => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Max Quantity</label>
-              <input
-                type="number"
-                value={item.maxQuantity || ''}
-                onChange={(e) => onUpdate('maxQuantity', e.target.value ? parseInt(e.target.value) : undefined)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Preparation Time (min)</label>
-              <input
-                type="number"
-                value={item.preparationTime || ''}
-                onChange={(e) => onUpdate('preparationTime', e.target.value ? parseInt(e.target.value) : undefined)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-          </div>
-
-          {/* Checkboxes */}
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                id="isVeg"
-                checked={item.isVeg}
-                onChange={(e) => onUpdate('isVeg', e.target.checked)}
-                className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-              />
-              <label htmlFor="isVeg" className="text-sm font-medium text-gray-700">Vegetarian</label>
-            </div>
-            <div className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                id="isSignature"
-                checked={item.isSignature || false}
-                onChange={(e) => onUpdate('isSignature', e.target.checked)}
-                className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-              />
-              <label htmlFor="isSignature" className="text-sm font-medium text-gray-700">Signature Item</label>
-            </div>
-            <div className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                id="isSpecial"
-                checked={item.isSpecial || false}
-                onChange={(e) => onUpdate('isSpecial', e.target.checked)}
-                className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-              />
-              <label htmlFor="isSpecial" className="text-sm font-medium text-gray-700">Special Item</label>
-            </div>
-            <div className="flex items-center space-x-3">
-              <input
-                type="checkbox"
-                id="isDisabled"
-                checked={item.isDisabled || false}
-                onChange={(e) => onUpdate('isDisabled', e.target.checked)}
-                className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-              />
-              <label htmlFor="isDisabled" className="text-sm font-medium text-gray-700">Disabled (Hide from customers)</label>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 pt-6 border-t">
-            <Button onClick={onClose} variant="outline">
-              Cancel
-            </Button>
-            <Button onClick={onSave} className="bg-gradient-to-r from-orange-500 to-red-500">
-              <Save className="w-4 h-4 mr-2" />
-              Save Changes
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Order Details Modal
-function OrderDetailsModal({ order, onClose }: { order: any, onClose: () => void }) {
-  if (!order) return null;
-
-  // Handle different order data structures
-  const orderId = order.orderId || order._id;
-  const tableNumber = order.tableNumber;
-  const timestamp = order.timestamp || order.createdAt;
-  const totalAmount = order.totalAmount || order.orderSummary?.grandTotal;
-  const items = order.items || [];
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">Order Details</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Order Header */}
-        <div className="bg-gray-50 p-4 rounded-lg mb-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600">Order ID</p>
-              <p className="font-medium">#{orderId?.slice(-6) || 'N/A'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Table</p>
-              <p className="font-medium">{tableNumber}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Date & Time</p>
-              <p className="font-medium">{new Date(timestamp).toLocaleString()}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Total Amount</p>
-              <p className="font-medium text-lg">₹{totalAmount}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Order Items */}
-        <div className="space-y-3">
-          <h3 className="font-semibold text-gray-900">Order Items</h3>
-          {items.map((item: any, index: number) => {
-            // Calculate subtotal based on available data
-            const itemPrice = item.price || item.unitPrice || 0;
-            const itemSubtotal = item.subtotal || (itemPrice * item.quantity);
-            
-            return (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex-1">
-                  <p className="font-medium">{item.name}</p>
-                  <p className="text-sm text-gray-600">
-                    Quantity: {item.quantity} × ₹{itemPrice} = ₹{itemSubtotal}
-                  </p>
-                  {item.isVeg && <Badge className="bg-green-100 text-green-800 text-xs mt-1">Veg</Badge>}
-                  {item.isSignature && <Badge className="bg-orange-100 text-orange-800 text-xs mt-1 ml-1">Signature</Badge>}
-                  {item.category && (
-                    <Badge className="bg-blue-100 text-blue-800 text-xs mt-1 ml-1">{item.category}</Badge>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="font-medium">₹{itemSubtotal}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Order Summary */}
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <div className="flex justify-between items-center">
-            <span className="font-semibold">Total Items:</span>
-            <span>{items.length}</span>
-          </div>
-          <div className="flex justify-between items-center mt-2">
-            <span className="font-semibold">Total Amount:</span>
-            <span className="font-bold text-lg">₹{totalAmount}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // Dashboard Section
-function DashboardSection({ realOrders, ordersLoading, onOrderClick }: { 
+function DashboardSection({ 
+  realOrders, 
+  ordersLoading, 
+  lastRefresh,
+  onOrderClick 
+}: { 
   realOrders: any[], 
   ordersLoading: boolean,
+  lastRefresh: Date,
   onOrderClick: (order: any) => void 
 }) {
   // Calculate analytics from real orders
@@ -513,12 +288,17 @@ function DashboardSection({ realOrders, ordersLoading, onOrderClick }: {
   const totalRevenue = realOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
   const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
   
-  // Get recent orders (last 10)
-  const recentOrders = realOrders.slice(0, 10);
+  // Get recent orders (last 5)
+  const recentOrders = realOrders.slice(0, 5);
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
+        <div className="text-sm text-gray-500">
+          Last updated: {lastRefresh.toLocaleTimeString()}
+        </div>
+      </div>
       
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -598,6 +378,68 @@ function DashboardSection({ realOrders, ordersLoading, onOrderClick }: {
                   <div className="flex items-center space-x-2">
                     <Badge variant="outline">{order.items?.length || 0} items</Badge>
                     <Eye className="w-4 h-4 text-gray-500" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Orders Section
+function OrdersSection({ 
+  orders, 
+  loading, 
+  onOrderClick, 
+  onRefresh 
+}: { 
+  orders: any[], 
+  loading: boolean,
+  onOrderClick: (order: any) => void,
+  onRefresh: () => void
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">All Orders</h2>
+        <Button onClick={onRefresh} disabled={loading} variant="outline">
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+              <p className="text-sm text-gray-500 mt-2">Loading orders...</p>
+            </div>
+          ) : orders.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No orders found</p>
+            </div>
+          ) : (
+            <div className="divide-y">
+              {orders.map((order: any) => (
+                <div 
+                  key={order._id || order.orderId}
+                  className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => onOrderClick(order)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Order #{order.orderId?.slice(-6) || 'N/A'}</p>
+                      <p className="text-sm text-gray-600">Table {order.tableNumber}</p>
+                      <p className="text-xs text-gray-500">{new Date(order.timestamp || order.createdAt).toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">₹{order.totalAmount || order.orderSummary?.grandTotal}</p>
+                      <Badge variant="outline">{order.items?.length || 0} items</Badge>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -798,6 +640,240 @@ function SettingsSection() {
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+// Edit Item Modal Component
+function EditItemModal({ item, onClose, onSave, onUpdate }: { 
+  item: any, 
+  onClose: () => void, 
+  onSave: () => void,
+  onUpdate: (field: string, value: any) => void 
+}) {
+  if (!item) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b">
+          <h2 className="text-xl font-bold text-gray-900">Edit Menu Item</h2>
+          <Button onClick={onClose} variant="ghost" size="sm">
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Basic Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Item Name</label>
+              <input
+                type="text"
+                value={item.name}
+                onChange={(e) => onUpdate('name', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Price (₹)</label>
+              <input
+                type="number"
+                value={item.price}
+                onChange={(e) => onUpdate('price', parseInt(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <textarea
+              value={item.description}
+              onChange={(e) => onUpdate('description', e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <select
+                value={item.category}
+                onChange={(e) => onUpdate('category', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              >
+                {menuCategories.map(category => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Max Quantity</label>
+              <input
+                type="number"
+                value={item.maxQuantity || ''}
+                onChange={(e) => onUpdate('maxQuantity', e.target.value ? parseInt(e.target.value) : undefined)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Preparation Time (min)</label>
+              <input
+                type="number"
+                value={item.preparationTime || ''}
+                onChange={(e) => onUpdate('preparationTime', e.target.value ? parseInt(e.target.value) : undefined)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+          </div>
+
+          {/* Checkboxes */}
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="isVeg"
+                checked={item.isVeg}
+                onChange={(e) => onUpdate('isVeg', e.target.checked)}
+                className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+              />
+              <label htmlFor="isVeg" className="text-sm font-medium text-gray-700">Vegetarian</label>
+            </div>
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="isSignature"
+                checked={item.isSignature || false}
+                onChange={(e) => onUpdate('isSignature', e.target.checked)}
+                className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+              />
+              <label htmlFor="isSignature" className="text-sm font-medium text-gray-700">Signature Item</label>
+            </div>
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="isSpecial"
+                checked={item.isSpecial || false}
+                onChange={(e) => onUpdate('isSpecial', e.target.checked)}
+                className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+              />
+              <label htmlFor="isSpecial" className="text-sm font-medium text-gray-700">Special Item</label>
+            </div>
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="isDisabled"
+                checked={item.isDisabled || false}
+                onChange={(e) => onUpdate('isDisabled', e.target.checked)}
+                className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+              />
+              <label htmlFor="isDisabled" className="text-sm font-medium text-gray-700">Disabled (Hide from customers)</label>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-3 pt-6 border-t">
+            <Button onClick={onClose} variant="outline">
+              Cancel
+            </Button>
+            <Button onClick={onSave} className="bg-gradient-to-r from-orange-500 to-red-500">
+              Save Changes
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Order Details Modal
+function OrderDetailsModal({ order, onClose }: { order: any, onClose: () => void }) {
+  if (!order) return null;
+
+  // Handle different order data structures
+  const orderId = order.orderId || order._id;
+  const tableNumber = order.tableNumber;
+  const timestamp = order.timestamp || order.createdAt;
+  const totalAmount = order.totalAmount || order.orderSummary?.grandTotal;
+  const items = order.items || [];
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">Order Details</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Order Header */}
+        <div className="bg-gray-50 p-4 rounded-lg mb-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-600">Order ID</p>
+              <p className="font-medium">#{orderId?.slice(-6) || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Table</p>
+              <p className="font-medium">{tableNumber}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Date & Time</p>
+              <p className="font-medium">{new Date(timestamp).toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Total Amount</p>
+              <p className="font-medium text-lg">₹{totalAmount}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Order Items */}
+        <div className="space-y-3">
+          <h3 className="font-semibold text-gray-900">Order Items</h3>
+          {items.map((item: any, index: number) => {
+            // Calculate subtotal based on available data
+            const itemPrice = item.price || item.unitPrice || 0;
+            const itemSubtotal = item.subtotal || (itemPrice * item.quantity);
+            
+            return (
+              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <p className="font-medium">{item.name}</p>
+                  <p className="text-sm text-gray-600">
+                    Quantity: {item.quantity} × ₹{itemPrice} = ₹{itemSubtotal}
+                  </p>
+                  {item.isVeg && <Badge className="bg-green-100 text-green-800 text-xs mt-1">Veg</Badge>}
+                  {item.isSignature && <Badge className="bg-orange-100 text-orange-800 text-xs mt-1 ml-1">Signature</Badge>}
+                  {item.category && (
+                    <Badge className="bg-blue-100 text-blue-800 text-xs mt-1 ml-1">{item.category}</Badge>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">₹{itemSubtotal}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Order Summary */}
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold">Total Items:</span>
+            <span>{items.length}</span>
+          </div>
+          <div className="flex justify-between items-center mt-2">
+            <span className="font-semibold">Total Amount:</span>
+            <span className="font-bold text-lg">₹{totalAmount}</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 } 

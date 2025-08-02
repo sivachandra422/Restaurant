@@ -7,6 +7,7 @@ import { LanguageProvider } from '@/contexts/LanguageContext';
 import { AnalyticsProvider } from '@/contexts/AnalyticsContext';
 import { CustomerExperienceProvider } from '@/contexts/CustomerExperienceContext';
 import { MenuProvider } from '@/contexts/MenuContext';
+import { AdminProvider } from '@/contexts/AdminContext';
 import { Toaster } from '@/components/ui/toaster';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -50,10 +51,12 @@ export default function RootLayout({
             <AnalyticsProvider>
               <CustomerExperienceProvider>
                 <MenuProvider>
-                  <CartProvider>
-                    {children}
-                    <Toaster />
-                  </CartProvider>
+                  <AdminProvider>
+                    <CartProvider>
+                      {children}
+                      <Toaster />
+                    </CartProvider>
+                  </AdminProvider>
                 </MenuProvider>
               </CustomerExperienceProvider>
             </AnalyticsProvider>
