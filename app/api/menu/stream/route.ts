@@ -62,7 +62,7 @@ export async function GET() {
               clearInterval(interval);
             }
           }
-        }, 30000);
+        }, 120000); // Check every 2 minutes instead of 30 seconds
 
         // Clean up on close
         return () => {

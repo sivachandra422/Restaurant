@@ -179,12 +179,12 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
       console.error('SSE not supported, falling back to polling:', error);
     }
 
-    // Fallback polling if SSE fails
+    // Fallback polling if SSE fails - reduced frequency to prevent frequent refreshes
     const interval = setInterval(() => {
       if (!eventSource || eventSource.readyState === EventSource.CLOSED) {
         checkForUpdates();
       }
-    }, 30000); // Check every 30 seconds instead of 10 seconds
+    }, 120000); // Check every 2 minutes instead of 30 seconds
 
     return () => {
       clearInterval(interval);

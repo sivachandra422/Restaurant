@@ -28,11 +28,7 @@ export async function GET() {
       // Check if we have items in database
       const count = await MenuItem.countDocuments();
 
-      // Force reinitialize database with correct images (temporary fix)
-      if (count === 0 || true) { // Temporarily force reinitialization
-        // Clear existing data
-        await MenuItem.deleteMany({});
-        
+      if (count === 0) {
         // Initialize database with static data and correct images
         const menuItems = Object.values(sriKanyaMenu).flat().map(item => ({
           ...item,
@@ -40,17 +36,27 @@ export async function GET() {
         }));
 
         await MenuItem.insertMany(menuItems);
-        console.log('Database reinitialized with correct images (visible)');
+        console.log('Database initialized with correct images (visible)');
       }
 
       // Return only visible items (not disabled)
       const menuItems = await MenuItem.find({ isDisabled: { $ne: true } }).sort({ category: 1, name: 1 });
 
-      // Ensure all items have proper image URLs
-      const itemsWithImages = menuItems.map(item => ({
-        ...item.toObject(),
-        image: item.image || getFoodImage(item.id)
-      }));
+      // Ensure all items have proper image URLs and update database if needed
+      const itemsWithImages = menuItems.map(item => {
+        const correctImage = getFoodImage(item.id);
+        const itemWithImage = {
+          ...item.toObject(),
+          image: item.image || correctImage
+        };
+        
+        // Update database if image is missing or incorrect
+        if (!item.image || item.image !== correctImage) {
+          MenuItem.findByIdAndUpdate(item._id, { image: correctImage }).catch(console.error);
+        }
+        
+        return itemWithImage;
+      });
 
       return NextResponse.json(itemsWithImages);
     } catch (dbError) {
