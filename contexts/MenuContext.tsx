@@ -9,7 +9,7 @@ interface MenuContextType {
   menuItems: MenuItem[];
   updateMenuItem: (id: string, updates: Partial<MenuItem>) => Promise<void>;
   toggleItemVisibility: (id: string) => Promise<void>;
-  getVisibleItems: () => MenuItem[];
+  getVisibleItems: () => Promise<MenuItem[]>;
   getAllItems: () => MenuItem[]; // New function for admin
   getItemsByCategory: (category: string) => MenuItem[];
   refreshMenu: () => Promise<void>;
@@ -76,6 +76,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       
+      // Use the main menu API which returns ALL items (including disabled ones)
       const response = await fetch('/api/menu', {
         method: 'GET',
         headers: {
@@ -108,6 +109,37 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
       setMenuItems(staticItems);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch visible menu items from API (for customer menu)
+  const fetchVisibleItems = async () => {
+    try {
+      const response = await fetch('/api/menu/visible', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-cache'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Ensure all items have images
+      const itemsWithImages = data.map((item: MenuItem) => ({
+        ...item,
+        image: item.image || getFoodImage(item.id)
+      }));
+      
+      return itemsWithImages;
+    } catch (error) {
+      console.error('Error fetching visible menu items from API:', error);
+      // Fallback to filtering local items
+      return menuItems.filter(item => !item.isDisabled);
     }
   };
 
@@ -224,10 +256,6 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const getVisibleItems = () => {
-    return menuItems.filter(item => !item.isDisabled);
-  };
-
   const getAllItems = () => {
     return menuItems; // Return all items including disabled ones for admin
   };
@@ -240,6 +268,10 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
 
   const refreshMenu = async () => {
     await fetchMenuItems();
+  };
+
+  const getVisibleItems = () => {
+    return menuItems.filter(item => !item.isDisabled);
   };
 
   return (
