@@ -10,6 +10,7 @@ interface MenuContextType {
   updateMenuItem: (id: string, updates: Partial<MenuItem>) => Promise<void>;
   toggleItemVisibility: (id: string) => Promise<void>;
   getVisibleItems: () => MenuItem[];
+  getAllItems: () => MenuItem[]; // New function for admin
   getItemsByCategory: (category: string) => MenuItem[];
   refreshMenu: () => Promise<void>;
   loading: boolean;
@@ -88,11 +89,11 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
     fetchMenuItems();
   }, []);
 
-  // Poll for updates every 5 seconds (real-time sync)
+  // Poll for updates every 30 seconds (reduced from 5 seconds to prevent frequent reloads)
   useEffect(() => {
     const interval = setInterval(() => {
       fetchMenuItems();
-    }, 5000); // Poll every 5 seconds
+    }, 30000); // Poll every 30 seconds instead of 5
 
     return () => clearInterval(interval);
   }, []);
@@ -162,6 +163,10 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
     return menuItems.filter(item => !item.isDisabled);
   };
 
+  const getAllItems = () => {
+    return menuItems; // Return all items including disabled ones for admin
+  };
+
   const getItemsByCategory = (category: string) => {
     return menuItems.filter(item => 
       item.category === category && !item.isDisabled
@@ -178,6 +183,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
       updateMenuItem,
       toggleItemVisibility,
       getVisibleItems,
+      getAllItems,
       getItemsByCategory,
       refreshMenu,
       loading

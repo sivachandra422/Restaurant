@@ -37,7 +37,7 @@ interface EditModalState {
 
 export default function AdminPage() {
   const { analytics } = useAnalytics();
-  const { menuItems, updateMenuItem, toggleItemVisibility } = useMenu();
+  const { getAllItems, updateMenuItem, toggleItemVisibility } = useMenu();
   const [adminState, setAdminState] = useState<AdminState>({
     isAuthenticated: false,
     currentSection: 'dashboard'
@@ -177,18 +177,18 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {adminState.currentSection === 'dashboard' && <DashboardSection analytics={analytics} />}
-        {adminState.currentSection === 'menu' && <MenuManagementSection menuItems={menuItems} onToggleVisibility={toggleItemVisibility} onEditItem={openEditModal} />}
+        {adminState.currentSection === 'menu' && <MenuManagementSection menuItems={getAllItems()} onToggleVisibility={toggleItemVisibility} onEditItem={openEditModal} />}
         {adminState.currentSection === 'analytics' && <AnalyticsSection analytics={analytics} />}
         {adminState.currentSection === 'feedback' && <FeedbackSection analytics={analytics} />}
         {adminState.currentSection === 'settings' && <SettingsSection />}
       </div>
 
       {/* Edit Modal */}
-      {editModal.isOpen && (
-        <EditItemModal 
+      {editModal.isOpen && editModal.item && (
+        <EditItemModal
           item={editModal.item}
           onClose={closeEditModal}
           onSave={handleSaveEdit}
@@ -441,7 +441,7 @@ function MenuManagementSection({ menuItems, onToggleVisibility, onEditItem }: {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {menuItems.map((item) => (
-          <Card key={item.id} className={`${item.isDisabled ? 'opacity-60' : ''}`}>
+          <Card key={item.id} className={`${item.isDisabled ? 'opacity-60 border-red-200 bg-red-50' : ''}`}>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm">{item.name}</CardTitle>
@@ -449,6 +449,7 @@ function MenuManagementSection({ menuItems, onToggleVisibility, onEditItem }: {
                   {item.isVeg && <Badge className="bg-green-100 text-green-800 text-xs">Veg</Badge>}
                   {item.isSignature && <Badge className="bg-yellow-100 text-yellow-800 text-xs">Signature</Badge>}
                   {item.isSpecial && <Badge className="bg-purple-100 text-purple-800 text-xs">Special</Badge>}
+                  {item.isDisabled && <Badge className="bg-red-100 text-red-800 text-xs">Disabled</Badge>}
                 </div>
               </div>
             </CardHeader>
@@ -469,7 +470,7 @@ function MenuManagementSection({ menuItems, onToggleVisibility, onEditItem }: {
                   </Button>
                   <Button 
                     size="sm" 
-                    variant="outline"
+                    variant={item.isDisabled ? "destructive" : "outline"}
                     onClick={() => onToggleVisibility(item.id)}
                   >
                     {item.isDisabled ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
