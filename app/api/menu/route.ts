@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import { MenuItem } from '@/lib/models/MenuItem';
 import { sriKanyaMenu } from '@/data/sriKanyaMenu';
+import { getFoodImage } from '@/lib/imageMappings';
 
 // Force dynamic rendering to prevent static generation errors
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,7 @@ export async function GET() {
     if (!process.env.MONGODB_URI) {
       const staticItems = Object.values(sriKanyaMenu).flat().map(item => ({
         ...item,
-        image: `/api/food-image?item=${item.id}`
+        image: getFoodImage(item.id)
       }));
       return NextResponse.json(staticItems);
     }
@@ -29,7 +30,7 @@ export async function GET() {
         // Initialize database with static data
         const menuItems = Object.values(sriKanyaMenu).flat().map(item => ({
           ...item,
-          image: `/api/food-image?item=${item.id}`
+          image: getFoodImage(item.id)
         }));
 
         await MenuItem.insertMany(menuItems);
@@ -38,13 +39,19 @@ export async function GET() {
       // Return ALL items including disabled ones (for admin dashboard)
       const menuItems = await MenuItem.find({}).sort({ category: 1, name: 1 });
 
-      return NextResponse.json(menuItems);
+      // Ensure all items have proper image URLs
+      const itemsWithImages = menuItems.map(item => ({
+        ...item.toObject(),
+        image: item.image || getFoodImage(item.id)
+      }));
+
+      return NextResponse.json(itemsWithImages);
     } catch (dbError) {
       console.error('Database error, using static data:', dbError);
       // Fallback to static data if database fails
       const staticItems = Object.values(sriKanyaMenu).flat().map(item => ({
         ...item,
-        image: `/api/food-image?item=${item.id}`
+        image: getFoodImage(item.id)
       }));
       return NextResponse.json(staticItems);
     }
@@ -53,7 +60,7 @@ export async function GET() {
     // Fallback to static data
     const staticItems = Object.values(sriKanyaMenu).flat().map(item => ({
       ...item,
-      image: `/api/food-image?item=${item.id}`
+      image: getFoodImage(item.id)
     }));
     return NextResponse.json(staticItems);
   }

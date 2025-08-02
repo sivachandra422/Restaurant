@@ -75,9 +75,6 @@ function calculateBulkPrice(item: MenuItem, quantity: number): number {
 }
 
 function cartReducer(state: CartState, action: CartAction): CartState {
-  console.log('CartReducer - Action:', action.type, 'payload:', 'payload' in action ? action.payload : 'no payload');
-  console.log('CartReducer - Current State:', state);
-
   let newState: CartState;
 
   switch (action.type) {
@@ -131,7 +128,6 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 
     case 'UPDATE_QUANTITY': {
       const { itemId, quantity } = action.payload;
-      console.log('UPDATE_QUANTITY - itemId:', itemId, 'quantity:', quantity);
       
       const item = state.items.find(item => item.id === itemId);
       if (!item) return state;
@@ -306,7 +302,6 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       return state;
   }
 
-  console.log('CartReducer - New State:', newState);
   return newState;
 }
 
