@@ -14,13 +14,13 @@ export const foodImageMappings: { [key: string]: string } = {
   'mix_biryani': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/mix_biryani_loofey',
   'mutton_biryani': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/mutton_biryani_s37yud',
   'kaju_biryani': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_biryani_hmsekh',
-  'paneer_biryani': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_biryani_hmsekh',
-  'mushroom_biryani': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_biryani_hmsekh',
+  'paneer_biryani': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/mixed_veg_biryani_jdlmp7',
+  'mushroom_biryani': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/mixed_veg_biryani_jdlmp7',
   'mixed_veg_biryani': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/mixed_veg_biryani_jdlmp7',
 
   // Veg Curries - Rich vegetarian curries with consistent presentation
-  'kaju_tomato': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_masala_yti9z5',
-  'kaju_paneer': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_tomato_jbm1vj',
+  'kaju_tomato': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_tomato_jbm1vj',
+  'kaju_paneer': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_masala_yti9z5',
   'mushroom_curry': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/mushroom_curry_vyzob0',
   'paneer_butter_masala': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/paneer_butter_masala_htawqb',
   'methi_chaman': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/methi_chaman_e2mnf1',
@@ -39,7 +39,7 @@ export const foodImageMappings: { [key: string]: string } = {
   'dragon_chicken': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/dragon_chicken_ujeume',
   'kaju_chicken_balls': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_chicken_balls_empxbq',
   'chicken_555': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_555_kuqke1',
-  'chicken_65': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_curry_yx4fkd', // Use different image
+  'chicken_65': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_555_kuqke1', // Use different image
   'chicken_fry': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_fry_ulixuq',
   'lolipop_chicken': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/lolipop_chicken_snaglx',
   'whigs_fry': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/wings_fry_rvxgpq',
@@ -48,9 +48,9 @@ export const foodImageMappings: { [key: string]: string } = {
   'chicken_bone': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_curry_yx4fkd',
   'chicken_boneless': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/boneless_curry_uc9dcs',
   'kaju_chicken': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_chicken_ebyauf',
-  'hyderabadi_chicken': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_curry_yx4fkd',
+  'hyderabadi_chicken': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kadai_chicken_wishxq',
   'kadai_chicken': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kadai_chicken_wishxq',
-  'chicken_pawan_kalyan': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_curry_yx4fkd', // Use different image
+  'chicken_pawan_kalyan': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_mughlai_vsmcmq',
   'methi_chicken': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/methi_chicken_xvsxjc',
   'palak_chicken': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/palak_chicken_fgjmeh',
   'chicken_mughlai': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_mughlai_vsmcmq',
@@ -80,6 +80,12 @@ export const foodImageMappings: { [key: string]: string } = {
 
   // Breads & Roti - Traditional Indian breads
   'pulka': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/pulka_dddf21',
+  
+  // Additional specific mappings for common items
+  'chicken_boneless_curry': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/boneless_curry_uc9dcs',
+  'chicken_bone_curry': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_curry_yx4fkd',
+  'paneer_mushroom': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chilly_paneer_mushroom_iicqqh',
+  'wings_fry': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/wings_fry_rvxgpq',
 };
 
 // Function to get the appropriate image for a menu item with consistent styling
@@ -105,7 +111,12 @@ export function getFoodImage(itemId: string): string {
       'mughlai_biryani', 
       'mutton_biryani',
       'prawns_biryani',
-      'kaju_biryani'
+      'kaju_biryani',
+      'sp_chicken_biryani',
+      'lolipop_biryani',
+      'joint_biryani',
+      'mix_biryani',
+      'mixed_veg_biryani'
     ];
     const selectedImage = biryaniImages[Math.abs(hash) % biryaniImages.length];
     return foodImageMappings[selectedImage];
@@ -119,7 +130,11 @@ export function getFoodImage(itemId: string): string {
       'chicken_mughlai_vsmcmq',
       'kadai_chicken_wishxq',
       'paneer_butter_masala_htawqb',
-      'kaju_masala_yti9z5'
+      'kaju_masala_yti9z5',
+      'methi_chicken_xvsxjc',
+      'palak_chicken_fgjmeh',
+      'kaju_chicken_ebyauf',
+      'boneless_curry_uc9dcs'
     ];
     const selectedImage = curryImages[Math.abs(hash) % curryImages.length];
     return `https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/${selectedImage}`;
