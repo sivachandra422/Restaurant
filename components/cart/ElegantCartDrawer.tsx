@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X, Plus, Minus, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { useCart } from '@/contexts/CartContext';
@@ -9,6 +9,13 @@ import { PremiumBadge } from '@/components/ui/PremiumBadge';
 
 export function ElegantCartDrawer() {
   const { state, setCartOpen, setCheckoutOpen, updateQuantity, removeFromCart, resetCart } = useCart();
+
+  // Debug logging for cart items
+  useEffect(() => {
+    if (state.items.length > 0) {
+      console.log('Cart items:', state.items.map(item => ({ name: item.name, image: item.image })));
+    }
+  }, [state.items]);
 
   if (!state.isCartOpen) return null;
 
@@ -62,7 +69,6 @@ export function ElegantCartDrawer() {
                 <div className="flex gap-3 sm:gap-4">
                   {/* Item Image */}
                   <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden flex-shrink-0 bg-stone-100">
-                    {console.log('Rendering cart item:', item.name, 'Image URL:', item.image)}
                     <img
                       src={item.image}
                       alt={item.name}
