@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Minus, Star, Leaf, Zap, Heart, ChefHat } from 'lucide-react';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +37,8 @@ export function PremiumMenuCard({
   const [imageError, setImageError] = useState(false);
   const [currentImageUrl, setCurrentImageUrl] = useState('');
   const [fallbackAttempt, setFallbackAttempt] = useState(0);
+  const [isInView, setIsInView] = useState(false);
+  const imageRef = useRef<HTMLDivElement>(null);
   
   // Get the proper image URL for this item with robust fallback system
   const primaryImageUrl = item.image || getFoodImage(item.id); // Use database image first
@@ -52,6 +54,28 @@ export function PremiumMenuCard({
                        item.id === 'chicken_biryani' || 
                        item.id === 'paneer_butter_masala' ||
                        item.id === 'chicken_curry';
+
+  // Intersection Observer for true lazy loading
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      {
+        rootMargin: '50px', // Start loading 50px before item comes into view
+        threshold: 0.1
+      }
+    );
+
+    if (imageRef.current) {
+      observer.observe(imageRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     // Reset image state when item changes for consistent loading
@@ -150,32 +174,36 @@ export function PremiumMenuCard({
     <Card className="menu-card group overflow-hidden border-0 shadow-soft hover:shadow-glow bg-white">
       <CardContent className="p-0">
         {/* Image Section */}
-        <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
-          {/* Loading Placeholder */}
+        <div ref={imageRef} className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+          {/* Skeleton Loading Placeholder */}
           {imageLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-              <div className="animate-pulse text-gray-400">
-                <ChefHat className="w-8 h-8" />
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-gray-400">
+                  <ChefHat className="w-8 h-8 animate-pulse" />
+                </div>
               </div>
             </div>
           )}
           
-          {/* Main Image */}
-          <Image
-            src={currentImageUrl}
-            alt={item.name}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className={`object-cover transition-all duration-500 ${
-              imageLoading ? 'opacity-0' : 'opacity-100 group-hover:scale-110'
-            }`}
-            onError={handleImageError}
-            onLoad={handleImageLoad}
-            priority={shouldPreload}
-            loading={shouldPreload ? "eager" : "lazy"}
-            placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-          />
+          {/* Main Image - Only load when in view */}
+          {isInView && (
+            <Image
+              src={currentImageUrl}
+              alt={item.name}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className={`object-cover transition-all duration-500 ${
+                imageLoading ? 'opacity-0' : 'opacity-100 group-hover:scale-110'
+              }`}
+              onError={handleImageError}
+              onLoad={handleImageLoad}
+              priority={shouldPreload}
+              loading={shouldPreload ? "eager" : "lazy"}
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+            />
+          )}
           
           {/* Overlay on hover */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300" />
