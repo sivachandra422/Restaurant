@@ -26,7 +26,7 @@ export function ElegantCategoryTabs({
     <div className="w-full bg-white">
       {/* Horizontal Scroll for All Screen Sizes */}
       <ScrollArea className="w-full" type="always">
-        <div className="flex space-x-4 p-4 pb-6 min-w-max">
+        <div className="flex space-x-3 sm:space-x-4 p-3 sm:p-4 pb-4 sm:pb-6 min-w-max">
           {categories.map((category) => {
             const isActive = category.id === activeCategory;
             
@@ -34,21 +34,21 @@ export function ElegantCategoryTabs({
               <button
                 key={category.id}
                 onClick={() => onCategoryChange(category.id)}
-                className={`group relative px-6 py-4 rounded-xl transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation flex-shrink-0 min-w-[200px] max-w-[220px] ${
+                className={`group relative px-4 sm:px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation flex-shrink-0 min-w-[160px] sm:min-w-[180px] max-w-[180px] sm:max-w-[220px] ${
                   isActive
                     ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg'
                     : 'bg-white text-gray-700 hover:bg-gray-50 hover:shadow-md border border-gray-200'
                 }`}
               >
                 {/* Icon */}
-                <div className={`text-2xl mb-3 transition-transform duration-300 ${
+                <div className={`text-xl sm:text-2xl mb-2 sm:mb-3 transition-transform duration-300 ${
                   isActive ? 'transform scale-110' : 'group-hover:scale-110'
                 }`}>
                   {category.icon}
                 </div>
                 
                 {/* Category Name */}
-                <div className="font-semibold text-sm mb-2 leading-tight">
+                <div className="font-semibold text-xs sm:text-sm mb-1 sm:mb-2 leading-tight">
                   {category.name}
                 </div>
                 
@@ -61,13 +61,13 @@ export function ElegantCategoryTabs({
                 
                 {/* Active Indicator */}
                 {isActive && (
-                  <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-white rounded-full shadow-lg" />
+                  <div className="absolute -bottom-1 sm:-bottom-2 left-1/2 transform -translate-x-1/2 w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full shadow-lg" />
                 )}
               </button>
             );
           })}
         </div>
-        <ScrollBar orientation="horizontal" className="h-2" />
+        <ScrollBar orientation="horizontal" className="h-1 sm:h-2" />
       </ScrollArea>
     </div>
   );

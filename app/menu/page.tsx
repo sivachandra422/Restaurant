@@ -130,54 +130,60 @@ export default function MenuPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
+      <div className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20 lg:h-24">
+          <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
             {/* Logo and Restaurant Name */}
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <ChefHat className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-white" />
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <ChefHat className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate">Sri Kanya Restaurant</h1>
-                <p className="text-xs sm:text-sm text-gray-600 truncate">Authentic Indian Cuisine</p>
+                <h1 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 truncate">Sri Kanya Restaurant</h1>
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Authentic Indian Cuisine</p>
               </div>
             </div>
 
             {/* Header Actions */}
-            <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="flex items-center space-x-1 sm:space-x-2">
               {state.tableNumber && (
-                <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                <div className="hidden sm:block text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md border border-gray-200">
                   Table {state.tableNumber}
+                </div>
+              )}
+              {/* Mobile table indicator */}
+              {state.tableNumber && (
+                <div className="sm:hidden w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-medium text-orange-700">{state.tableNumber}</span>
                 </div>
               )}
               {/* Real-time sync indicator */}
               {isSyncing && (
-                <div className="flex items-center space-x-1 text-xs text-orange-600">
+                <div className="hidden sm:flex items-center space-x-1 text-xs text-orange-600">
                   <RefreshCw className="w-3 h-3 animate-spin" />
-                  <span className="hidden sm:inline">Syncing...</span>
+                  <span>Syncing...</span>
                 </div>
               )}
               {/* Manual refresh button */}
               <Button
                 onClick={handleManualRefresh}
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="flex items-center gap-1 sm:gap-2"
+                className="h-8 w-8 sm:h-9 sm:w-auto p-0 sm:px-3"
                 disabled={isSyncing}
               >
-                <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline text-xs sm:text-sm">Refresh</span>
+                <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline text-xs ml-1">Refresh</span>
               </Button>
               <LanguageSwitcher />
               <Button
                 onClick={() => setShowOrderHistory(true)}
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="flex items-center gap-1 sm:gap-2"
+                className="h-8 w-8 sm:h-9 sm:w-auto p-0 sm:px-3"
               >
-                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline text-xs sm:text-sm">Orders</span>
+                <Clock className="w-4 h-4" />
+                <span className="hidden sm:inline text-xs ml-1">Orders</span>
               </Button>
               <PremiumCartIcon />
             </div>
@@ -186,30 +192,30 @@ export default function MenuPage() {
       </div>
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-6 sm:py-8">
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 sm:py-6 lg:py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="flex items-center justify-center space-x-2 sm:space-x-3 mb-2 sm:mb-3">
-            <Crown className="w-5 h-5 sm:w-6 sm:h-6" />
-            <h2 className="text-xl sm:text-2xl font-bold">Our Menu</h2>
-            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
+            <Crown className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold">Our Menu</h2>
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
           </div>
-          <p className="text-sm sm:text-lg opacity-90 max-w-2xl mx-auto">
+          <p className="text-xs sm:text-sm lg:text-base opacity-90 max-w-2xl mx-auto leading-relaxed">
             Discover our authentic Indian dishes, crafted with traditional recipes and fresh ingredients
           </p>
           {/* Real-time indicator */}
           {isSyncing && (
-            <div className="mt-3 flex items-center justify-center space-x-2 text-orange-100">
-              <RefreshCw className="w-4 h-4 animate-spin" />
-              <span className="text-sm">Updating menu in real-time...</span>
+            <div className="mt-2 sm:mt-3 flex items-center justify-center space-x-2 text-orange-100">
+              <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+              <span className="text-xs sm:text-sm">Updating menu in real-time...</span>
             </div>
           )}
         </div>
       </div>
 
       {/* Search and Filter Section */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             {/* Search */}
             <div className="flex-1">
               <div className="relative">
@@ -219,15 +225,15 @@ export default function MenuPage() {
                   placeholder="Search for dishes..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-10 sm:h-11"
+                  className="pl-10 h-9 sm:h-10 text-sm"
                 />
               </div>
             </div>
 
             {/* Sort */}
-            <div className="w-full sm:w-48">
+            <div className="w-full sm:w-40 lg:w-48">
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="h-10 sm:h-11">
+                <SelectTrigger className="h-9 sm:h-10 text-sm">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
@@ -255,23 +261,23 @@ export default function MenuPage() {
 
       {/* Menu Items */}
       <div className="bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
           {loading ? (
-            <div className="text-center py-12">
-              <RefreshCw className="w-8 h-8 mx-auto mb-4 text-orange-500 animate-spin" />
-              <h3 className="text-lg font-semibold text-gray-600 mb-2">Loading menu...</h3>
-              <p className="text-gray-500">Fetching latest menu items</p>
+            <div className="text-center py-8 sm:py-12">
+              <RefreshCw className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-3 sm:mb-4 text-orange-500 animate-spin" />
+              <h3 className="text-base sm:text-lg font-semibold text-gray-600 mb-2">Loading menu...</h3>
+              <p className="text-sm text-gray-500">Fetching latest menu items</p>
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="text-center py-12">
-              <ChefHat className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-gray-300" />
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-600 mb-2">No items found</h3>
-              <p className="text-gray-500 text-sm sm:text-base">
+            <div className="text-center py-8 sm:py-12">
+              <ChefHat className="w-10 h-10 sm:w-12 sm:h-12 lg:w-16 lg:h-16 mx-auto mb-3 sm:mb-4 text-gray-300" />
+              <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-gray-600 mb-2">No items found</h3>
+              <p className="text-xs sm:text-sm lg:text-base text-gray-500">
                 Try adjusting your search or filter criteria
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
               {filteredItems.map((item) => {
                 const cartItem = state.items.find(cartItem => cartItem.id === item.id);
                 const quantity = cartItem?.quantity || 0;
