@@ -47,6 +47,12 @@ export function PremiumMenuCard({
   const maxQuantity = getMaxQuantity(item);
   const isAtMaxQuantity = quantity >= maxQuantity;
 
+  // Preload images for first few items (improves perceived loading)
+  const shouldPreload = item.id === 'chicken_dum_biryani_half' || 
+                       item.id === 'chicken_biryani' || 
+                       item.id === 'paneer_butter_masala' ||
+                       item.id === 'chicken_curry';
+
   useEffect(() => {
     // Reset image state when item changes for consistent loading
     setImageError(false);
@@ -155,14 +161,20 @@ export function PremiumMenuCard({
           )}
           
           {/* Main Image */}
-          <img
+          <Image
             src={currentImageUrl}
             alt={item.name}
-            className={`w-full h-full object-cover transition-all duration-500 ${
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className={`object-cover transition-all duration-500 ${
               imageLoading ? 'opacity-0' : 'opacity-100 group-hover:scale-110'
             }`}
             onError={handleImageError}
             onLoad={handleImageLoad}
+            priority={shouldPreload}
+            loading={shouldPreload ? "eager" : "lazy"}
+            placeholder="blur"
+            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
           />
           
           {/* Overlay on hover */}
