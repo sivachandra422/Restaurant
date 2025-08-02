@@ -23,7 +23,18 @@ import {
   XCircle,
   RefreshCw,
   Lock,
-  X
+  X,
+  FileText,
+  Download,
+  Filter,
+  Activity,
+  PieChart,
+  Calendar,
+  MapPin,
+  Phone,
+  Mail,
+  Globe,
+  Printer
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +43,9 @@ import { useAdmin } from '@/contexts/AdminContext';
 import { useAnalytics } from '@/contexts/AnalyticsContext';
 import { useMenu } from '@/contexts/MenuContext';
 import { menuCategories } from '@/data/sriKanyaMenu';
+import AdvancedDashboard from '@/components/admin/AdvancedDashboard';
+import ReportsSection from '@/components/admin/ReportsSection';
+import SettingsSection from '@/components/admin/SettingsSection';
 
 interface EditModalState {
   isOpen: boolean;
@@ -62,6 +76,12 @@ export default function AdminPage() {
   const [realOrders, setRealOrders] = useState<any[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+
+  // Analytics and settings state
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [settings, setSettings] = useState<any>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [reportsData, setReportsData] = useState<any>(null);
 
   // Check authentication on mount
   useEffect(() => {
@@ -95,14 +115,87 @@ export default function AdminPage() {
   useEffect(() => {
     if (adminState.isAuthenticated) {
       fetchRealOrders();
+      fetchAnalytics();
+      fetchSettings();
+      fetchNotifications();
       
       // Poll for new orders every 30 seconds if auto-refresh is enabled
       if (adminState.preferences.autoRefresh) {
-        const interval = setInterval(fetchRealOrders, 30000);
+        const interval = setInterval(() => {
+          fetchRealOrders();
+          fetchNotifications();
+        }, 30000);
         return () => clearInterval(interval);
       }
     }
   }, [adminState.isAuthenticated, adminState.preferences.autoRefresh]);
+
+  // Fetch analytics data
+  const fetchAnalytics = async () => {
+    try {
+      const response = await fetch('/api/admin/analytics');
+      if (response.ok) {
+        const data = await response.json();
+        setAnalyticsData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    }
+  };
+
+  // Fetch settings
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch('/api/admin/settings');
+      if (response.ok) {
+        const data = await response.json();
+        setSettings(data);
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    }
+  };
+
+  // Fetch notifications
+  const fetchNotifications = async () => {
+    try {
+      const response = await fetch('/api/admin/notifications');
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data.notifications || []);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
+  // Generate report
+  const handleGenerateReport = async (type: string, filters: any) => {
+    try {
+      const queryParams = new URLSearchParams({
+        type,
+        ...filters
+      });
+      const response = await fetch(`/api/admin/reports?${queryParams}`);
+      if (response.ok) {
+        const data = await response.json();
+        setReportsData(data);
+        return data;
+      }
+    } catch (error) {
+      console.error('Error generating report:', error);
+    }
+  };
+
+  // Export report
+  const handleExportReport = (type: string, format: string, filters: any) => {
+    const queryParams = new URLSearchParams({
+      type,
+      format,
+      ...filters
+    });
+    window.open(`/api/admin/reports?${queryParams}`, '_blank');
+  };
 
   const handleLogout = () => {
     logout();
@@ -217,10 +310,12 @@ export default function AdminPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {adminState.currentSection === 'dashboard' && (
-          <DashboardSection 
-            realOrders={realOrders} 
-            ordersLoading={ordersLoading}
-            lastRefresh={lastRefresh}
+          <AdvancedDashboard 
+            analytics={analyticsData}
+            orders={realOrders}
+            settings={settings}
+            notifications={notifications}
+            onRefresh={fetchRealOrders}
             onOrderClick={(order) => setOrderDetailsModal({ isOpen: true, order })} 
           />
         )}
@@ -240,13 +335,28 @@ export default function AdminPage() {
           />
         )}
         {adminState.currentSection === 'analytics' && (
-          <AnalyticsSection analytics={analytics} />
+          <ReportsSection 
+            onGenerateReport={handleGenerateReport}
+            onExportReport={handleExportReport}
+          />
         )}
         {adminState.currentSection === 'feedback' && (
           <FeedbackSection analytics={analytics} />
         )}
         {adminState.currentSection === 'settings' && (
-          <SettingsSection />
+          <SettingsSection 
+            settings={settings}
+            onSaveSettings={async (newSettings) => {
+              const response = await fetch('/api/admin/settings', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newSettings)
+              });
+              if (response.ok) {
+                setSettings(newSettings);
+              }
+            }}
+          />
         )}
       </div>
 
@@ -598,51 +708,7 @@ function FeedbackSection({ analytics }: { analytics: any }) {
   );
 }
 
-// Settings Section
-function SettingsSection() {
-  return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Restaurant Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Restaurant Name</label>
-              <input 
-                type="text" 
-                defaultValue="Sri Kanya Restaurant"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number</label>
-              <input 
-                type="tel" 
-                defaultValue="+91 98765 43210"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-              <textarea 
-                defaultValue="123 Main Street, City, State - 123456"
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-            <Button className="bg-gradient-to-r from-orange-500 to-red-500">
-              Save Changes
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+
 
 // Edit Item Modal Component
 function EditItemModal({ item, onClose, onSave, onUpdate }: { 
