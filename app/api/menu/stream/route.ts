@@ -15,6 +15,7 @@ export async function GET() {
     const stream = new ReadableStream({
       start(controller) {
         let lastUpdate = Date.now();
+        let isActive = true;
 
         // Send initial connection message
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connected', timestamp: lastUpdate })}\n\n`));
@@ -22,8 +23,8 @@ export async function GET() {
         // Check for updates every 30 seconds
         const interval = setInterval(async () => {
           try {
-            // Check if controller is still active
-            if (controller.signal?.aborted) {
+            // Check if we should stop
+            if (!isActive) {
               clearInterval(interval);
               return;
             }
@@ -57,6 +58,7 @@ export async function GET() {
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: 'Connection error' })}\n\n`));
             } catch (enqueueError) {
               console.error('Failed to send error message:', enqueueError);
+              isActive = false;
               clearInterval(interval);
             }
           }
@@ -64,6 +66,7 @@ export async function GET() {
 
         // Clean up on close
         return () => {
+          isActive = false;
           clearInterval(interval);
         };
       }
