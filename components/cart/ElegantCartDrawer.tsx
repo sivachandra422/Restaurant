@@ -62,15 +62,19 @@ export function ElegantCartDrawer() {
                 <div className="flex gap-3 sm:gap-4">
                   {/* Item Image */}
                   <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden flex-shrink-0 bg-stone-100">
-                    <Image
+                    {console.log('Rendering cart item:', item.name, 'Image URL:', item.image)}
+                    <img
                       src={item.image}
                       alt={item.name}
-                      fill
-                      className="object-cover"
+                      className="w-full h-full object-cover"
                       onError={(e) => {
+                        console.error('Image failed to load for:', item.name, 'URL:', item.image);
                         // Fallback to a placeholder if image fails to load
                         const target = e.target as HTMLImageElement;
                         target.src = 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop&crop=center';
+                      }}
+                      onLoad={() => {
+                        console.log('Image loaded successfully for:', item.name);
                       }}
                     />
                   </div>
