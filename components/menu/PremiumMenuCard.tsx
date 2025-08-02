@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { Plus, Minus, Star, Leaf, Zap, Heart } from 'lucide-react';
+import { Plus, Minus, Star, Leaf, Zap, Heart, ChefHat } from 'lucide-react';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -98,10 +98,6 @@ export function PremiumMenuCard({
       // Try fallback image with consistent styling
       setImageError(true);
       setCurrentImageUrl(fallbackImageUrl);
-      setImageLoading(true);
-    } else {
-      // If fallback also fails, show placeholder
-      setImageLoading(false);
     }
   };
 
@@ -110,136 +106,129 @@ export function PremiumMenuCard({
   };
 
   return (
-    <Card className="group overflow-hidden bg-white border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02] h-full flex flex-col">
-      <CardContent className="p-0 flex flex-col h-full">
-        {/* Image Section - Responsive Height */}
-        <div className="relative h-40 sm:h-44 md:h-48 lg:h-52 overflow-hidden flex-shrink-0">
-          {/* Loading Placeholder with Consistent Styling */}
+    <Card className="menu-card group overflow-hidden border-0 shadow-soft hover:shadow-glow bg-white">
+      <CardContent className="p-0">
+        {/* Image Section */}
+        <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+          {/* Loading Placeholder */}
           {imageLoading && (
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse flex items-center justify-center">
-              <div className="text-2xl sm:text-3xl md:text-4xl animate-bounce">🍽️</div>
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+              <div className="animate-pulse text-gray-400">
+                <ChefHat className="w-8 h-8" />
+              </div>
             </div>
           )}
           
-          {/* Main Image with Consistent Quality and Styling */}
-          <Image
+          {/* Main Image */}
+          <img
             src={currentImageUrl}
             alt={item.name}
-            fill
-            className={`object-cover transition-all duration-700 ${
-              imageLoading ? 'opacity-0' : 'opacity-100'
-            } group-hover:scale-110`}
-            onLoad={handleImageLoad}
+            className={`w-full h-full object-cover transition-all duration-500 ${
+              imageLoading ? 'opacity-0' : 'opacity-100 group-hover:scale-110'
+            }`}
             onError={handleImageError}
-            sizes="(max-width: 640px) 50vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            priority={false}
-            quality={90}
-            placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+            onLoad={handleImageLoad}
           />
           
-          {/* Overlay with Consistent Gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          {/* Overlay on hover */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300" />
           
           {/* Favorite Button */}
           <button
             onClick={handleFavoriteClick}
-            className="absolute top-2 left-2 p-1.5 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-300 transform hover:scale-110"
+            className="absolute top-2 left-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-200 hover:bg-white hover:scale-110 focus-ring"
           >
             <Heart 
-              className={`w-3 h-3 sm:w-4 sm:h-4 transition-all duration-300 ${
-                isItemFavorite(item.id) ? 'text-red-500 fill-red-500' : 'text-white'
-              }`} 
+              className={`w-4 h-4 transition-all duration-200 ${
+                isItemFavorite(item.id) 
+                  ? 'text-red-500 fill-current' 
+                  : 'text-gray-600 hover:text-red-500'
+              }`}
             />
           </button>
           
-          {/* Special Badges - Only Signature and Special with Consistent Styling */}
+          {/* Badges */}
           <div className="absolute top-2 right-2 flex flex-col gap-1">
-            {item.isSignature && (
-              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 font-medium text-xs px-1.5 py-0.5 shadow-md">
-                <Star className="w-2.5 h-2.5 mr-1" />
-                {t('signature', language)}
-              </Badge>
-            )}
-            {item.isSpecial && (
-              <Badge className="bg-gradient-to-r from-purple-400 to-pink-500 text-white border-0 font-medium text-xs px-1.5 py-0.5 shadow-md">
-                <Zap className="w-2.5 h-2.5 mr-1" />
-                {t('special', language)}
-              </Badge>
-            )}
             {item.isVeg && (
-              <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 font-medium text-xs px-1.5 py-0.5 shadow-md">
-                <Leaf className="w-2.5 h-2.5 mr-1" />
-                {t('veg', language)}
+              <Badge className="bg-green-500 text-white text-xs px-2 py-1 shadow-md">
+                Veg
+              </Badge>
+            )}
+            {item.isSignature && (
+              <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs px-2 py-1 shadow-md">
+                Signature
+              </Badge>
+            )}
+            {item.trending && (
+              <Badge className="pulse-glow bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 shadow-md">
+                Trending
               </Badge>
             )}
           </div>
         </div>
 
-        {/* Content Section - Responsive Structure */}
-        <div className="p-3 sm:p-4 md:p-5 flex flex-col flex-1">
-          {/* Title - Responsive Height */}
-          <div className="mb-2 h-10 sm:h-12 md:h-14 flex items-start">
-            <h3 className="font-bold text-gray-900 text-sm sm:text-base md:text-lg leading-tight line-clamp-2 group-hover:text-gray-700 transition-colors duration-300">
+        {/* Content Section */}
+        <div className="p-3 sm:p-4">
+          {/* Title and Description */}
+          <div className="mb-3">
+            <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-1 line-clamp-1 group-hover:text-orange-600 transition-colors duration-200">
               {item.name}
             </h3>
-          </div>
-          
-          {/* Description - Responsive Height */}
-          <div className="mb-3 h-8 sm:h-10 md:h-12 flex items-start">
-            <p className="text-gray-600 text-xs sm:text-sm md:text-base leading-relaxed line-clamp-2">
+            <p className="text-xs sm:text-sm text-gray-600 line-clamp-2 leading-relaxed">
               {item.description}
             </p>
           </div>
-          
-          {/* Price and Wait Time - Responsive Styling */}
-          <div className="mb-3 sm:mb-4 flex items-center justify-between">
-            <span className="font-bold text-base sm:text-lg md:text-xl text-gray-900 group-hover:text-gray-700 transition-colors duration-300">
-              ₹{item.price.toLocaleString()}
-            </span>
-            <WaitTimeIndicator item={item} showTrending={false} />
+
+          {/* Price and Time */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-lg sm:text-xl text-gray-900">
+                ₹{item.price}
+              </span>
+              {item.preparationTime && (
+                <span className="text-xs text-gray-500">
+                  • {item.preparationTime} min
+                </span>
+              )}
+            </div>
+            <WaitTimeIndicator item={item} />
           </div>
 
-          {/* Quantity Controls - Responsive at Bottom */}
-          <div className="flex items-center justify-between mt-auto">
+          {/* Add to Cart Section */}
+          <div className="flex items-center justify-between">
             {quantity === 0 ? (
               <Button
                 onClick={handleAddClick}
-                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-2 sm:py-3 px-3 sm:px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md text-xs sm:text-sm hover:shadow-lg"
-                disabled={isAtMaxQuantity}
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium ripple focus-ring transition-all duration-200 transform hover:scale-105 active:scale-95"
               >
-                {t('add_to_cart', language)}
+                <Plus className="w-4 h-4 mr-1" />
+                Add to Cart
               </Button>
             ) : (
-              <div className="flex items-center gap-2 w-full">
+              <div className="flex items-center space-x-2 w-full">
                 <Button
                   onClick={handleDecreaseClick}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 p-0 flex items-center justify-center transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-110"
+                  variant="outline"
+                  size="sm"
+                  className="w-8 h-8 p-0 rounded-full ripple focus-ring"
                 >
-                  <Minus className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                  <Minus className="w-3 h-3" />
                 </Button>
                 
-                <span className="font-bold text-gray-900 min-w-[1.5rem] sm:min-w-[2rem] md:min-w-[2.5rem] text-center text-xs sm:text-sm md:text-base">
+                <span className="flex-1 text-center font-semibold text-gray-900">
                   {quantity}
                 </span>
                 
                 <Button
                   onClick={handleIncreaseClick}
-                  className={`rounded-full w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 p-0 flex items-center justify-center transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-110 ${
-                    isAtMaxQuantity
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-orange-500 hover:bg-orange-600 text-white'
+                  variant="outline"
+                  size="sm"
+                  className={`w-8 h-8 p-0 rounded-full ripple focus-ring ${
+                    isAtMaxQuantity ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                   disabled={isAtMaxQuantity}
                 >
-                  <Plus className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
-                </Button>
-                
-                <Button
-                  onClick={handleRemoveClick}
-                  className="ml-auto bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1.5 rounded-md transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105"
-                >
-                  {t('remove', language)}
+                  <Plus className="w-3 h-3" />
                 </Button>
               </div>
             )}

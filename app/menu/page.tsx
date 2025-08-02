@@ -124,30 +124,34 @@ export default function MenuPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+      <div className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20">
             {/* Logo and Restaurant Name */}
             <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-soft hover:shadow-glow transition-all duration-300 hover:scale-105">
                 <ChefHat className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-white" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 truncate">Sri Kanya Restaurant</h1>
-                <p className="text-xs sm:text-sm text-gray-500 truncate">Authentic Indian Cuisine</p>
+                <h1 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 truncate gradient-text">
+                  Sri Kanya Restaurant
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-500 truncate">
+                  Authentic Indian Cuisine
+                </p>
               </div>
             </div>
 
             {/* Header Actions */}
             <div className="flex items-center space-x-1 sm:space-x-2">
               {state.tableNumber && (
-                <div className="hidden sm:block text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md border border-gray-200">
+                <div className="hidden sm:block text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md border border-gray-200 shadow-soft">
                   Table {state.tableNumber}
                 </div>
               )}
               {/* Mobile table indicator */}
               {state.tableNumber && (
-                <div className="sm:hidden w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
+                <div className="sm:hidden w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center shadow-soft hover:shadow-glow transition-all duration-200 hover:scale-110">
                   <span className="text-xs font-medium text-orange-700">{state.tableNumber}</span>
                 </div>
               )}
@@ -163,7 +167,7 @@ export default function MenuPage() {
                 onClick={() => setShowOrderHistory(true)}
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 sm:h-9 sm:w-auto p-0 sm:px-3"
+                className="h-8 w-8 sm:h-9 sm:w-auto p-0 sm:px-3 ripple focus-ring hover:bg-orange-50 transition-all duration-200"
               >
                 <Clock className="w-4 h-4" />
                 <span className="hidden sm:inline text-xs ml-1">Orders</span>
