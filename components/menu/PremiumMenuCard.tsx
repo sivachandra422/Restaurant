@@ -190,11 +190,6 @@ export function PremiumMenuCard({
               <span className="font-bold text-lg sm:text-xl text-gray-900">
                 ₹{item.price}
               </span>
-              {item.preparationTime && (
-                <span className="text-xs text-gray-500">
-                  • {item.preparationTime} min
-                </span>
-              )}
             </div>
             <WaitTimeIndicator item={item} />
           </div>

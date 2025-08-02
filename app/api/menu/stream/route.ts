@@ -19,9 +19,15 @@ export async function GET() {
         // Send initial connection message
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connected', timestamp: lastUpdate })}\n\n`));
 
-        // Check for updates every 30 seconds instead of 5 seconds
+        // Check for updates every 30 seconds
         const interval = setInterval(async () => {
           try {
+            // Check if controller is still active
+            if (controller.signal?.aborted) {
+              clearInterval(interval);
+              return;
+            }
+
             if (!process.env.MONGODB_URI) {
               // If no database, just send heartbeat
               controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`));
@@ -46,9 +52,15 @@ export async function GET() {
             }
           } catch (error) {
             console.error('SSE error:', error);
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: 'Connection error' })}\n\n`));
+            // Only try to send error if controller is still active
+            try {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: 'Connection error' })}\n\n`));
+            } catch (enqueueError) {
+              console.error('Failed to send error message:', enqueueError);
+              clearInterval(interval);
+            }
           }
-        }, 5000);
+        }, 30000);
 
         // Clean up on close
         return () => {
