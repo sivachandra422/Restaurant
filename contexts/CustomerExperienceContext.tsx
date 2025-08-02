@@ -78,18 +78,16 @@ export function CustomerExperienceProvider({ children }: { children: React.React
   };
 
   const getWaitTime = (item: MenuItem): number => {
-    // Base preparation time from item data
+    // Use consistent preparation time from item data
     const baseTime = item.preparationTime || 20;
     
-    // Add some randomness to simulate real kitchen conditions
-    const variation = Math.random() * 5 - 2.5; // ±2.5 minutes
-    
-    // Consider kitchen load (simplified)
+    // Consider kitchen load (simplified) but keep it consistent
     const currentHour = new Date().getHours();
     const isPeakHour = (currentHour >= 12 && currentHour <= 14) || (currentHour >= 19 && currentHour <= 21);
     const peakMultiplier = isPeakHour ? 1.2 : 1.0;
     
-    return Math.max(10, Math.round((baseTime + variation) * peakMultiplier));
+    // Return consistent time without random variation
+    return Math.max(10, Math.round(baseTime * peakMultiplier));
   };
 
   const getPopularItems = (): MenuItem[] => {

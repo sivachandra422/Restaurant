@@ -150,7 +150,7 @@ export function ElegantCheckoutForm() {
           totalAmount: state.totalAmount,
           tableNumber: state.tableNumber || 0,
           customerName: formData.customerName,
-          preparationTime: Math.max(15, Math.floor(Math.random() * 30) + 15), // Simulated prep time
+          preparationTime: 20, // Use consistent preparation time
         });
 
         setOrderPlaced(true);
