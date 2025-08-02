@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import { MenuItem } from '@/lib/models/MenuItem';
 
+// Force dynamic rendering for SSE
+export const dynamic = 'force-dynamic';
+
 // SSE endpoint for real-time menu updates
 export async function GET() {
   try {

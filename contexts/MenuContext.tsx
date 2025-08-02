@@ -9,7 +9,7 @@ interface MenuContextType {
   menuItems: MenuItem[];
   updateMenuItem: (id: string, updates: Partial<MenuItem>) => Promise<void>;
   toggleItemVisibility: (id: string) => Promise<void>;
-  getVisibleItems: () => Promise<MenuItem[]>;
+  getVisibleItems: () => MenuItem[];
   getAllItems: () => MenuItem[]; // New function for admin
   getItemsByCategory: (category: string) => MenuItem[];
   refreshMenu: () => Promise<void>;

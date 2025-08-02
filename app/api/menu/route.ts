@@ -3,6 +3,9 @@ import dbConnect from '@/lib/mongodb';
 import { MenuItem } from '@/lib/models/MenuItem';
 import { sriKanyaMenu } from '@/data/sriKanyaMenu';
 
+// Force dynamic rendering to prevent static generation errors
+export const dynamic = 'force-dynamic';
+
 // GET - Fetch all menu items (including disabled ones for admin)
 export async function GET() {
   try {

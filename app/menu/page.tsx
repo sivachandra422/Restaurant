@@ -96,7 +96,7 @@ export default function MenuPage() {
     });
 
     return items;
-  }, [allMenuItems, selectedCategory, searchQuery, sortBy, getItemsByCategory, lastMenuUpdate]);
+  }, [allMenuItems, selectedCategory, searchQuery, sortBy, getItemsByCategory]);
 
   // Extract table number from URL
   useEffect(() => {
