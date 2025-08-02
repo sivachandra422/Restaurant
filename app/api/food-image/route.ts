@@ -50,7 +50,8 @@ const defaultImage = 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    // Use searchParams directly from the request object
+    const searchParams = request.nextUrl.searchParams;
     const item = searchParams.get('item');
     
     if (!item) {
