@@ -148,18 +148,23 @@ export function PremiumMenuCard({
           </button>
           
           {/* Badges */}
-          <div className="absolute top-2 right-2 flex flex-col gap-1">
+          <div className="absolute top-2 right-2 flex flex-col gap-1 max-w-[calc(100%-1rem)]">
+            {/* Veg Badge - Always show if applicable */}
             {item.isVeg && (
               <Badge className="bg-green-500 text-white text-xs px-2 py-1 shadow-md">
                 Veg
               </Badge>
             )}
+            
+            {/* Signature Badge - Priority badge */}
             {item.isSignature && (
               <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs px-2 py-1 shadow-md">
                 Signature
               </Badge>
             )}
-            {item.trending && (
+            
+            {/* Trending Badge - Only show if not signature and trending */}
+            {item.trending && !item.isSignature && (
               <Badge className="pulse-glow bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 shadow-md">
                 Trending
               </Badge>

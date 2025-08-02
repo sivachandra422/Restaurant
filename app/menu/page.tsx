@@ -97,8 +97,7 @@ export default function MenuPage() {
           return b.price - a.price;
         case 'name':
           return a.name.localeCompare(b.name);
-        case 'popularity':
-          return (b.popularity || 0) - (a.popularity || 0);
+
         default:
           return 0;
       }
@@ -227,7 +226,7 @@ export default function MenuPage() {
                   <SelectItem value="name">Name</SelectItem>
                   <SelectItem value="price-low">Price: Low to High</SelectItem>
                   <SelectItem value="price-high">Price: High to Low</SelectItem>
-                  <SelectItem value="popularity">Popularity</SelectItem>
+
                 </SelectContent>
               </Select>
             </div>

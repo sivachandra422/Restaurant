@@ -11,7 +11,7 @@ interface WaitTimeIndicatorProps {
   showTrending?: boolean;
 }
 
-export function WaitTimeIndicator({ item, showTrending = true }: WaitTimeIndicatorProps) {
+export function WaitTimeIndicator({ item, showTrending = false }: WaitTimeIndicatorProps) {
   const { getWaitTime } = useCustomerExperience();
   const waitTime = getWaitTime(item);
 
@@ -21,14 +21,8 @@ export function WaitTimeIndicator({ item, showTrending = true }: WaitTimeIndicat
     return 'bg-orange-500';
   };
 
-  const getWaitTimeText = (time: number) => {
-    if (time <= 15) return 'Quick';
-    if (time <= 25) return 'Normal';
-    return 'Popular';
-  };
-
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center">
       {/* Wait Time Badge */}
       <Badge 
         className={`${getWaitTimeColor(waitTime)} text-white border-0 font-medium text-xs px-2 py-1 shadow-md`}
@@ -36,21 +30,6 @@ export function WaitTimeIndicator({ item, showTrending = true }: WaitTimeIndicat
         <Clock className="w-3 h-3 mr-1" />
         {waitTime} min
       </Badge>
-
-      {/* Trending Badge */}
-      {showTrending && item.trending && (
-        <Badge className="bg-gradient-to-r from-purple-400 to-pink-500 text-white border-0 font-medium text-xs px-2 py-1 shadow-md animate-pulse">
-          <TrendingUp className="w-3 h-3 mr-1" />
-          Trending
-        </Badge>
-      )}
-
-      {/* Popularity Badge */}
-      {item.popularity && item.popularity >= 8 && (
-        <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 font-medium text-xs px-2 py-1 shadow-md">
-          ⭐ Popular
-        </Badge>
-      )}
     </div>
   );
 } 
