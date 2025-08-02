@@ -6,6 +6,9 @@ const config: Config = {
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './contexts/**/*.{js,ts,jsx,tsx,mdx}',
+    './lib/**/*.{js,ts,jsx,tsx,mdx}',
+    './data/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
@@ -78,10 +81,36 @@ const config: Config = {
             height: '0',
           },
         },
+        'fadeInUp': {
+          from: {
+            opacity: '0',
+            transform: 'translateY(20px)',
+          },
+          to: {
+            opacity: '1',
+            transform: 'translateY(0)',
+          },
+        },
+        'slideInRight': {
+          from: {
+            opacity: '0',
+            transform: 'translateX(100%)',
+          },
+          to: {
+            opacity: '1',
+            transform: 'translateX(0)',
+          },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'fadeInUp': 'fadeInUp 0.5s ease-out',
+        'slideInRight': 'slideInRight 0.3s ease-out',
+      },
+      fontFamily: {
+        inter: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        playfair: ['var(--font-playfair)', 'Georgia', 'serif'],
       },
     },
   },

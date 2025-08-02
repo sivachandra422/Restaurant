@@ -110,14 +110,14 @@ export function PremiumMenuCard({
   };
 
   return (
-    <Card className="group overflow-hidden bg-white/90 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] h-full flex flex-col animate-fadeInUp">
+    <Card className="group overflow-hidden bg-white border border-gray-100 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.02] h-full flex flex-col">
       <CardContent className="p-0 flex flex-col h-full">
         {/* Image Section - Responsive Height */}
-        <div className="relative h-32 sm:h-40 md:h-48 overflow-hidden flex-shrink-0">
+        <div className="relative h-40 sm:h-44 md:h-48 lg:h-52 overflow-hidden flex-shrink-0">
           {/* Loading Placeholder with Consistent Styling */}
           {imageLoading && (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse flex items-center justify-center">
-              <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl animate-bounce">🍽️</div>
+              <div className="text-2xl sm:text-3xl md:text-4xl animate-bounce">🍽️</div>
             </div>
           )}
           
@@ -144,7 +144,7 @@ export function PremiumMenuCard({
           {/* Favorite Button */}
           <button
             onClick={handleFavoriteClick}
-            className="absolute top-2 left-2 sm:top-3 sm:left-3 p-1.5 sm:p-2 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-300 transform hover:scale-110"
+            className="absolute top-2 left-2 p-1.5 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-all duration-300 transform hover:scale-110"
           >
             <Heart 
               className={`w-3 h-3 sm:w-4 sm:h-4 transition-all duration-300 ${
@@ -154,22 +154,22 @@ export function PremiumMenuCard({
           </button>
           
           {/* Special Badges - Only Signature and Special with Consistent Styling */}
-          <div className="absolute top-2 right-2 sm:top-3 sm:right-3 flex flex-col gap-1">
+          <div className="absolute top-2 right-2 flex flex-col gap-1">
             {item.isSignature && (
-              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 font-medium text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 shadow-md animate-pulse">
-                <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />
+              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 font-medium text-xs px-1.5 py-0.5 shadow-md">
+                <Star className="w-2.5 h-2.5 mr-1" />
                 {t('signature', language)}
               </Badge>
             )}
             {item.isSpecial && (
-              <Badge className="bg-gradient-to-r from-purple-400 to-pink-500 text-white border-0 font-medium text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 shadow-md animate-pulse">
-                <Zap className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />
+              <Badge className="bg-gradient-to-r from-purple-400 to-pink-500 text-white border-0 font-medium text-xs px-1.5 py-0.5 shadow-md">
+                <Zap className="w-2.5 h-2.5 mr-1" />
                 {t('special', language)}
               </Badge>
             )}
             {item.isVeg && (
-              <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 font-medium text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 shadow-md">
-                <Leaf className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />
+              <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 font-medium text-xs px-1.5 py-0.5 shadow-md">
+                <Leaf className="w-2.5 h-2.5 mr-1" />
                 {t('veg', language)}
               </Badge>
             )}
@@ -177,24 +177,24 @@ export function PremiumMenuCard({
         </div>
 
         {/* Content Section - Responsive Structure */}
-        <div className="p-3 sm:p-4 flex flex-col flex-1">
+        <div className="p-3 sm:p-4 md:p-5 flex flex-col flex-1">
           {/* Title - Responsive Height */}
-          <div className="mb-2 h-10 sm:h-12 flex items-start">
-            <h3 className="font-bold text-gray-900 text-sm sm:text-base leading-tight line-clamp-2 group-hover:text-orange-600 transition-colors duration-300">
+          <div className="mb-2 h-10 sm:h-12 md:h-14 flex items-start">
+            <h3 className="font-bold text-gray-900 text-sm sm:text-base md:text-lg leading-tight line-clamp-2 group-hover:text-gray-700 transition-colors duration-300">
               {item.name}
             </h3>
           </div>
           
           {/* Description - Responsive Height */}
-          <div className="mb-3 h-8 sm:h-10 flex items-start">
-            <p className="text-gray-600 text-xs sm:text-sm leading-relaxed line-clamp-2">
+          <div className="mb-3 h-8 sm:h-10 md:h-12 flex items-start">
+            <p className="text-gray-600 text-xs sm:text-sm md:text-base leading-relaxed line-clamp-2">
               {item.description}
             </p>
           </div>
           
           {/* Price and Wait Time - Responsive Styling */}
           <div className="mb-3 sm:mb-4 flex items-center justify-between">
-            <span className="font-bold text-base sm:text-lg text-gray-900 group-hover:text-orange-600 transition-colors duration-300">
+            <span className="font-bold text-base sm:text-lg md:text-xl text-gray-900 group-hover:text-gray-700 transition-colors duration-300">
               ₹{item.price.toLocaleString()}
             </span>
             <WaitTimeIndicator item={item} showTrending={false} />
@@ -203,44 +203,44 @@ export function PremiumMenuCard({
           {/* Quantity Controls - Responsive at Bottom */}
           <div className="flex items-center justify-between mt-auto">
             {quantity === 0 ? (
-                              <Button
-                  onClick={handleAddClick}
-                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-semibold py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md text-xs sm:text-sm hover:shadow-lg"
-                  disabled={isAtMaxQuantity}
-                >
-                  {t('add_to_cart', language)}
-                </Button>
+              <Button
+                onClick={handleAddClick}
+                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-2 sm:py-3 px-3 sm:px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md text-xs sm:text-sm hover:shadow-lg"
+                disabled={isAtMaxQuantity}
+              >
+                {t('add_to_cart', language)}
+              </Button>
             ) : (
               <div className="flex items-center gap-2 w-full">
                 <Button
                   onClick={handleDecreaseClick}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full w-6 h-6 sm:w-8 sm:h-8 p-0 flex items-center justify-center transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-110"
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 p-0 flex items-center justify-center transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-110"
                 >
-                  <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <Minus className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                 </Button>
                 
-                <span className="font-bold text-gray-900 min-w-[1.5rem] sm:min-w-[2rem] text-center text-xs sm:text-sm">
+                <span className="font-bold text-gray-900 min-w-[1.5rem] sm:min-w-[2rem] md:min-w-[2.5rem] text-center text-xs sm:text-sm md:text-base">
                   {quantity}
                 </span>
                 
                 <Button
                   onClick={handleIncreaseClick}
-                  className={`rounded-full w-6 h-6 sm:w-8 sm:h-8 p-0 flex items-center justify-center transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-110 ${
+                  className={`rounded-full w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 p-0 flex items-center justify-center transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-110 ${
                     isAtMaxQuantity
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-orange-500 hover:bg-orange-600 text-white'
                   }`}
                   disabled={isAtMaxQuantity}
                 >
-                  <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                 </Button>
                 
-                                  <Button
-                    onClick={handleRemoveClick}
-                    className="ml-auto bg-red-500 hover:bg-red-600 text-white text-xs px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
-                  >
-                    {t('remove', language)}
-                  </Button>
+                <Button
+                  onClick={handleRemoveClick}
+                  className="ml-auto bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1.5 rounded-md transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105"
+                >
+                  {t('remove', language)}
+                </Button>
               </div>
             )}
           </div>

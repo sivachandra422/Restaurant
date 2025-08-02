@@ -101,6 +101,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-inter), system-ui, sans-serif;
+  }
+  html {
+    scroll-behavior: smooth;
   }
 }
 
@@ -305,4 +309,43 @@
   .no-print {
     display: none;
   }
+}
+
+/* Fix for potential layout issues */
+.min-h-screen {
+  min-height: 100vh;
+}
+
+.flex-1 {
+  flex: 1 1 0%;
+}
+
+/* Ensure proper image display */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Fix for potential button styling issues */
+button {
+  cursor: pointer;
+}
+
+/* Ensure proper card styling */
+.card {
+  @apply bg-white rounded-lg shadow-md border border-gray-200;
+}
+
+/* Fix for potential grid issues */
+.grid {
+  display: grid;
+}
+
+/* Ensure proper spacing */
+.space-y-4 > * + * {
+  margin-top: 1rem;
+}
+
+.space-x-4 > * + * {
+  margin-left: 1rem;
 }

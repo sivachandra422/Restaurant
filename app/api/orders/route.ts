@@ -5,14 +5,19 @@ import { Order } from '@/lib/models/Order';
 // POST - Create new order
 export async function POST(request: NextRequest) {
   try {
-    await dbConnect();
-    
     const orderData = await request.json();
     
     // If MongoDB is available, save to database
     if (process.env.MONGODB_URI) {
-      const order = new Order(orderData);
-      await order.save();
+      try {
+        await dbConnect();
+        const order = new Order(orderData);
+        await order.save();
+        console.log('Order saved to MongoDB:', orderData.orderId);
+      } catch (dbError) {
+        console.error('Failed to save order to MongoDB:', dbError);
+        // Continue without database, order will still be processed
+      }
     }
     
     // Send webhook notification (existing functionality)
@@ -47,27 +52,32 @@ export async function POST(request: NextRequest) {
 // GET - Fetch all orders (for admin)
 export async function GET(request: NextRequest) {
   try {
-    await dbConnect();
-    
     // If no MongoDB URI is provided, return empty array
     if (!process.env.MONGODB_URI) {
       return NextResponse.json([]);
     }
     
-    const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const status = searchParams.get('status');
-    
-    let query = {};
-    if (status) {
-      query = { status };
+    try {
+      await dbConnect();
+      
+      const { searchParams } = new URL(request.url);
+      const limit = parseInt(searchParams.get('limit') || '50');
+      const status = searchParams.get('status');
+      
+      let query = {};
+      if (status) {
+        query = { status };
+      }
+      
+      const orders = await Order.find(query)
+        .sort({ createdAt: -1 })
+        .limit(limit);
+      
+      return NextResponse.json(orders);
+    } catch (dbError) {
+      console.error('Database error, returning empty orders:', dbError);
+      return NextResponse.json([]);
     }
-    
-    const orders = await Order.find(query)
-      .sort({ createdAt: -1 })
-      .limit(limit);
-    
-    return NextResponse.json(orders);
   } catch (error) {
     console.error('Error fetching orders:', error);
     return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 });

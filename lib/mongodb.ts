@@ -23,6 +23,8 @@ async function dbConnect() {
     console.error('MongoDB connection error:', error);
     // Don't throw error, just log it so app can continue
     console.warn('Continuing without database connection');
+    // Reset connection flag so we can try again
+    isConnected = false;
   }
 }
 

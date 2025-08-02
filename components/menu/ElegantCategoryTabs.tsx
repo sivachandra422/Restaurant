@@ -23,7 +23,7 @@ export function ElegantCategoryTabs({
   onCategoryChange,
 }: ElegantCategoryTabsProps) {
   return (
-    <div className="w-full">
+    <div className="w-full bg-white">
       {/* Horizontal Scroll for All Screen Sizes */}
       <ScrollArea className="w-full" type="always">
         <div className="flex space-x-4 p-4 pb-6 min-w-max">
@@ -36,8 +36,8 @@ export function ElegantCategoryTabs({
                 onClick={() => onCategoryChange(category.id)}
                 className={`group relative px-6 py-4 rounded-xl transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation flex-shrink-0 min-w-[200px] max-w-[220px] ${
                   isActive
-                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg'
-                    : 'bg-white/90 backdrop-blur-sm text-gray-700 hover:bg-white hover:shadow-md border border-gray-200'
+                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 hover:shadow-md border border-gray-200'
                 }`}
               >
                 {/* Icon */}

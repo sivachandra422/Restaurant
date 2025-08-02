@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { sriKanyaMenu } from '@/data/sriKanyaMenu';
 import { MenuItem } from '@/data/sriKanyaMenu';
+import { getFoodImage } from '@/lib/imageMappings';
 
 interface MenuContextType {
   menuItems: MenuItem[];
@@ -20,29 +21,24 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Load menu items from database
+  // Load menu items from static data
   const loadMenuItems = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/menu');
-      if (response.ok) {
-        const data = await response.json();
-        setMenuItems(data);
-      } else {
-        // Fallback to static data if API fails
-        console.warn('Failed to load menu from API, using static data');
-        const staticItems = Object.values(sriKanyaMenu).flat().map(item => ({
-          ...item,
-          image: `/api/food-image?item=${item.id}`
-        }));
-        setMenuItems(staticItems);
-      }
+      
+      // Use static data directly and add image URLs
+      const staticItems = Object.values(sriKanyaMenu).flat().map(item => ({
+        ...item,
+        image: getFoodImage(item.id)
+      }));
+      
+      setMenuItems(staticItems);
     } catch (error) {
       console.error('Error loading menu items:', error);
       // Fallback to static data
       const staticItems = Object.values(sriKanyaMenu).flat().map(item => ({
         ...item,
-        image: `/api/food-image?item=${item.id}`
+        image: getFoodImage(item.id)
       }));
       setMenuItems(staticItems);
     } finally {
@@ -57,13 +53,14 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
       try {
         const parsedMenu = JSON.parse(savedMenu);
         setMenuItems(parsedMenu);
+        setLoading(false);
       } catch (error) {
         console.error('Error loading menu from localStorage:', error);
+        loadMenuItems();
       }
+    } else {
+      loadMenuItems();
     }
-    
-    // Then load from database
-    loadMenuItems();
   }, []);
 
   // Save to localStorage whenever menu changes
@@ -74,46 +71,14 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
   }, [menuItems]);
 
   const updateMenuItem = async (id: string, updates: Partial<MenuItem>) => {
-    try {
-      // Update in database
-      const response = await fetch(`/api/menu/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updates),
-      });
-
-      if (response.ok) {
-        const updatedItem = await response.json();
-        setMenuItems(prev => 
-          prev.map(item => 
-            item.id === id 
-              ? { ...item, ...updatedItem }
-              : item
-          )
-        );
-      } else {
-        // Fallback: update local state only
-        setMenuItems(prev => 
-          prev.map(item => 
-            item.id === id 
-              ? { ...item, ...updates }
-              : item
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Error updating menu item:', error);
-      // Fallback: update local state only
-      setMenuItems(prev => 
-        prev.map(item => 
-          item.id === id 
-            ? { ...item, ...updates }
-            : item
-        )
-      );
-    }
+    // Update local state only for now
+    setMenuItems(prev => 
+      prev.map(item => 
+        item.id === id 
+          ? { ...item, ...updates }
+          : item
+      )
+    );
   };
 
   const toggleItemVisibility = async (id: string) => {
