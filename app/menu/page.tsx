@@ -268,10 +268,10 @@ export default function MenuPage() {
                 const cartItem = state.items.find(cartItem => cartItem.id === item.id);
                 const quantity = cartItem?.quantity || 0;
 
-                // Ensure item has proper image URL
+                // Always use correct image from getFoodImage
                 const itemWithImage = {
                   ...item,
-                  image: item.image || getFoodImage(item.id)
+                  image: getFoodImage(item.id)
                 };
 
                 return (
