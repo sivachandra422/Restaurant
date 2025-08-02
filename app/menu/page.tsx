@@ -27,15 +27,30 @@ export default function MenuPage() {
   const { isOnline } = useOffline();
   const { language } = useLanguage();
   const { orderHistory } = useCustomerExperience();
-  const { getVisibleItems, getItemsByCategory } = useMenu();
+  const { getVisibleItems, getItemsByCategory, refreshMenu } = useMenu();
   
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [showOrderHistory, setShowOrderHistory] = useState(false);
+  const [lastMenuUpdate, setLastMenuUpdate] = useState(0);
 
   // Get visible menu items (filtered by disabled status)
   const allMenuItems = getVisibleItems();
+
+  // Listen for menu updates from admin dashboard
+  useEffect(() => {
+    const handleMenuUpdate = () => {
+      setLastMenuUpdate(Date.now());
+      refreshMenu();
+    };
+
+    window.addEventListener('menuUpdated', handleMenuUpdate);
+    
+    return () => {
+      window.removeEventListener('menuUpdated', handleMenuUpdate);
+    };
+  }, [refreshMenu]);
 
   // Filter items based on search and category
   const filteredItems = useMemo(() => {
@@ -73,7 +88,7 @@ export default function MenuPage() {
     });
 
     return items;
-  }, [allMenuItems, selectedCategory, searchQuery, sortBy, getItemsByCategory]);
+  }, [allMenuItems, selectedCategory, searchQuery, sortBy, getItemsByCategory, lastMenuUpdate]);
 
   // Extract table number from URL
   useEffect(() => {

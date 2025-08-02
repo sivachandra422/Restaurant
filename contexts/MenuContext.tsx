@@ -52,7 +52,12 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
     if (savedMenu) {
       try {
         const parsedMenu = JSON.parse(savedMenu);
-        setMenuItems(parsedMenu);
+        // Ensure all items have images
+        const menuWithImages = parsedMenu.map((item: MenuItem) => ({
+          ...item,
+          image: item.image || getFoodImage(item.id)
+        }));
+        setMenuItems(menuWithImages);
         setLoading(false);
       } catch (error) {
         console.error('Error loading menu from localStorage:', error);
@@ -67,18 +72,39 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (menuItems.length > 0) {
       localStorage.setItem('sriKanyaMenu', JSON.stringify(menuItems));
+      // Trigger a custom event to notify other components
+      window.dispatchEvent(new CustomEvent('menuUpdated', { detail: menuItems }));
     }
   }, [menuItems]);
 
+  // Listen for menu updates from other components
+  useEffect(() => {
+    const handleMenuUpdate = (event: CustomEvent) => {
+      setMenuItems(event.detail);
+    };
+
+    window.addEventListener('menuUpdated', handleMenuUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('menuUpdated', handleMenuUpdate as EventListener);
+    };
+  }, []);
+
   const updateMenuItem = async (id: string, updates: Partial<MenuItem>) => {
-    // Update local state only for now
-    setMenuItems(prev => 
-      prev.map(item => 
-        item.id === id 
-          ? { ...item, ...updates }
-          : item
-      )
+    // Update local state
+    const updatedItems = menuItems.map(item => 
+      item.id === id 
+        ? { ...item, ...updates }
+        : item
     );
+    
+    setMenuItems(updatedItems);
+    
+    // Save to localStorage immediately
+    localStorage.setItem('sriKanyaMenu', JSON.stringify(updatedItems));
+    
+    // Trigger menu update event
+    window.dispatchEvent(new CustomEvent('menuUpdated', { detail: updatedItems }));
   };
 
   const toggleItemVisibility = async (id: string) => {
