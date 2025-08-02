@@ -124,7 +124,7 @@ function formatWebhookPayload(orderData: any) {
       name: item.name,
       quantity: item.quantity,
       price: item.price,
-      subtotal: item.price * item.quantity, // Calculate subtotal
+      subtotal: item.price * item.quantity, // Calculate subtotal for webhook
       category: item.category,
       isVeg: item.isVeg,
       specialNotes: ""
@@ -143,7 +143,7 @@ function formatWebhookPayload(orderData: any) {
         name: item.name,
         quantity: item.quantity,
         price: item.price,
-        subtotal: item.price * item.quantity, // Calculate subtotal
+        subtotal: item.price * item.quantity, // Calculate subtotal for webhook
         category: item.category,
         isVeg: item.isVeg,
         specialNotes: ""

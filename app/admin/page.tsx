@@ -460,21 +460,30 @@ function OrderDetailsModal({ order, onClose }: { order: any, onClose: () => void
         {/* Order Items */}
         <div className="space-y-3">
           <h3 className="font-semibold text-gray-900">Order Items</h3>
-          {items.map((item: any, index: number) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex-1">
-                <p className="font-medium">{item.name}</p>
-                <p className="text-sm text-gray-600">
-                  Quantity: {item.quantity} × ₹{item.unitPrice || item.price} = ₹{item.subtotal}
-                </p>
-                {item.isVeg && <Badge className="bg-green-100 text-green-800 text-xs mt-1">Veg</Badge>}
-                {item.isSignature && <Badge className="bg-orange-100 text-orange-800 text-xs mt-1 ml-1">Signature</Badge>}
+          {items.map((item: any, index: number) => {
+            // Calculate subtotal based on available data
+            const itemPrice = item.price || item.unitPrice || 0;
+            const itemSubtotal = item.subtotal || (itemPrice * item.quantity);
+            
+            return (
+              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <p className="font-medium">{item.name}</p>
+                  <p className="text-sm text-gray-600">
+                    Quantity: {item.quantity} × ₹{itemPrice} = ₹{itemSubtotal}
+                  </p>
+                  {item.isVeg && <Badge className="bg-green-100 text-green-800 text-xs mt-1">Veg</Badge>}
+                  {item.isSignature && <Badge className="bg-orange-100 text-orange-800 text-xs mt-1 ml-1">Signature</Badge>}
+                  {item.category && (
+                    <Badge className="bg-blue-100 text-blue-800 text-xs mt-1 ml-1">{item.category}</Badge>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">₹{itemSubtotal}</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="font-medium">₹{item.subtotal}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Order Summary */}
