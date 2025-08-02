@@ -26,14 +26,19 @@ export async function GET() {
       // Check if we have items in database
       const count = await MenuItem.countDocuments();
 
-      if (count === 0) {
-        // Initialize database with static data
+      // Force reinitialize database with correct images (temporary fix)
+      if (count === 0 || true) { // Temporarily force reinitialization
+        // Clear existing data
+        await MenuItem.deleteMany({});
+        
+        // Initialize database with static data and correct images
         const menuItems = Object.values(sriKanyaMenu).flat().map(item => ({
           ...item,
           image: getFoodImage(item.id)
         }));
 
         await MenuItem.insertMany(menuItems);
+        console.log('Database reinitialized with correct images');
       }
 
       // Return ALL items including disabled ones (for admin dashboard)
