@@ -43,9 +43,15 @@ export async function PUT(
     
     const body = await request.json();
     
+    // Ensure updatedAt is set to current time
+    const updateData = {
+      ...body,
+      updatedAt: new Date()
+    };
+    
     const menuItem = await MenuItem.findOneAndUpdate(
       { id: params.id },
-      { ...body, updatedAt: new Date() },
+      updateData,
       { new: true, runValidators: true }
     );
     

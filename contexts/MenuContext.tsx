@@ -22,6 +22,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastFetch, setLastFetch] = useState(0);
+  const [lastServerUpdate, setLastServerUpdate] = useState(0);
 
   // Show notification function
   const showNotification = (message: string, type: 'success' | 'info' | 'warning' = 'info') => {
@@ -43,6 +44,33 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
     }, 3000);
   };
 
+  // Check for updates without fetching full data
+  const checkForUpdates = async () => {
+    try {
+      const response = await fetch('/api/menu/last-updated', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-cache'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const serverLastUpdate = data.lastUpdated || 0;
+        
+        // Only fetch full data if there's an actual update
+        if (serverLastUpdate > lastServerUpdate) {
+          console.log('Menu updates detected, fetching new data...');
+          await fetchMenuItems();
+          setLastServerUpdate(serverLastUpdate);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking for updates:', error);
+    }
+  };
+
   // Fetch menu items from API
   const fetchMenuItems = async () => {
     try {
@@ -53,7 +81,6 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        // Add cache busting to ensure fresh data
         cache: 'no-cache'
       });
 
@@ -89,14 +116,49 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
     fetchMenuItems();
   }, []);
 
-  // Poll for updates every 30 seconds (reduced from 5 seconds to prevent frequent reloads)
+  // Smart polling - only check for updates, don't fetch full data unless needed
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchMenuItems();
-    }, 30000); // Poll every 30 seconds instead of 5
+    // Try to use SSE first, fallback to polling
+    let eventSource: EventSource | null = null;
+    
+    try {
+      eventSource = new EventSource('/api/menu/stream');
+      
+      eventSource.onmessage = async (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'update') {
+            console.log('Real-time update detected:', data.message);
+            await fetchMenuItems();
+            setLastServerUpdate(data.timestamp);
+          }
+        } catch (error) {
+          console.error('Error parsing SSE message:', error);
+        }
+      };
 
-    return () => clearInterval(interval);
-  }, []);
+      eventSource.onerror = (error) => {
+        console.error('SSE connection error:', error);
+        eventSource?.close();
+      };
+
+    } catch (error) {
+      console.error('SSE not supported, falling back to polling:', error);
+    }
+
+    // Fallback polling if SSE fails
+    const interval = setInterval(() => {
+      if (!eventSource || eventSource.readyState === EventSource.CLOSED) {
+        checkForUpdates();
+      }
+    }, 10000); // Check every 10 seconds, but only fetch if there are changes
+
+    return () => {
+      clearInterval(interval);
+      eventSource?.close();
+    };
+  }, [lastServerUpdate]);
 
   // Update menu item via API
   const updateMenuItem = async (id: string, updates: Partial<MenuItem>) => {
@@ -123,6 +185,9 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
             : item
         )
       );
+
+      // Update server timestamp
+      setLastServerUpdate(Date.now());
 
       // Show notification
       if (updates.isDisabled !== undefined) {
