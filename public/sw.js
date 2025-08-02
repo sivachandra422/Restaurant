@@ -3,8 +3,6 @@ const urlsToCache = [
   '/',
   '/menu',
   '/api/orders',
-  '/assets/',
-  '/menu-images/',
   '/_next/static/',
 ];
 
@@ -21,6 +19,11 @@ self.addEventListener('install', (event) => {
 
 // Fetch event - serve from cache when offline
 self.addEventListener('fetch', (event) => {
+  // Skip caching for image requests to avoid interference
+  if (event.request.destination === 'image') {
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request)
       .then((response) => {

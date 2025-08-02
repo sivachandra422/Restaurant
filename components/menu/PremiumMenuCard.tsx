@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Minus, Star, Leaf, Zap, Heart, ChefHat } from 'lucide-react';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { MenuItem } from '@/data/sriKanyaMenu';
-import { getFoodImage, getFallbackImage } from '@/lib/imageMappings';
+import { getFoodImage, getFallbackImage, getLocalFallbackImage } from '@/lib/imageMappings';
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCustomerExperience } from '@/contexts/CustomerExperienceContext';
@@ -33,14 +33,15 @@ export function PremiumMenuCard({
   const { language } = useLanguage();
   const { isFavorite: isItemFavorite, addToFavorites, removeFromFavorites } = useCustomerExperience();
   
-  const [imageError, setImageError] = React.useState(false);
-  const [imageLoading, setImageLoading] = React.useState(true);
-  const [isFavorite, setIsFavorite] = React.useState(false);
-  const [currentImageUrl, setCurrentImageUrl] = React.useState('');
-
-  // Get the proper image URL for this item with consistent styling
-  const primaryImageUrl = getFoodImage(item.id);
-  const fallbackImageUrl = getFallbackImage(item.category);
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+  const [currentImageUrl, setCurrentImageUrl] = useState('');
+  const [fallbackAttempt, setFallbackAttempt] = useState(0);
+  
+  // Get the proper image URL for this item with robust fallback system
+  const primaryImageUrl = item.image || getFoodImage(item.id); // Use database image first
+  const cloudinaryFallbackUrl = getFoodImage(item.id);
+  const localFallbackUrl = getLocalFallbackImage(item.id);
 
   // Get item-specific limits
   const maxQuantity = getMaxQuantity(item);
@@ -50,7 +51,11 @@ export function PremiumMenuCard({
     // Reset image state when item changes for consistent loading
     setImageError(false);
     setImageLoading(true);
+    setFallbackAttempt(0);
     setCurrentImageUrl(primaryImageUrl);
+    
+    // Test image accessibility for debugging
+    console.log(`Loading image for ${item.id}: ${primaryImageUrl}`);
   }, [item.id, primaryImageUrl]);
 
   const handleAddClick = (e: React.MouseEvent) => {
@@ -94,14 +99,44 @@ export function PremiumMenuCard({
   };
 
   const handleImageError = () => {
-    if (!imageError) {
-      // Try fallback image with consistent styling
+    console.log(`Image failed to load for ${item.id}: ${currentImageUrl}`);
+    
+    if (fallbackAttempt === 0) {
+      // First fallback: If we were using database image, try Cloudinary
+      if (currentImageUrl.startsWith('/menu-images/')) {
+        setFallbackAttempt(1);
+        setCurrentImageUrl(cloudinaryFallbackUrl);
+        console.log(`Trying Cloudinary for ${item.id}: ${cloudinaryFallbackUrl}`);
+      } else {
+        // If we were using Cloudinary, try local image
+        setFallbackAttempt(1);
+        setImageError(true);
+        setCurrentImageUrl(localFallbackUrl);
+        console.log(`Trying local fallback for ${item.id}: ${localFallbackUrl}`);
+      }
+    } else if (fallbackAttempt === 1) {
+      // Second fallback: Try the opposite of what we tried first
+      if (currentImageUrl.startsWith('https://res.cloudinary.com/')) {
+        setFallbackAttempt(2);
+        setImageError(true);
+        setCurrentImageUrl(localFallbackUrl);
+        console.log(`Trying local fallback for ${item.id}: ${localFallbackUrl}`);
+      } else {
+        setFallbackAttempt(2);
+        setImageError(true);
+        setCurrentImageUrl(cloudinaryFallbackUrl);
+        console.log(`Trying Cloudinary fallback for ${item.id}: ${cloudinaryFallbackUrl}`);
+      }
+    } else {
+      // Final fallback: Use a default image
       setImageError(true);
-      setCurrentImageUrl(fallbackImageUrl);
+      setCurrentImageUrl('/menu-images/chicken_biryani.jpg');
+      console.log(`Using default image for ${item.id}`);
     }
   };
 
   const handleImageLoad = () => {
+    console.log(`Image loaded successfully for ${item.id}: ${currentImageUrl}`);
     setImageLoading(false);
   };
 

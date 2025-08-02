@@ -16,22 +16,40 @@ export async function GET() {
       start(controller) {
         let lastUpdate = Date.now();
         let isActive = true;
+        let interval: NodeJS.Timeout | null = null;
 
         // Send initial connection message
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connected', timestamp: lastUpdate })}\n\n`));
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connected', timestamp: lastUpdate })}\n\n`));
+        } catch (error) {
+          console.error('Failed to send initial message:', error);
+          return;
+        }
 
-        // Check for updates every 30 seconds
-        const interval = setInterval(async () => {
+        // Check for updates every 2 minutes
+        interval = setInterval(async () => {
           try {
             // Check if we should stop
             if (!isActive) {
-              clearInterval(interval);
+              if (interval) {
+                clearInterval(interval);
+                interval = null;
+              }
               return;
             }
 
             if (!process.env.MONGODB_URI) {
               // If no database, just send heartbeat
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`));
+              try {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`));
+              } catch (enqueueError) {
+                console.error('Failed to send heartbeat:', enqueueError);
+                isActive = false;
+                if (interval) {
+                  clearInterval(interval);
+                  interval = null;
+                }
+              }
               return;
             }
 
@@ -41,33 +59,59 @@ export async function GET() {
 
             // If there's a new update, send it
             if (currentUpdate > lastUpdate) {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-                type: 'update', 
-                timestamp: currentUpdate,
-                message: 'Menu has been updated'
-              })}\n\n`));
-              lastUpdate = currentUpdate;
+              try {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+                  type: 'update', 
+                  timestamp: currentUpdate,
+                  message: 'Menu has been updated'
+                })}\n\n`));
+                lastUpdate = currentUpdate;
+              } catch (enqueueError) {
+                console.error('Failed to send update:', enqueueError);
+                isActive = false;
+                if (interval) {
+                  clearInterval(interval);
+                  interval = null;
+                }
+              }
             } else {
               // Send heartbeat to keep connection alive
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`));
+              try {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`));
+              } catch (enqueueError) {
+                console.error('Failed to send heartbeat:', enqueueError);
+                isActive = false;
+                if (interval) {
+                  clearInterval(interval);
+                  interval = null;
+                }
+              }
             }
           } catch (error) {
             console.error('SSE error:', error);
-            // Only try to send error if controller is still active
+            // Only try to send error if controller is still active and not closed
             try {
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: 'Connection error' })}\n\n`));
+              if (isActive) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: 'Connection error' })}\n\n`));
+              }
             } catch (enqueueError) {
               console.error('Failed to send error message:', enqueueError);
               isActive = false;
-              clearInterval(interval);
+              if (interval) {
+                clearInterval(interval);
+                interval = null;
+              }
             }
           }
-        }, 120000); // Check every 2 minutes instead of 30 seconds
+        }, 120000); // Check every 2 minutes
 
         // Clean up on close
         return () => {
           isActive = false;
-          clearInterval(interval);
+          if (interval) {
+            clearInterval(interval);
+            interval = null;
+          }
         };
       }
     });

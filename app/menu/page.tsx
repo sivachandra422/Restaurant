@@ -42,6 +42,7 @@ export default function MenuPage() {
   // Extract table number from URL and set it in cart context
   useEffect(() => {
     const tableParam = searchParams.get('table');
+    console.log('Table param from URL:', tableParam);
     if (tableParam) {
       const tableNumber = parseInt(tableParam, 10);
       if (!isNaN(tableNumber) && tableNumber > 0) {
@@ -50,6 +51,11 @@ export default function MenuPage() {
       }
     }
   }, [searchParams, setTableNumber]);
+
+  // Debug: Log current table number
+  useEffect(() => {
+    console.log('Current table number in state:', state.tableNumber);
+  }, [state.tableNumber]);
 
   // Get visible menu items (filtered by disabled status)
   const allMenuItems = getVisibleItems();
@@ -106,20 +112,6 @@ export default function MenuPage() {
     return items;
   }, [allMenuItems, selectedCategory, searchQuery, sortBy, getItemsByCategory]);
 
-  // Extract table number from URL
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tableNumber = urlParams.get('table');
-    if (tableNumber) {
-      // Set table number in cart context
-      const numericTable = parseInt(tableNumber);
-      if (!isNaN(numericTable)) {
-        // Update cart context with table number
-        // This would need to be implemented in CartContext
-      }
-    }
-  }, []);
-
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -143,15 +135,16 @@ export default function MenuPage() {
 
             {/* Header Actions */}
             <div className="flex items-center space-x-1 sm:space-x-2">
-              {state.tableNumber && (
+              {/* Table number display - with fallback */}
+              {(state.tableNumber || searchParams.get('table')) && (
                 <div className="hidden sm:block text-xs text-gray-600 bg-gray-50 px-2 py-1 rounded-md border border-gray-200 shadow-soft">
-                  Table {state.tableNumber}
+                  Table {state.tableNumber || searchParams.get('table')}
                 </div>
               )}
-              {/* Mobile table indicator */}
-              {state.tableNumber && (
+              {/* Mobile table indicator - with fallback */}
+              {(state.tableNumber || searchParams.get('table')) && (
                 <div className="sm:hidden w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center shadow-soft hover:shadow-glow transition-all duration-200 hover:scale-110">
-                  <span className="text-xs font-medium text-orange-700">{state.tableNumber}</span>
+                  <span className="text-xs font-medium text-orange-700">{state.tableNumber || searchParams.get('table')}</span>
                 </div>
               )}
               {/* Real-time sync indicator */}

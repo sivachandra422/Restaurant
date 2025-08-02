@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import { MenuItem } from '@/lib/models/MenuItem';
 import { sriKanyaMenu } from '@/data/sriKanyaMenu';
-import { getFoodImage } from '@/lib/imageMappings';
+import { getFoodImage, getLocalFallbackImage } from '@/lib/imageMappings';
 
 // Force dynamic rendering to prevent static generation errors
 export const dynamic = 'force-dynamic';
@@ -27,24 +27,34 @@ export async function GET() {
       const count = await MenuItem.countDocuments();
 
       if (count === 0) {
-        // Initialize database with static data and correct images
+        // Initialize database with static data and local images
         const menuItems = Object.values(sriKanyaMenu).flat().map(item => ({
           ...item,
-          image: getFoodImage(item.id)
+          image: getLocalFallbackImage(item.id) // Use local images for database
         }));
 
         await MenuItem.insertMany(menuItems);
-        console.log('Database initialized with correct images');
+        console.log('Database initialized with local images');
       }
 
       // Return ALL items including disabled ones (for admin dashboard)
       const menuItems = await MenuItem.find({}).sort({ category: 1, name: 1 });
 
-      // Always return correct images regardless of database content
-      const itemsWithImages = menuItems.map(item => ({
-        ...item.toObject(),
-        image: getFoodImage(item.id) // Always use the correct image
-      }));
+      // Use database images first, with intelligent fallback
+      const itemsWithImages = menuItems.map(item => {
+        const itemObj = item.toObject();
+        
+        // If database has a valid image, use it
+        if (itemObj.image && itemObj.image.startsWith('/menu-images/')) {
+          return itemObj;
+        }
+        
+        // Otherwise, use Cloudinary with local fallback
+        return {
+          ...itemObj,
+          image: getFoodImage(itemObj.id)
+        };
+      });
 
       return NextResponse.json(itemsWithImages);
     } catch (dbError) {

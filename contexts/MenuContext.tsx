@@ -91,11 +91,19 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json();
       
-      // Always use correct images from getFoodImage, ignore database images
-      const itemsWithImages = data.map((item: MenuItem) => ({
-        ...item,
-        image: getFoodImage(item.id) // Always use the correct image
-      }));
+      // Use database images if available, otherwise use Cloudinary with fallback
+      const itemsWithImages = data.map((item: MenuItem) => {
+        // If database has a valid local image, use it
+        if (item.image && item.image.startsWith('/menu-images/')) {
+          return item;
+        }
+        
+        // Otherwise, use Cloudinary with local fallback
+        return {
+          ...item,
+          image: getFoodImage(item.id)
+        };
+      });
       
       setMenuItems(itemsWithImages);
       setLastFetch(Date.now());
