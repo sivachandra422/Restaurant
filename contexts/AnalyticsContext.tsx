@@ -164,10 +164,12 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addOrder = (order: OrderAnalytics) => {
+    console.log('Adding order to analytics:', order);
     const newOrders = [...orders, order];
     setOrders(newOrders);
     const newAnalytics = calculateAnalytics(newOrders);
     setAnalytics(newAnalytics);
+    console.log('Updated analytics:', newAnalytics);
   };
 
   const addRating = (orderId: string, rating: number, feedback?: string) => {

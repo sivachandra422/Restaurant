@@ -90,19 +90,19 @@ function formatWebhookPayload(orderData: any) {
     orderId: orderData.orderId,
     timestamp: orderData.timestamp,
     tableNumber: orderData.tableNumber,
-    customerName: orderData.customerName,
-    customerPhone: orderData.customerPhone,
+    customerName: orderData.customer?.name || "",
+    customerPhone: orderData.customer?.phone || "",
     items: orderData.items.map((item: any) => ({
       name: item.name,
       quantity: item.quantity,
-      unitPrice: item.price,
-      subtotal: item.price * item.quantity,
+      price: item.unitPrice || item.price, // Use unitPrice if available, fallback to price
+      subtotal: item.subtotal, // Use the calculated subtotal from cart
       category: item.category,
       isVeg: item.isVeg,
       specialNotes: item.specialNotes || ""
     })),
     specialInstructions: orderData.specialInstructions,
-    totalAmount: orderData.totalAmount,
+    totalAmount: orderData.orderSummary?.grandTotal || orderData.totalAmount,
     estimatedTime: orderData.estimatedTime,
     priority: orderData.priority,
     quantityValidation: orderData.quantityValidation,
@@ -110,18 +110,18 @@ function formatWebhookPayload(orderData: any) {
       orderId: orderData.orderId,
       timestamp: orderData.timestamp,
       tableNumber: orderData.tableNumber,
-      customerName: orderData.customerName,
+      customerName: orderData.customer?.name || "",
       items: orderData.items.map((item: any) => ({
         name: item.name,
         quantity: item.quantity,
-        unitPrice: item.price,
-        subtotal: item.price * item.quantity,
+        price: item.unitPrice || item.price, // Use unitPrice if available, fallback to price
+        subtotal: item.subtotal, // Use the calculated subtotal from cart
         category: item.category,
         isVeg: item.isVeg,
         specialNotes: item.specialNotes || ""
       })),
       specialInstructions: orderData.specialInstructions,
-      totalAmount: orderData.totalAmount,
+      totalAmount: orderData.orderSummary?.grandTotal || orderData.totalAmount,
       estimatedTime: orderData.estimatedTime,
       priority: orderData.priority
     }
