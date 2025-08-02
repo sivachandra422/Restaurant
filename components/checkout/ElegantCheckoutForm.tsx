@@ -87,38 +87,32 @@ export function ElegantCheckoutForm() {
 
     const orderData = {
       orderId: `SRK-${Date.now()}`,
-      restaurantName: 'Sri Kanya Restaurant',
-      tableNumber: state.tableNumber || 0,
       sessionId: state.sessionId || `table-${state.tableNumber}-${Date.now()}`,
       timestamp: new Date().toISOString(),
-      customer: {
-        name: formData.customerName,
-        phone: formData.customerPhone,
-      },
+      tableNumber: state.tableNumber || 0,
+      customerName: formData.customerName,
+      customerPhone: formData.customerPhone,
       items: state.items.map(item => ({
         id: item.id,
         name: item.name,
         quantity: item.quantity,
-        unitPrice: item.price,
-        subtotal: item.subtotal,
+        price: item.price, // Use price instead of unitPrice to match schema
         category: item.category,
         isVeg: item.isVeg,
-        isSignature: item.isSignature || false,
-        maxQuantity: item.maxQuantity,
-        bulkPricing: item.bulkPricing,
       })),
-      orderSummary: {
-        itemCount: state.totalItems,
-        subtotal: state.totalAmount,
-        tax: 0,
-        serviceCharge: 0,
-        discount: 0,
-        grandTotal: state.totalAmount,
-      },
       specialInstructions: formData.specialInstructions,
-      orderType: 'dine-in',
+      totalAmount: state.totalAmount,
       estimatedTime: '20-25 minutes',
-      status: 'received' as const,
+      priority: 'NORMAL',
+      quantityValidation: {
+        totalItems: state.totalItems,
+        maxItemsPerOrder: 20,
+        hasBulkItems: state.items.some(item => item.quantity > 5),
+        bulkItemsCount: state.items.filter(item => item.quantity > 5).length
+      },
+      status: 'pending',
+      paymentMethod: 'cash',
+      paymentStatus: 'pending'
     };
 
     try {

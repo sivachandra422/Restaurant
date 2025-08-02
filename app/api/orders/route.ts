@@ -6,18 +6,38 @@ import { Order } from '@/lib/models/Order';
 export async function POST(request: NextRequest) {
   try {
     const orderData = await request.json();
+    console.log('Received order data:', orderData);
     
     // If MongoDB is available, save to database
     if (process.env.MONGODB_URI) {
       try {
         await dbConnect();
+        console.log('Database connected successfully');
+        
         const order = new Order(orderData);
-        await order.save();
-        console.log('Order saved to MongoDB:', orderData.orderId);
-      } catch (dbError) {
+        console.log('Order model created:', order);
+        
+        const savedOrder = await order.save();
+        console.log('Order saved to MongoDB successfully:', savedOrder._id);
+        
+        return NextResponse.json({ 
+          success: true, 
+          orderId: orderData.orderId,
+          message: 'Order placed successfully and saved to database' 
+        });
+      } catch (dbError: any) {
         console.error('Failed to save order to MongoDB:', dbError);
-        // Continue without database, order will still be processed
+        console.error('Order data that failed to save:', orderData);
+        
+        // Return error response instead of continuing
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Failed to save order to database',
+          details: dbError?.message || 'Unknown database error'
+        }, { status: 500 });
       }
+    } else {
+      console.log('No MongoDB URI provided, skipping database save');
     }
     
     // Send webhook notification (existing functionality)
@@ -25,13 +45,21 @@ export async function POST(request: NextRequest) {
     if (webhookUrl) {
       try {
         const webhookPayload = formatWebhookPayload(orderData);
-        await fetch(webhookUrl, {
+        console.log('Sending webhook payload:', webhookPayload);
+        
+        const webhookResponse = await fetch(webhookUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(webhookPayload),
         });
+        
+        if (webhookResponse.ok) {
+          console.log('Webhook sent successfully');
+        } else {
+          console.error('Webhook failed with status:', webhookResponse.status);
+        }
       } catch (webhookError) {
         console.error('Webhook error:', webhookError);
         // Don't fail the order if webhook fails
@@ -90,19 +118,19 @@ function formatWebhookPayload(orderData: any) {
     orderId: orderData.orderId,
     timestamp: orderData.timestamp,
     tableNumber: orderData.tableNumber,
-    customerName: orderData.customer?.name || "",
-    customerPhone: orderData.customer?.phone || "",
+    customerName: orderData.customerName || "",
+    customerPhone: orderData.customerPhone || "",
     items: orderData.items.map((item: any) => ({
       name: item.name,
       quantity: item.quantity,
-      price: item.unitPrice || item.price, // Use unitPrice if available, fallback to price
-      subtotal: item.subtotal, // Use the calculated subtotal from cart
+      price: item.price,
+      subtotal: item.price * item.quantity, // Calculate subtotal
       category: item.category,
       isVeg: item.isVeg,
-      specialNotes: item.specialNotes || ""
+      specialNotes: ""
     })),
     specialInstructions: orderData.specialInstructions,
-    totalAmount: orderData.orderSummary?.grandTotal || orderData.totalAmount,
+    totalAmount: orderData.totalAmount,
     estimatedTime: orderData.estimatedTime,
     priority: orderData.priority,
     quantityValidation: orderData.quantityValidation,
@@ -110,18 +138,18 @@ function formatWebhookPayload(orderData: any) {
       orderId: orderData.orderId,
       timestamp: orderData.timestamp,
       tableNumber: orderData.tableNumber,
-      customerName: orderData.customer?.name || "",
+      customerName: orderData.customerName || "",
       items: orderData.items.map((item: any) => ({
         name: item.name,
         quantity: item.quantity,
-        price: item.unitPrice || item.price, // Use unitPrice if available, fallback to price
-        subtotal: item.subtotal, // Use the calculated subtotal from cart
+        price: item.price,
+        subtotal: item.price * item.quantity, // Calculate subtotal
         category: item.category,
         isVeg: item.isVeg,
-        specialNotes: item.specialNotes || ""
+        specialNotes: ""
       })),
       specialInstructions: orderData.specialInstructions,
-      totalAmount: orderData.orderSummary?.grandTotal || orderData.totalAmount,
+      totalAmount: orderData.totalAmount,
       estimatedTime: orderData.estimatedTime,
       priority: orderData.priority
     }
