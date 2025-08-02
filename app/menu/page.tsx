@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, ChefHat, Sparkles, Crown, Search, Filter, SortAsc, Clock, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,7 +25,8 @@ import { OrderHistory } from '@/components/ui/OrderHistory';
 import { ElegantCheckoutForm } from '@/components/checkout/ElegantCheckoutForm';
 
 export default function MenuPage() {
-  const { addToCart, state, removeFromCart, updateQuantity } = useCart();
+  const searchParams = useSearchParams();
+  const { addToCart, state, removeFromCart, updateQuantity, setTableNumber } = useCart();
   const { isOnline } = useOffline();
   const { language } = useLanguage();
   const { orderHistory } = useCustomerExperience();
@@ -36,6 +38,18 @@ export default function MenuPage() {
   const [showOrderHistory, setShowOrderHistory] = useState(false);
   const [lastMenuUpdate, setLastMenuUpdate] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
+
+  // Extract table number from URL and set it in cart context
+  useEffect(() => {
+    const tableParam = searchParams.get('table');
+    if (tableParam) {
+      const tableNumber = parseInt(tableParam, 10);
+      if (!isNaN(tableNumber) && tableNumber > 0) {
+        console.log('Setting table number from URL:', tableNumber);
+        setTableNumber(tableNumber);
+      }
+    }
+  }, [searchParams, setTableNumber]);
 
   // Get visible menu items (filtered by disabled status)
   const allMenuItems = getVisibleItems();
@@ -116,50 +130,40 @@ export default function MenuPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20 lg:h-24">
-            {/* Logo and Restaurant Name */}
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <ChefHat className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-white" />
+      <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <ChefHat className="w-6 h-6 text-white" />
               </div>
-              <div className="min-w-0">
-                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate">Sri Kanya Restaurant</h1>
-                <p className="text-xs sm:text-sm text-gray-600 truncate">Authentic Indian Cuisine</p>
+              <div>
+                <h1 className="text-xl sm:text-2xl font-bold">Sri Kanya Restaurant</h1>
+                <p className="text-sm sm:text-base text-orange-100">Authentic Indian Cuisine</p>
               </div>
             </div>
-
-            {/* Header Actions */}
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              {/* Real-time sync indicator */}
-              {isSyncing && (
-                <div className="flex items-center space-x-1 text-xs text-orange-600">
-                  <RefreshCw className="w-3 h-3 animate-spin" />
-                  <span className="hidden sm:inline">Syncing...</span>
+            
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              {state.tableNumber && (
+                <div className="bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
+                  Table {state.tableNumber}
                 </div>
               )}
-              {/* Manual refresh button */}
-              <Button
+              <button
                 onClick={handleManualRefresh}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1 sm:gap-2"
                 disabled={isSyncing}
+                className="flex items-center space-x-1 bg-white/20 px-3 py-1 rounded-lg text-sm hover:bg-white/30 transition-colors disabled:opacity-50"
               >
-                <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline text-xs sm:text-sm">Refresh</span>
-              </Button>
+                <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </button>
               <LanguageSwitcher />
-              <Button
+              <button
                 onClick={() => setShowOrderHistory(true)}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1 sm:gap-2"
+                className="flex items-center space-x-1 bg-white/20 px-3 py-1 rounded-lg text-sm hover:bg-white/30 transition-colors"
               >
-                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline text-xs sm:text-sm">Orders</span>
-              </Button>
+                <span>Orders</span>
+              </button>
               <PremiumCartIcon />
             </div>
           </div>
