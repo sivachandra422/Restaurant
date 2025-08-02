@@ -69,12 +69,6 @@ export default function MenuPage() {
     };
   }, [refreshMenu]);
 
-  // Add a manual refresh button for immediate updates
-  const handleManualRefresh = () => {
-    setIsSyncing(true);
-    refreshMenu().finally(() => setIsSyncing(false));
-  };
-
   // Filter items based on search and category
   const filteredItems = useMemo(() => {
     let items = allMenuItems;
@@ -164,17 +158,6 @@ export default function MenuPage() {
                   <span>Syncing...</span>
                 </div>
               )}
-              {/* Manual refresh button */}
-              <Button
-                onClick={handleManualRefresh}
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 sm:h-9 sm:w-auto p-0 sm:px-3"
-                disabled={isSyncing}
-              >
-                <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline text-xs ml-1">Refresh</span>
-              </Button>
               <LanguageSwitcher />
               <Button
                 onClick={() => setShowOrderHistory(true)}
