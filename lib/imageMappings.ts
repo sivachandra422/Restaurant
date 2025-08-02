@@ -39,7 +39,7 @@ export const foodImageMappings: { [key: string]: string } = {
   'dragon_chicken': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/dragon_chicken_ujeume',
   'kaju_chicken_balls': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/kaju_chicken_balls_empxbq',
   'chicken_555': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_555_kuqke1',
-  'chicken_65': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop&crop=center',
+  'chicken_65': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_555_kuqke1',
   'chicken_fry': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/chicken_fry_ulixuq',
   'lolipop_chicken': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/lolipop_chicken_snaglx',
   'whigs_fry': 'https://res.cloudinary.com/dklpiguqs/image/upload/w_400,h_300,c_fill,f_auto,q_auto/wings_fry_rvxgpq',

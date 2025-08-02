@@ -23,24 +23,21 @@ export async function GET() {
 
     // Try to connect to MongoDB, but fallback if it fails
     try {
-      // Check if we have items in database
-      const count = await MenuItem.countDocuments();
+      // Always reinitialize database with correct image URLs
+      const menuItems = Object.values(sriKanyaMenu).flat().map(item => ({
+        ...item,
+        image: getFoodImage(item.id)
+      }));
 
-      if (count === 0) {
-        // Initialize database with static data
-        const menuItems = Object.values(sriKanyaMenu).flat().map(item => ({
-          ...item,
-          image: getFoodImage(item.id)
-        }));
-
-        await MenuItem.insertMany(menuItems);
-      }
+      // Clear existing data and insert fresh data
+      await MenuItem.deleteMany({});
+      await MenuItem.insertMany(menuItems);
 
       // Return ALL items including disabled ones (for admin dashboard)
-      const menuItems = await MenuItem.find({}).sort({ category: 1, name: 1 });
+      const updatedMenuItems = await MenuItem.find({}).sort({ category: 1, name: 1 });
 
       // Ensure all items have proper image URLs
-      const itemsWithImages = menuItems.map(item => ({
+      const itemsWithImages = updatedMenuItems.map(item => ({
         ...item.toObject(),
         image: item.image || getFoodImage(item.id)
       }));
