@@ -42,21 +42,11 @@ export async function GET() {
       // Return only visible items (not disabled)
       const menuItems = await MenuItem.find({ isDisabled: { $ne: true } }).sort({ category: 1, name: 1 });
 
-      // Ensure all items have proper image URLs and update database if needed
-      const itemsWithImages = menuItems.map(item => {
-        const correctImage = getFoodImage(item.id);
-        const itemWithImage = {
-          ...item.toObject(),
-          image: item.image || correctImage
-        };
-        
-        // Update database if image is missing or incorrect
-        if (!item.image || item.image !== correctImage) {
-          MenuItem.findByIdAndUpdate(item._id, { image: correctImage }).catch(console.error);
-        }
-        
-        return itemWithImage;
-      });
+      // Always return correct images regardless of database content
+      const itemsWithImages = menuItems.map(item => ({
+        ...item.toObject(),
+        image: getFoodImage(item.id) // Always use the correct image
+      }));
 
       return NextResponse.json(itemsWithImages);
     } catch (dbError) {

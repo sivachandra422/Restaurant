@@ -91,10 +91,10 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json();
       
-      // Ensure all items have images
+      // Always use correct images from getFoodImage, ignore database images
       const itemsWithImages = data.map((item: MenuItem) => ({
         ...item,
-        image: item.image || getFoodImage(item.id)
+        image: getFoodImage(item.id) // Always use the correct image
       }));
       
       setMenuItems(itemsWithImages);
@@ -129,10 +129,10 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json();
       
-      // Ensure all items have images
+      // Always use correct images from getFoodImage, ignore database images
       const itemsWithImages = data.map((item: MenuItem) => ({
         ...item,
-        image: item.image || getFoodImage(item.id)
+        image: getFoodImage(item.id) // Always use the correct image
       }));
       
       return itemsWithImages;
