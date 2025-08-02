@@ -184,7 +184,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
       if (!eventSource || eventSource.readyState === EventSource.CLOSED) {
         checkForUpdates();
       }
-    }, 10000); // Check every 10 seconds, but only fetch if there are changes
+    }, 30000); // Check every 30 seconds instead of 10 seconds
 
     return () => {
       clearInterval(interval);

@@ -19,7 +19,7 @@ export async function GET() {
         // Send initial connection message
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connected', timestamp: lastUpdate })}\n\n`));
 
-        // Check for updates every 5 seconds
+        // Check for updates every 30 seconds instead of 5 seconds
         const interval = setInterval(async () => {
           try {
             if (!process.env.MONGODB_URI) {
