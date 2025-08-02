@@ -61,12 +61,17 @@ export function ElegantCartDrawer() {
               <div key={item.id} className="bg-stone-50 rounded-lg sm:rounded-xl p-3 sm:p-4">
                 <div className="flex gap-3 sm:gap-4">
                   {/* Item Image */}
-                  <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden flex-shrink-0 bg-stone-100">
                     <Image
                       src={item.image}
                       alt={item.name}
                       fill
                       className="object-cover"
+                      onError={(e) => {
+                        // Fallback to a placeholder if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.src = 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop&crop=center';
+                      }}
                     />
                   </div>
 

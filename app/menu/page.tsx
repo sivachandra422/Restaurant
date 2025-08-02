@@ -13,6 +13,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useCustomerExperience } from '@/contexts/CustomerExperienceContext';
 import { useMenu } from '@/contexts/MenuContext';
 import { menuCategories } from '@/data/sriKanyaMenu';
+import { getFoodImage } from '@/lib/imageMappings';
 import { PremiumCartIcon } from '@/components/cart/PremiumCartIcon';
 import { ElegantCartDrawer } from '@/components/cart/ElegantCartDrawer';
 import { ElegantCategoryTabs } from '@/components/menu/ElegantCategoryTabs';
@@ -256,12 +257,18 @@ export default function MenuPage() {
                 const cartItem = state.items.find(cartItem => cartItem.id === item.id);
                 const quantity = cartItem?.quantity || 0;
 
+                // Ensure item has proper image URL
+                const itemWithImage = {
+                  ...item,
+                  image: item.image || getFoodImage(item.id)
+                };
+
                 return (
                   <PremiumMenuCard
                     key={item.id}
-                    item={item}
+                    item={itemWithImage}
                     quantity={quantity}
-                    onAdd={() => addToCart(item, 1)}
+                    onAdd={() => addToCart(itemWithImage, 1)}
                     onRemove={() => removeFromCart(item.id)}
                     onUpdateQuantity={(newQuantity: number) => updateQuantity(item.id, newQuantity)}
                   />
