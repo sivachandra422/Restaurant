@@ -38,14 +38,31 @@ interface EditModalState {
 export default function AdminPage() {
   const { analytics } = useAnalytics();
   const { getAllItems, updateMenuItem, toggleItemVisibility } = useMenu();
-  const [adminState, setAdminState] = useState<AdminState>({
-    isAuthenticated: false,
-    currentSection: 'dashboard'
+  const [adminState, setAdminState] = useState<AdminState>(() => {
+    // Check localStorage for existing session
+    if (typeof window !== 'undefined') {
+      const savedAuth = localStorage.getItem('adminAuthenticated');
+      return {
+        isAuthenticated: savedAuth === 'true',
+        currentSection: 'dashboard'
+      };
+    }
+    return {
+      isAuthenticated: false,
+      currentSection: 'dashboard'
+    };
   });
   const [password, setPassword] = useState('');
   const [editModal, setEditModal] = useState<EditModalState>({
     isOpen: false,
     item: null
+  });
+  const [orderDetailsModal, setOrderDetailsModal] = useState<{
+    isOpen: boolean;
+    order: any | null;
+  }>({
+    isOpen: false,
+    order: null
   });
 
   // Simple authentication (you can change this password)
@@ -53,7 +70,10 @@ export default function AdminPage() {
 
   const handleLogin = () => {
     if (password === ADMIN_PASSWORD) {
-      setAdminState({ ...adminState, isAuthenticated: true });
+      const newState = { ...adminState, isAuthenticated: true };
+      setAdminState(newState);
+      // Save to localStorage
+      localStorage.setItem('adminAuthenticated', 'true');
     } else {
       alert('Incorrect password!');
     }
@@ -62,6 +82,8 @@ export default function AdminPage() {
   const handleLogout = () => {
     setAdminState({ isAuthenticated: false, currentSection: 'dashboard' });
     setPassword('');
+    // Clear from localStorage
+    localStorage.removeItem('adminAuthenticated');
   };
 
   const openEditModal = (item: any) => {
@@ -179,7 +201,12 @@ export default function AdminPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {adminState.currentSection === 'dashboard' && <DashboardSection analytics={analytics} />}
+        {adminState.currentSection === 'dashboard' && (
+          <DashboardSection 
+            analytics={analytics} 
+            onOrderClick={(order) => setOrderDetailsModal({ isOpen: true, order })} 
+          />
+        )}
         {adminState.currentSection === 'menu' && <MenuManagementSection menuItems={getAllItems()} onToggleVisibility={toggleItemVisibility} onEditItem={openEditModal} />}
         {adminState.currentSection === 'analytics' && <AnalyticsSection analytics={analytics} />}
         {adminState.currentSection === 'feedback' && <FeedbackSection analytics={analytics} />}
@@ -194,6 +221,11 @@ export default function AdminPage() {
           onSave={handleSaveEdit}
           onUpdate={updateEditItem}
         />
+      )}
+
+      {/* Order Details Modal */}
+      {orderDetailsModal.isOpen && orderDetailsModal.order && (
+        <OrderDetailsModal order={orderDetailsModal.order} onClose={() => setOrderDetailsModal({ isOpen: false, order: null })} />
       )}
     </div>
   );
@@ -346,8 +378,80 @@ function EditItemModal({ item, onClose, onSave, onUpdate }: {
   );
 }
 
+// Order Details Modal
+function OrderDetailsModal({ order, onClose }: { order: any, onClose: () => void }) {
+  if (!order) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">Order Details</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Order Header */}
+        <div className="bg-gray-50 p-4 rounded-lg mb-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-600">Order ID</p>
+              <p className="font-medium">#{order.orderId.slice(-6)}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Table</p>
+              <p className="font-medium">{order.tableNumber}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Date & Time</p>
+              <p className="font-medium">{new Date(order.timestamp).toLocaleString()}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Total Amount</p>
+              <p className="font-medium text-lg">₹{order.totalAmount}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Order Items */}
+        <div className="space-y-3">
+          <h3 className="font-semibold text-gray-900">Order Items</h3>
+          {order.items.map((item: any, index: number) => (
+            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex-1">
+                <p className="font-medium">{item.name}</p>
+                <p className="text-sm text-gray-600">
+                  Quantity: {item.quantity} × ₹{item.price} = ₹{item.subtotal}
+                </p>
+                {item.isVeg && <Badge className="bg-green-100 text-green-800 text-xs mt-1">Veg</Badge>}
+                {item.isSignature && <Badge className="bg-orange-100 text-orange-800 text-xs mt-1 ml-1">Signature</Badge>}
+              </div>
+              <div className="text-right">
+                <p className="font-medium">₹{item.subtotal}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Order Summary */}
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold">Total Items:</span>
+            <span>{order.items.length}</span>
+          </div>
+          <div className="flex justify-between items-center mt-2">
+            <span className="font-semibold">Total Amount:</span>
+            <span className="font-bold text-lg">₹{order.totalAmount}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Dashboard Section
-function DashboardSection({ analytics }: { analytics: any }) {
+function DashboardSection({ analytics, onOrderClick }: { analytics: any, onOrderClick: (order: any) => void }) {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
@@ -407,13 +511,20 @@ function DashboardSection({ analytics }: { analytics: any }) {
         <CardContent>
           <div className="space-y-3">
             {analytics.recentOrders.slice(0, 5).map((order: any) => (
-              <div key={order.orderId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div 
+                key={order.orderId} 
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+                onClick={() => onOrderClick(order)}
+              >
                 <div>
                   <p className="font-medium">Order #{order.orderId.slice(-6)}</p>
                   <p className="text-sm text-gray-600">Table {order.tableNumber} • ₹{order.totalAmount}</p>
                   <p className="text-xs text-gray-500">{new Date(order.timestamp).toLocaleString()}</p>
                 </div>
-                <Badge variant="outline">{order.items.length} items</Badge>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline">{order.items.length} items</Badge>
+                  <Eye className="w-4 h-4 text-gray-500" />
+                </div>
               </div>
             ))}
           </div>
