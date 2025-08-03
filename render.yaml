@@ -2,7 +2,7 @@ services:
   - type: web
     name: sri-kanya-restaurant-menu
     env: node
-    buildCommand: npm install && npm run build
+    buildCommand: npm cache clean --force && npm install --include=dev && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -16,4 +16,4 @@ services:
       - key: ANALYTICS_WEBHOOK_URL
         sync: false
       - key: ORDER_API_KEY
-        sync: false 
+        sync: false

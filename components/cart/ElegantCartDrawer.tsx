@@ -2,9 +2,9 @@
 
 import React, { useEffect } from 'react';
 import { X, Plus, Minus, Trash2 } from 'lucide-react';
-import Image from 'next/image';
 import { useCart } from '@/contexts/CartContext';
 import { PremiumButton } from '@/components/ui/PremiumButton';
+import Image from 'next/image';
 import { PremiumBadge } from '@/components/ui/PremiumBadge';
 
 export function ElegantCartDrawer() {
@@ -67,11 +67,13 @@ export function ElegantCartDrawer() {
             state.items.map((item) => (
               <div key={item.id} className="bg-stone-50 rounded-lg sm:rounded-xl p-3 sm:p-4">
                 <div className="flex items-center space-x-3">
-                  <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100">
-                    <img
+                  <div className="relative w-12 h-12 rounded-lg overflow-hidden">
+                    <Image
                       src={item.image || '/menu-images/default.jpg'}
                       alt={item.name}
-                      className="w-full h-full object-cover"
+                      layout="fill"
+                      objectFit="cover"
+                      className="rounded-lg"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = '/menu-images/default.jpg';
