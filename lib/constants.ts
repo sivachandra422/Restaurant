@@ -1,12 +1,12 @@
 // Constants for Sri Kanya Family Restaurants
 
 export const RESTAURANT_INFO = {
-  name: 'Sri Kanya Family Restaurants',
+  name: 'Sri Kanya Family Restaurant',
   tagline: 'Authentic Indian Cuisine & Traditional Flavors',
   phone: '+91-9876543210',
-  address: '123 Culinary Street, Food District, City 560001',
-  email: 'orders@srikanya.com',
-  hours: 'Daily: 11:00 AM - 11:00 PM',
+  address: 'Dharmavaram, Andhra Pradesh - 533430',
+  email: 'srikanya.dharmavaram@gmail.com',
+  hours: 'Daily: 8:00 AM - 11:00 PM',
 };
 
 export const ORDER_CONFIG = {

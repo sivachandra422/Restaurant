@@ -8,6 +8,8 @@ import { getFoodImage } from '@/lib/imageMappings';
 interface MenuContextType {
   menuItems: MenuItem[];
   updateMenuItem: (id: string, updates: Partial<MenuItem>) => Promise<void>;
+  createMenuItem: (item: Partial<MenuItem>) => Promise<void>;
+  deleteMenuItem: (id: string) => Promise<void>;
   toggleItemVisibility: (id: string) => Promise<void>;
   getVisibleItems: () => MenuItem[];
   getAllItems: () => MenuItem[]; // New function for admin
@@ -168,11 +170,31 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
         try {
           const data = JSON.parse(event.data);
           
-          if (data.type === 'update') {
-            console.log('Real-time update detected:', data.message);
+          // Only respond to admin dashboard changes (menuUpdate events)
+          if (data.type === 'menuUpdate') {
+            console.log('Admin dashboard change detected:', data.data);
+            
+            // Show notification to user about admin changes
+            if (data.data) {
+              const updateData = data.data;
+              if (updateData.action === 'created') {
+                showNotification('New menu item has been added', 'info');
+              } else if (updateData.action === 'updated') {
+                showNotification('Menu item has been updated', 'info');
+              } else if (updateData.action === 'deleted') {
+                showNotification('Menu item has been removed', 'warning');
+              }
+            }
+            
             await fetchMenuItems();
             setLastServerUpdate(data.timestamp);
+            
+            // Dispatch custom event for immediate UI updates
+            window.dispatchEvent(new CustomEvent('menuUpdated', { 
+              detail: { timestamp: data.timestamp, type: data.type, source: 'admin' } 
+            }));
           }
+          // Ignore other types of updates (like heartbeat, general updates, etc.)
         } catch (error) {
           console.error('Error parsing SSE message:', error);
         }
@@ -203,15 +225,31 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
   // Update menu item via API
   const updateMenuItem = async (id: string, updates: Partial<MenuItem>) => {
     try {
+      // Get authentication headers if available (for admin operations)
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+
+      // Try to get admin token from cookies
+      const adminToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('admin-token='))
+        ?.split('=')[1];
+
+      if (adminToken) {
+        headers['Authorization'] = `Bearer ${adminToken}`;
+      }
+
       const response = await fetch(`/api/menu/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(updates),
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Unauthorized - Please log in as admin');
+        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -254,6 +292,7 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
             : item
         )
       );
+      throw error; // Re-throw to handle in calling component
     }
   };
 
@@ -261,6 +300,105 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
     const item = menuItems.find(item => item.id === id);
     if (item) {
       await updateMenuItem(id, { isDisabled: !item.isDisabled });
+    }
+  };
+
+  // Create new menu item
+  const createMenuItem = async (item: Partial<MenuItem>) => {
+    try {
+      // Get authentication headers if available (for admin operations)
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+
+      // Try to get admin token from cookies
+      const adminToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('admin-token='))
+        ?.split('=')[1];
+
+      if (adminToken) {
+        headers['Authorization'] = `Bearer ${adminToken}`;
+      }
+
+      const response = await fetch('/api/menu', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(item),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Unauthorized - Please log in as admin');
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const newItem = await response.json();
+      
+      // Update local state immediately
+      setMenuItems(prev => [...prev, newItem]);
+
+      // Update server timestamp
+      setLastServerUpdate(Date.now());
+
+      showNotification('Menu item created successfully', 'success');
+
+      // Trigger immediate refresh for all clients
+      await fetchMenuItems();
+      
+    } catch (error) {
+      console.error('Error creating menu item:', error);
+      showNotification('Failed to create menu item', 'warning');
+      throw error;
+    }
+  };
+
+  // Delete menu item
+  const deleteMenuItem = async (id: string) => {
+    try {
+      // Get authentication headers if available (for admin operations)
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+
+      // Try to get admin token from cookies
+      const adminToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('admin-token='))
+        ?.split('=')[1];
+
+      if (adminToken) {
+        headers['Authorization'] = `Bearer ${adminToken}`;
+      }
+
+      const response = await fetch(`/api/menu/${id}`, {
+        method: 'DELETE',
+        headers,
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Unauthorized - Please log in as admin');
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Update local state immediately
+      setMenuItems(prev => prev.filter(item => item.id !== id));
+
+      // Update server timestamp
+      setLastServerUpdate(Date.now());
+
+      showNotification('Menu item deleted successfully', 'success');
+
+      // Trigger immediate refresh for all clients
+      await fetchMenuItems();
+      
+    } catch (error) {
+      console.error('Error deleting menu item:', error);
+      showNotification('Failed to delete menu item', 'warning');
+      throw error;
     }
   };
 
@@ -286,6 +424,8 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
     <MenuContext.Provider value={{
       menuItems,
       updateMenuItem,
+      createMenuItem,
+      deleteMenuItem,
       toggleItemVisibility,
       getVisibleItems,
       getAllItems,

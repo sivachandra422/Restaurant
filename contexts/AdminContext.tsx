@@ -17,8 +17,9 @@ interface AdminState {
   user: AdminUser | null;
   isLoading: boolean;
   error: string | null;
-  currentSection: 'dashboard' | 'menu' | 'analytics' | 'feedback' | 'settings' | 'orders';
+  currentSection: 'dashboard' | 'menu' | 'analytics' | 'feedback' | 'settings' | 'orders' | 'backup';
   sessionExpiry: Date | null;
+  token: string | null;
   preferences: {
     theme: 'light' | 'dark' | 'auto';
     language: 'en' | 'hi' | 'te';
@@ -29,7 +30,7 @@ interface AdminState {
 
 type AdminAction =
   | { type: 'LOGIN_START' }
-  | { type: 'LOGIN_SUCCESS'; payload: AdminUser }
+  | { type: 'LOGIN_SUCCESS'; payload: { user: AdminUser; token: string } }
   | { type: 'LOGIN_FAILURE'; payload: string }
   | { type: 'LOGOUT' }
   | { type: 'SET_SECTION'; payload: AdminState['currentSection'] }
@@ -47,9 +48,30 @@ interface AdminContextType {
   setPreferences: (preferences: Partial<AdminState['preferences']>) => void;
   clearError: () => void;
   checkAuth: () => boolean;
+  getAuthHeaders: () => HeadersInit;
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
+
+// Helper function to set cookie
+const setCookie = (name: string, value: string, days: number) => {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+};
+
+// Helper function to get cookie
+const getCookie = (name: string): string | null => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+};
+
+// Helper function to delete cookie
+const deleteCookie = (name: string) => {
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
+};
 
 // Admin Reducer
 function adminReducer(state: AdminState, action: AdminAction): AdminState {
@@ -65,7 +87,8 @@ function adminReducer(state: AdminState, action: AdminAction): AdminState {
       return {
         ...state,
         isAuthenticated: true,
-        user: action.payload,
+        user: action.payload.user,
+        token: action.payload.token,
         isLoading: false,
         error: null,
         sessionExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
@@ -76,6 +99,7 @@ function adminReducer(state: AdminState, action: AdminAction): AdminState {
         ...state,
         isAuthenticated: false,
         user: null,
+        token: null,
         isLoading: false,
         error: action.payload,
         sessionExpiry: null
@@ -86,6 +110,7 @@ function adminReducer(state: AdminState, action: AdminAction): AdminState {
         ...state,
         isAuthenticated: false,
         user: null,
+        token: null,
         sessionExpiry: null,
         currentSection: 'dashboard'
       };
@@ -132,10 +157,11 @@ function adminReducer(state: AdminState, action: AdminAction): AdminState {
 const initialState: AdminState = {
   isAuthenticated: false,
   user: null,
-  isLoading: false,
+  isLoading: true, // Start with loading true
   error: null,
   currentSection: 'dashboard',
   sessionExpiry: null,
+  token: null,
   preferences: {
     theme: 'light',
     language: 'en',
@@ -153,22 +179,41 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const checkExistingSession = () => {
       try {
+        // Check for JWT token in cookie
+        const token = getCookie('admin-token');
         const sessionData = localStorage.getItem('adminSession');
-        if (sessionData) {
+        
+        if (token && sessionData) {
           const session = JSON.parse(sessionData);
           const expiry = new Date(session.expiry);
           
           if (expiry > new Date()) {
-            dispatch({ type: 'LOGIN_SUCCESS', payload: session.user });
+            dispatch({ 
+              type: 'LOGIN_SUCCESS', 
+              payload: { 
+                user: session.user, 
+                token: token 
+              } 
+            });
           } else {
             // Session expired
             localStorage.removeItem('adminSession');
+            deleteCookie('admin-token');
             dispatch({ type: 'LOGOUT' });
           }
+        } else {
+          // No valid session
+          localStorage.removeItem('adminSession');
+          deleteCookie('admin-token');
+          dispatch({ type: 'LOGOUT' });
         }
+        // Set loading to false after checking session
+        dispatch({ type: 'SET_LOADING', payload: false });
       } catch (error) {
         console.error('Error checking admin session:', error);
         localStorage.removeItem('adminSession');
+        deleteCookie('admin-token');
+        dispatch({ type: 'SET_LOADING', payload: false });
       }
     };
 
@@ -190,18 +235,20 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
   // Save session to localStorage when authenticated
   useEffect(() => {
-    if (state.isAuthenticated && state.user && state.sessionExpiry) {
+    if (state.isAuthenticated && state.user && state.sessionExpiry && state.token) {
       const sessionData = {
         user: state.user,
         expiry: state.sessionExpiry.toISOString(),
         preferences: state.preferences
       };
       localStorage.setItem('adminSession', JSON.stringify(sessionData));
+      setCookie('admin-token', state.token, 1); // 1 day
     }
-  }, [state.isAuthenticated, state.user, state.sessionExpiry, state.preferences]);
+  }, [state.isAuthenticated, state.user, state.sessionExpiry, state.token, state.preferences]);
 
   // Login function
   const login = useCallback(async (username: string, password: string) => {
+    console.log('Login attempt for:', username);
     dispatch({ type: 'LOGIN_START' });
 
     try {
@@ -214,14 +261,27 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ username, password }),
       });
 
+      console.log('Login response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
-        dispatch({ type: 'LOGIN_SUCCESS', payload: data.user });
+        console.log('Login successful, user data:', data.user);
+        console.log('Login successful, token received:', !!data.token);
+        
+        dispatch({ 
+          type: 'LOGIN_SUCCESS', 
+          payload: { 
+            user: data.user, 
+            token: data.token 
+          } 
+        });
       } else {
         const errorData = await response.json();
+        console.log('Login failed:', errorData);
         dispatch({ type: 'LOGIN_FAILURE', payload: errorData.message || 'Login failed' });
       }
     } catch (error) {
+      console.error('Login error:', error);
       dispatch({ type: 'LOGIN_FAILURE', payload: 'Network error. Please try again.' });
     }
   }, []);
@@ -230,7 +290,8 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     dispatch({ type: 'LOGOUT' });
     localStorage.removeItem('adminSession');
-    router.push('/admin');
+    deleteCookie('admin-token');
+    router.push('/admin/login');
   }, [router]);
 
   // Set current section
@@ -250,8 +311,21 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
   // Check if user is authenticated
   const checkAuth = useCallback(() => {
-    return state.isAuthenticated && state.sessionExpiry && new Date() < state.sessionExpiry;
+    return !!(state.isAuthenticated && state.sessionExpiry && new Date() < state.sessionExpiry);
   }, [state.isAuthenticated, state.sessionExpiry]);
+
+  // Get authentication headers for API requests
+  const getAuthHeaders = useCallback(() => {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (state.token) {
+      headers['Authorization'] = `Bearer ${state.token}`;
+    }
+    
+    return headers;
+  }, [state.token]);
 
   const value: AdminContextType = {
     state,
@@ -260,7 +334,8 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     setSection,
     setPreferences,
     clearError,
-    checkAuth
+    checkAuth,
+    getAuthHeaders
   };
 
   return (

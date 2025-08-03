@@ -28,4 +28,12 @@ async function dbConnect() {
   }
 }
 
+// Export the function that API routes expect
+export async function connectToDatabase() {
+  await dbConnect();
+  return {
+    db: mongoose.connection.db
+  };
+}
+
 export default dbConnect; 

@@ -6,11 +6,13 @@ import { useCart } from '@/contexts/CartContext';
 import { useAnalytics } from '@/contexts/AnalyticsContext';
 import { useCustomerExperience } from '@/contexts/CustomerExperienceContext';
 import { PremiumButton } from '@/components/ui/PremiumButton';
+import { RatingComponent } from '@/components/ui/rating';
 
 interface CheckoutFormData {
   customerName: string;
   customerPhone: string;
   specialInstructions: string;
+  paymentMethod: 'cash' | 'phonepe';
 }
 
 export function ElegantCheckoutForm() {
@@ -21,12 +23,15 @@ export function ElegantCheckoutForm() {
     customerName: '',
     customerPhone: '',
     specialInstructions: '',
+    paymentMethod: 'cash',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [showRating, setShowRating] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string>('');
   const [formError, setFormError] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isRatingSubmitting, setIsRatingSubmitting] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
 
@@ -111,7 +116,7 @@ export function ElegantCheckoutForm() {
         bulkItemsCount: state.items.filter(item => item.quantity > 5).length
       },
       status: 'pending',
-      paymentMethod: 'cash',
+      paymentMethod: formData.paymentMethod,
       paymentStatus: 'pending'
     };
 
@@ -174,6 +179,27 @@ export function ElegantCheckoutForm() {
     setCheckoutOpen(false);
     setFormError(null);
     setApiError(null);
+    setOrderPlaced(false);
+    setShowRating(false);
+  };
+
+  const handleRatingSubmit = async (rating: number, feedback?: string) => {
+    setIsRatingSubmitting(true);
+    try {
+      addRating(currentOrderId, rating, feedback);
+      // Show success message briefly before closing
+      setTimeout(() => {
+        handleClose();
+      }, 2000);
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+    } finally {
+      setIsRatingSubmitting(false);
+    }
+  };
+
+  const handleRatingSkip = () => {
+    handleClose();
   };
 
 
@@ -198,13 +224,34 @@ export function ElegantCheckoutForm() {
               <strong>Estimated Time:</strong> 20-25 minutes
             </p>
           </div>
-          <button
-            onClick={handleClose}
-            className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-colors"
-          >
-            Close
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowRating(true)}
+              className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Rate Experience
+            </button>
+            <button
+              onClick={handleClose}
+              className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Close
+            </button>
+          </div>
         </div>
+      </div>
+    );
+  }
+
+  if (showRating) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <RatingComponent
+          orderId={currentOrderId}
+          onSubmit={handleRatingSubmit}
+          onCancel={handleRatingSkip}
+          isSubmitting={isRatingSubmitting}
+        />
       </div>
     );
   }
@@ -318,6 +365,37 @@ export function ElegantCheckoutForm() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-colors resize-none"
                 placeholder="Any special requests or dietary preferences..."
               />
+            </div>
+          </div>
+
+          {/* Payment Method Selection */}
+          <div className="space-y-4">
+            <h3 className="font-semibold text-gray-800">Payment Method</h3>
+            <div className="flex items-center space-x-4">
+              <label htmlFor="cashPayment" className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  id="cashPayment"
+                  name="paymentMethod"
+                  value="cash"
+                  checked={formData.paymentMethod === 'cash'}
+                  onChange={handleInputChange}
+                  className="form-radio text-orange-500 focus:ring-orange-500"
+                />
+                <span className="ml-2 text-sm text-gray-700">Cash on Delivery</span>
+              </label>
+              <label htmlFor="phonepePayment" className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  id="phonepePayment"
+                  name="paymentMethod"
+                  value="phonepe"
+                  checked={formData.paymentMethod === 'phonepe'}
+                  onChange={handleInputChange}
+                  className="form-radio text-orange-500 focus:ring-orange-500"
+                />
+                <span className="ml-2 text-sm text-gray-700">PhonePe</span>
+              </label>
             </div>
           </div>
 

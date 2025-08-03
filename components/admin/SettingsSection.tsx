@@ -25,7 +25,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+// import { Progress } from '@/components/ui/progress';
 
 interface SettingsSectionProps {
   settings?: any;
@@ -337,7 +337,7 @@ function OperatingHoursTab({ settings, onUpdate }: { settings: any, onUpdate: (p
 
 // Payment Settings Tab
 function PaymentSettingsTab({ settings, onUpdate }: { settings: any, onUpdate: (path: string, value: any) => void }) {
-  const paymentMethods = ['cash', 'card', 'upi', 'digital_wallet'];
+  const paymentMethods = ['cash', 'phonepe'];
   
   return (
     <div className="space-y-6">
@@ -351,7 +351,7 @@ function PaymentSettingsTab({ settings, onUpdate }: { settings: any, onUpdate: (
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Accepted Payment Methods</label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {paymentMethods.map((method) => (
                 <label key={method} className="flex items-center space-x-2">
                   <input
@@ -366,10 +366,13 @@ function PaymentSettingsTab({ settings, onUpdate }: { settings: any, onUpdate: (
                     }}
                     className="w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
                   />
-                  <span className="text-sm capitalize">{method.replace('_', ' ')}</span>
+                  <span className="text-sm capitalize">{method === 'phonepe' ? 'PhonePe' : method}</span>
                 </label>
               ))}
             </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Customers pay through cash counter QR code for PhonePe payments
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

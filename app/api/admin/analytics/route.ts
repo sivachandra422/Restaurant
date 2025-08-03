@@ -5,6 +5,14 @@ export async function GET(request: NextRequest) {
   try {
     const { db } = await connectToDatabase();
     
+    // Check if database is available
+    if (!db) {
+      return NextResponse.json(
+        { error: 'Database not available' },
+        { status: 503 }
+      );
+    }
+    
     // Get all orders
     const orders = await db.collection('orders').find({}).toArray();
     
@@ -26,7 +34,8 @@ export async function GET(request: NextRequest) {
       peakHours: calculatePeakHours(orders),
       
       // Customer Analytics
-      customerSatisfaction: 4.5, // Mock data - can be enhanced with actual ratings
+      customerSatisfaction: calculateCustomerSatisfaction(orders),
+      customerReviewsCount: orders.filter(order => typeof order.rating === 'number').length,
       repeatCustomers: calculateRepeatCustomers(orders),
       
       // Category Performance
@@ -283,4 +292,13 @@ function calculateLowPerformingItems(orders: any[]) {
       ...stats
     }))
     .sort((a, b) => a.count - b.count);
+} 
+
+function calculateCustomerSatisfaction(orders: any[]) {
+  const ratings = orders
+    .map(order => typeof order.rating === 'number' ? order.rating : null)
+    .filter(rating => rating !== null);
+  if (ratings.length === 0) return 0;
+  const avg = ratings.reduce((sum, r) => sum + r, 0) / ratings.length;
+  return Math.round(avg * 10) / 10; // One decimal place
 } 

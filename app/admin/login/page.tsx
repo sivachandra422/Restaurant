@@ -38,6 +38,14 @@ export default function AdminLoginPage() {
     }
   };
 
+  // Check for successful authentication and redirect
+  useEffect(() => {
+    if (state.isAuthenticated && state.user) {
+      console.log('Login successful, redirecting to admin dashboard');
+      router.push('/admin');
+    }
+  }, [state.isAuthenticated, state.user, router]);
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSubmit(e);
@@ -133,15 +141,15 @@ export default function AdminLoginPage() {
         <div className="mt-8 p-4 bg-gray-50 rounded-lg">
           <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials</h3>
           <div className="space-y-1 text-xs text-gray-600">
-            <p><strong>Admin:</strong> admin / password</p>
-            <p><strong>Manager:</strong> manager / password</p>
+            <p><strong>Admin:</strong> admin / srikanya2024</p>
+            <p><strong>Manager:</strong> manager / srikanya2024</p>
           </div>
         </div>
 
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-xs text-gray-500">
-            © 2024 Sri Kanya Restaurant. All rights reserved.
+            © 2024 Sri Kanya Family Restaurant. All rights reserved.
           </p>
         </div>
       </div>

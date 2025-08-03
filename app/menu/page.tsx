@@ -23,6 +23,7 @@ import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { OrderHistory } from '@/components/ui/OrderHistory';
 import { ElegantCheckoutForm } from '@/components/checkout/ElegantCheckoutForm';
+import AIChatbot from '@/components/ui/AIChatbot';
 
 export default function MenuPage() {
   const searchParams = useSearchParams();
@@ -60,18 +61,22 @@ export default function MenuPage() {
   // Get visible menu items (filtered by disabled status)
   const allMenuItems = getVisibleItems();
 
-  // Listen for menu updates from admin dashboard
+  // Listen for menu updates from admin dashboard only
   useEffect(() => {
-    const handleMenuUpdate = () => {
-      setLastMenuUpdate(Date.now());
-      setIsSyncing(true);
-      refreshMenu().finally(() => setIsSyncing(false));
+    const handleMenuUpdate = (event: CustomEvent) => {
+      // Only refresh if the update comes from admin dashboard
+      if (event.detail && event.detail.source === 'admin') {
+        console.log('Admin dashboard change detected, refreshing menu...');
+        setLastMenuUpdate(Date.now());
+        setIsSyncing(true);
+        refreshMenu().finally(() => setIsSyncing(false));
+      }
     };
 
-    window.addEventListener('menuUpdated', handleMenuUpdate);
+    window.addEventListener('menuUpdated', handleMenuUpdate as EventListener);
     
     return () => {
-      window.removeEventListener('menuUpdated', handleMenuUpdate);
+      window.removeEventListener('menuUpdated', handleMenuUpdate as EventListener);
     };
   }, [refreshMenu]);
 
@@ -125,7 +130,7 @@ export default function MenuPage() {
               </div>
               <div className="min-w-0">
                 <h1 className="text-base sm:text-lg lg:text-xl font-bold text-gray-900 truncate gradient-text">
-                  Sri Kanya Restaurant
+                  Sri Kanya Family Restaurant
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-500 truncate">
                   Authentic Indian Cuisine
@@ -296,6 +301,9 @@ export default function MenuPage() {
       {showOrderHistory && (
         <OrderHistory onClose={() => setShowOrderHistory(false)} />
       )}
+
+      {/* AI Chatbot */}
+      <AIChatbot />
     </div>
   );
 }

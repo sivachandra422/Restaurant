@@ -28,7 +28,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+// import { Progress } from '@/components/ui/progress';
 
 interface DashboardProps {
   analytics: any;
@@ -65,7 +65,12 @@ export default function AdvancedDashboard({
 
   const todayRevenue = todayOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
   const pendingOrders = orders.filter(order => order.status === 'pending').length;
-  const completedOrders = orders.filter(order => order.status === 'completed').length;
+  const completedOrders = orders.filter(order => 
+    order.status === 'completed' || 
+    order.status === 'delivered' || 
+    order.status === 'served' || 
+    order.status === 'ready'
+  ).length;
 
   return (
     <div className="space-y-6">
@@ -74,7 +79,7 @@ export default function AdvancedDashboard({
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
           <p className="text-sm text-gray-600">
-            Welcome back! Here's what's happening at {settings?.restaurant?.name || 'Sri Kanya Restaurant'}
+            Welcome back! Here&apos;s what&apos;s happening at {settings?.restaurant?.name || 'Sri Kanya Family Restaurant'}
           </p>
         </div>
         <div className="flex items-center space-x-3">
@@ -99,7 +104,7 @@ export default function AdvancedDashboard({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-900">Today's Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-900">Today&apos;s Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
@@ -110,7 +115,7 @@ export default function AdvancedDashboard({
 
         <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-green-900">Today's Orders</CardTitle>
+            <CardTitle className="text-sm font-medium text-green-900">Today&apos;s Orders</CardTitle>
             <ShoppingCart className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -136,8 +141,12 @@ export default function AdvancedDashboard({
             <Star className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-900">4.8/5</div>
-            <p className="text-xs text-purple-700">Based on 127 reviews</p>
+            <div className="text-2xl font-bold text-purple-900">
+              {analytics?.customerSatisfaction ? analytics.customerSatisfaction.toFixed(1) : '0.0'}/5
+            </div>
+            <p className="text-xs text-purple-700">
+              Based on {analytics?.recentOrders?.filter((order: any) => order.rating !== undefined)?.length || 0} reviews
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -165,7 +174,9 @@ export default function AdvancedDashboard({
               ))}
             </div>
             <div className="mt-4 text-center">
-              <p className="text-sm text-gray-600">Weekly revenue performance</p>
+              <p className="text-sm text-gray-600">
+                Today&apos;s revenue compared to yesterday&apos;s performance
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -247,8 +258,8 @@ export default function AdvancedDashboard({
                 <div key={hour.hour} className="flex items-center justify-between">
                   <span className="text-sm">{hour.hour}:00</span>
                   <div className="flex items-center space-x-2">
-                    <Progress value={hour.orders} className="w-20" />
-                    <span className="text-xs text-gray-500">{hour.orders}</span>
+                    {/* <Progress value={hour.orders} className="w-20" /> */}
+                    <span className="text-xs text-gray-500">{hour.orders} orders</span>
                   </div>
                 </div>
               ))}

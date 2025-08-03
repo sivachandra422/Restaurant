@@ -25,16 +25,27 @@ interface AnalyticsData {
   averagePreparationTime: number;
   trendingItems: string[];
   recentOrders: OrderAnalytics[];
+  // Real-time additions
+  todayOrders?: number;
+  todayRevenue?: number;
+  orderStatusDistribution?: { status: string; count: number }[];
+  lastUpdate?: number;
+  newOrdersCount?: number;
 }
 
 interface AnalyticsContextType {
   analytics: AnalyticsData;
   addOrder: (order: OrderAnalytics) => void;
-  addRating: (orderId: string, rating: number, feedback?: string) => void;
+  addRating: (orderId: string, rating: number, feedback?: string) => Promise<void>;
   getPopularItems: () => { id: string; name: string; count: number; revenue: number }[];
   getTrendingItems: () => string[];
   getPeakHours: () => { hour: number; orders: number }[];
   resetAnalytics: () => void;
+  // Real-time additions
+  isRealTimeConnected: boolean;
+  lastRealTimeUpdate: Date | null;
+  connectRealTime: () => void;
+  disconnectRealTime: () => void;
 }
 
 const AnalyticsContext = createContext<AnalyticsContextType | undefined>(undefined);
@@ -49,11 +60,19 @@ const initialAnalytics: AnalyticsData = {
   averagePreparationTime: 0,
   trendingItems: [],
   recentOrders: [],
+  todayOrders: 0,
+  todayRevenue: 0,
+  orderStatusDistribution: [],
+  lastUpdate: Date.now(),
+  newOrdersCount: 0
 };
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   const [analytics, setAnalytics] = useState<AnalyticsData>(initialAnalytics);
   const [orders, setOrders] = useState<OrderAnalytics[]>([]);
+  const [isRealTimeConnected, setIsRealTimeConnected] = useState(false);
+  const [lastRealTimeUpdate, setLastRealTimeUpdate] = useState<Date | null>(null);
+  const [eventSource, setEventSource] = useState<EventSource | null>(null);
 
   // Load analytics from localStorage
   useEffect(() => {
@@ -82,12 +101,97 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     }
   }, [analytics, orders]);
 
+  // Real-time SSE connection
+  const connectRealTime = () => {
+    if (eventSource) {
+      eventSource.close();
+    }
+
+    const lastUpdate = analytics.lastUpdate || Date.now();
+    const newEventSource = new EventSource(`/api/admin/analytics/stream?lastUpdate=${lastUpdate}`);
+    
+    newEventSource.onopen = () => {
+      console.log('Analytics real-time connection established');
+      setIsRealTimeConnected(true);
+    };
+
+    newEventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.heartbeat) {
+          // Just a heartbeat, no action needed
+          return;
+        }
+        
+        // Update analytics with real-time data
+        setAnalytics(prev => ({
+          ...prev,
+          totalRevenue: data.totalRevenue || prev.totalRevenue,
+          totalOrders: data.totalOrders || prev.totalOrders,
+          averageOrderValue: data.averageOrderValue || prev.averageOrderValue,
+          popularItems: data.popularItems || prev.popularItems,
+          orderStatusDistribution: data.orderStatusDistribution || prev.orderStatusDistribution,
+          todayOrders: data.todayOrders || prev.todayOrders,
+          todayRevenue: data.todayRevenue || prev.todayRevenue,
+          lastUpdate: data.lastUpdate || prev.lastUpdate,
+          newOrdersCount: data.newOrdersCount || 0
+        }));
+        
+        setLastRealTimeUpdate(new Date());
+        
+        // Show notification for new orders
+        if (data.newOrdersCount > 0) {
+          // Dispatch custom event for notifications
+          window.dispatchEvent(new CustomEvent('analyticsUpdate', {
+            detail: {
+              type: 'newOrders',
+              count: data.newOrdersCount,
+              timestamp: new Date()
+            }
+          }));
+        }
+      } catch (error) {
+        console.error('Error parsing analytics stream data:', error);
+      }
+    };
+
+    newEventSource.onerror = (error) => {
+      console.error('Analytics real-time connection error:', error);
+      setIsRealTimeConnected(false);
+      // Attempt to reconnect after 5 seconds
+      setTimeout(() => {
+        if (isRealTimeConnected) {
+          connectRealTime();
+        }
+      }, 5000);
+    };
+
+    setEventSource(newEventSource);
+  };
+
+  const disconnectRealTime = () => {
+    if (eventSource) {
+      eventSource.close();
+      setEventSource(null);
+    }
+    setIsRealTimeConnected(false);
+  };
+
+  // Auto-connect to real-time updates when component mounts
+  useEffect(() => {
+    connectRealTime();
+    
+    return () => {
+      disconnectRealTime();
+    };
+  }, []);
+
   const calculateAnalytics = (orders: OrderAnalytics[]): AnalyticsData => {
     if (orders.length === 0) return initialAnalytics;
 
-      const totalOrders = orders.length;
-  const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
-  const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    const totalOrders = orders.length;
+    const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
     // Calculate popular items
     const itemCounts: { [key: string]: { count: number; revenue: number; name: string } } = {};
@@ -172,15 +276,34 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     console.log('Updated analytics:', newAnalytics);
   };
 
-  const addRating = (orderId: string, rating: number, feedback?: string) => {
-    const updatedOrders = orders.map(order => 
-      order.orderId === orderId 
-        ? { ...order, rating, feedback }
-        : order
-    );
-    setOrders(updatedOrders);
-    const newAnalytics = calculateAnalytics(updatedOrders);
-    setAnalytics(newAnalytics);
+  const addRating = async (orderId: string, rating: number, feedback?: string) => {
+    try {
+      // Call the API to save the rating
+      const response = await fetch(`/api/orders/${orderId}/rating`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ rating, feedback }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit rating');
+      }
+
+      // Update local state
+      const updatedOrders = orders.map(order => 
+        order.orderId === orderId 
+          ? { ...order, rating, feedback }
+          : order
+      );
+      setOrders(updatedOrders);
+      const newAnalytics = calculateAnalytics(updatedOrders);
+      setAnalytics(newAnalytics);
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      throw error;
+    }
   };
 
   const getPopularItems = () => analytics.popularItems;
@@ -200,6 +323,10 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     getTrendingItems,
     getPeakHours,
     resetAnalytics,
+    isRealTimeConnected,
+    lastRealTimeUpdate,
+    connectRealTime,
+    disconnectRealTime,
   };
 
   return (

@@ -26,7 +26,7 @@ export async function GET() {
           return;
         }
 
-        // Check for updates every 2 minutes
+        // Check for updates every 30 seconds
         interval = setInterval(async () => {
           try {
             // Check if we should stop
@@ -38,53 +38,46 @@ export async function GET() {
               return;
             }
 
-            if (!process.env.MONGODB_URI) {
-              // If no database, just send heartbeat
-              try {
+            // Check if controller is still active before sending data
+            try {
+              // Check for menu updates from broadcast
+              if (global.menuUpdates && global.menuUpdates.length > 0) {
+                const latestUpdate = global.menuUpdates[global.menuUpdates.length - 1];
+                if (latestUpdate.timestamp > lastUpdate) {
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+                    type: 'menuUpdate', 
+                    timestamp: latestUpdate.timestamp,
+                    data: latestUpdate
+                  })}\n\n`));
+                  lastUpdate = latestUpdate.timestamp;
+                }
+              } else if (!process.env.MONGODB_URI) {
+                // If no database, just send heartbeat
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`));
-              } catch (enqueueError) {
-                console.error('Failed to send heartbeat:', enqueueError);
-                isActive = false;
-                if (interval) {
-                  clearInterval(interval);
-                  interval = null;
+              } else {
+                // Get the latest update timestamp from database
+                const latestItem = await MenuItem.findOne().sort({ updatedAt: -1 });
+                const currentUpdate = latestItem ? latestItem.updatedAt.getTime() : Date.now();
+
+                // If there's a new update, send it
+                if (currentUpdate > lastUpdate) {
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
+                    type: 'update', 
+                    timestamp: currentUpdate,
+                    message: 'Menu has been updated'
+                  })}\n\n`));
+                  lastUpdate = currentUpdate;
+                } else {
+                  // Send heartbeat to keep connection alive
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`));
                 }
               }
-              return;
-            }
-
-            // Get the latest update timestamp
-            const latestItem = await MenuItem.findOne().sort({ updatedAt: -1 });
-            const currentUpdate = latestItem ? latestItem.updatedAt.getTime() : Date.now();
-
-            // If there's a new update, send it
-            if (currentUpdate > lastUpdate) {
-              try {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-                  type: 'update', 
-                  timestamp: currentUpdate,
-                  message: 'Menu has been updated'
-                })}\n\n`));
-                lastUpdate = currentUpdate;
-              } catch (enqueueError) {
-                console.error('Failed to send update:', enqueueError);
-                isActive = false;
-                if (interval) {
-                  clearInterval(interval);
-                  interval = null;
-                }
-              }
-            } else {
-              // Send heartbeat to keep connection alive
-              try {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`));
-              } catch (enqueueError) {
-                console.error('Failed to send heartbeat:', enqueueError);
-                isActive = false;
-                if (interval) {
-                  clearInterval(interval);
-                  interval = null;
-                }
+            } catch (enqueueError) {
+              console.error('Failed to send data:', enqueueError);
+              isActive = false;
+              if (interval) {
+                clearInterval(interval);
+                interval = null;
               }
             }
           } catch (error) {
@@ -103,7 +96,7 @@ export async function GET() {
               }
             }
           }
-        }, 120000); // Check every 2 minutes
+        }, 30000); // Check every 30 seconds
 
         // Clean up on close
         return () => {

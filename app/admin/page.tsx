@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   ChefHat, 
@@ -34,7 +34,8 @@ import {
   Phone,
   Mail,
   Globe,
-  Printer
+  Printer,
+  Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,8 +45,11 @@ import { useAnalytics } from '@/contexts/AnalyticsContext';
 import { useMenu } from '@/contexts/MenuContext';
 import { menuCategories } from '@/data/sriKanyaMenu';
 import AdvancedDashboard from '@/components/admin/AdvancedDashboard';
+import AIDashboard from '@/components/admin/AIDashboard';
 import ReportsSection from '@/components/admin/ReportsSection';
 import SettingsSection from '@/components/admin/SettingsSection';
+import BackupSection from '@/components/admin/BackupSection';
+import RealTimeTest from '@/components/admin/RealTimeTest';
 
 interface EditModalState {
   isOpen: boolean;
@@ -59,9 +63,16 @@ interface OrderDetailsModalState {
 
 export default function AdminPage() {
   const router = useRouter();
-  const { state: adminState, logout, setSection, checkAuth } = useAdmin();
+  const { state: adminState, logout, setSection, checkAuth, getAuthHeaders } = useAdmin();
   const { analytics } = useAnalytics();
-  const { getAllItems, updateMenuItem, toggleItemVisibility } = useMenu();
+  const { getAllItems, updateMenuItem, toggleItemVisibility, createMenuItem, deleteMenuItem } = useMenu();
+  
+  console.log('AdminPage render - State:', {
+    isAuthenticated: adminState.isAuthenticated,
+    user: adminState.user,
+    isLoading: adminState.isLoading,
+    currentSection: adminState.currentSection
+  });
   
   const [editModal, setEditModal] = useState<EditModalState>({
     isOpen: false,
@@ -85,17 +96,31 @@ export default function AdminPage() {
 
   // Check authentication on mount
   useEffect(() => {
-    if (!checkAuth()) {
-      router.push('/admin/login');
-      return;
+    console.log('Admin page - Authentication state:', adminState.isAuthenticated);
+    console.log('Admin page - User:', adminState.user);
+    console.log('Admin page - Loading state:', adminState.isLoading);
+    
+    // Only check authentication after context has finished loading
+    if (!adminState.isLoading) {
+      // Add a small delay to ensure state is properly updated
+      const timer = setTimeout(() => {
+        if (!adminState.isAuthenticated) {
+          console.log('Admin page - Not authenticated, redirecting to login');
+          router.push('/admin/login');
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
-  }, [checkAuth, router]);
+  }, [adminState.isAuthenticated, adminState.isLoading, adminState.user, router]);
 
   // Fetch real orders from database
-  const fetchRealOrders = async () => {
+  const fetchRealOrders = useCallback(async () => {
     setOrdersLoading(true);
     try {
-      const response = await fetch('/api/orders');
+      const response = await fetch('/api/orders', {
+        headers: getAuthHeaders()
+      });
       if (response.ok) {
         const orders = await response.json();
         setRealOrders(orders);
@@ -109,7 +134,54 @@ export default function AdminPage() {
     } finally {
       setOrdersLoading(false);
     }
-  };
+  }, [getAuthHeaders]);
+
+
+
+  // Fetch analytics data
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/analytics', {
+        headers: getAuthHeaders()
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAnalyticsData(data);
+      }
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    }
+  }, [getAuthHeaders]);
+
+  // Fetch settings
+  const fetchSettings = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/settings', {
+        headers: getAuthHeaders()
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setSettings(data);
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    }
+  }, [getAuthHeaders]);
+
+  // Fetch notifications
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/notifications', {
+        headers: getAuthHeaders()
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data.notifications || []);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  }, [getAuthHeaders]);
 
   // Fetch orders on mount and set up polling
   useEffect(() => {
@@ -128,46 +200,7 @@ export default function AdminPage() {
         return () => clearInterval(interval);
       }
     }
-  }, [adminState.isAuthenticated, adminState.preferences.autoRefresh]);
-
-  // Fetch analytics data
-  const fetchAnalytics = async () => {
-    try {
-      const response = await fetch('/api/admin/analytics');
-      if (response.ok) {
-        const data = await response.json();
-        setAnalyticsData(data);
-      }
-    } catch (error) {
-      console.error('Error fetching analytics:', error);
-    }
-  };
-
-  // Fetch settings
-  const fetchSettings = async () => {
-    try {
-      const response = await fetch('/api/admin/settings');
-      if (response.ok) {
-        const data = await response.json();
-        setSettings(data);
-      }
-    } catch (error) {
-      console.error('Error fetching settings:', error);
-    }
-  };
-
-  // Fetch notifications
-  const fetchNotifications = async () => {
-    try {
-      const response = await fetch('/api/admin/notifications');
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data.notifications || []);
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    }
-  };
+  }, [adminState.isAuthenticated, adminState.preferences.autoRefresh, fetchRealOrders, fetchAnalytics, fetchSettings, fetchNotifications]);
 
   // Generate report
   const handleGenerateReport = async (type: string, filters: any) => {
@@ -176,7 +209,9 @@ export default function AdminPage() {
         type,
         ...filters
       });
-      const response = await fetch(`/api/admin/reports?${queryParams}`);
+      const response = await fetch(`/api/admin/reports?${queryParams}`, {
+        headers: getAuthHeaders()
+      });
       if (response.ok) {
         const data = await response.json();
         setReportsData(data);
@@ -215,10 +250,38 @@ export default function AdminPage() {
     });
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (editModal.item) {
-      updateMenuItem(editModal.item.id, editModal.item);
-      closeEditModal();
+      try {
+        await updateMenuItem(editModal.item.id, editModal.item);
+        closeEditModal();
+        
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-green-500';
+        notification.textContent = 'Menu item updated successfully!';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 3000);
+      } catch (error) {
+        console.error('Error updating menu item:', error);
+        
+        // Show error notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-red-500';
+        notification.textContent = 'Failed to update menu item';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 3000);
+      }
     }
   };
 
@@ -234,17 +297,87 @@ export default function AdminPage() {
     }
   };
 
-  // If not authenticated, show loading
+  const handleCreateNewItem = () => {
+    setEditModal({
+      isOpen: true,
+      item: {
+        id: '',
+        name: '',
+        description: '',
+        price: 0,
+        category: 'starters',
+        isVeg: false,
+        isSignature: false,
+        isSpecial: false,
+        isDisabled: false,
+        image: '/menu-images/default.jpg',
+        maxQuantity: 10,
+        minQuantity: 1,
+        preparationTime: 15
+      }
+    });
+  };
+
+  const handleSaveNewItem = async () => {
+    if (editModal.item && !editModal.item.id) {
+      try {
+        await createMenuItem(editModal.item);
+        closeEditModal();
+        
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-green-500';
+        notification.textContent = 'Menu item created successfully!';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 3000);
+      } catch (error) {
+        console.error('Error creating menu item:', error);
+        
+        // Show error notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-red-500';
+        notification.textContent = 'Failed to create menu item';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 3000);
+      }
+    }
+  };
+
+  // If context is still loading, show loading
+  if (adminState.isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Initializing...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authenticated, redirect to login
   if (!adminState.isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading admin dashboard...</p>
+          <p className="text-gray-600">Redirecting to login...</p>
         </div>
       </div>
     );
   }
+
+  console.log('Rendering section:', adminState.currentSection);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -255,7 +388,7 @@ export default function AdminPage() {
             <div className="flex items-center space-x-3">
               <ChefHat className="w-8 h-8 text-orange-500" />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Sri Kanya Restaurant Admin</h1>
+                <h1 className="text-xl font-bold text-gray-900">Sri Kanya Family Restaurant Admin</h1>
                 <p className="text-sm text-gray-500">Welcome back, {adminState.user?.username}</p>
               </div>
             </div>
@@ -331,13 +464,23 @@ export default function AdminPage() {
           <MenuManagementSection 
             menuItems={getAllItems()} 
             onToggleVisibility={toggleItemVisibility} 
-            onEditItem={openEditModal} 
+            onEditItem={openEditModal}
+            onCreateItem={handleCreateNewItem}
+            onDeleteItem={deleteMenuItem}
           />
         )}
         {adminState.currentSection === 'analytics' && (
-          <ReportsSection 
-            onGenerateReport={handleGenerateReport}
-            onExportReport={handleExportReport}
+          <div>
+            <RealTimeTest />
+            <ReportsSection 
+              onGenerateReport={handleGenerateReport}
+              onExportReport={handleExportReport}
+            />
+          </div>
+        )}
+        {adminState.currentSection === 'backup' && (
+          <BackupSection 
+            getAuthHeaders={getAuthHeaders}
           />
         )}
         {adminState.currentSection === 'feedback' && (
@@ -349,7 +492,7 @@ export default function AdminPage() {
             onSaveSettings={async (newSettings) => {
               const response = await fetch('/api/admin/settings', {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(newSettings)
               });
               if (response.ok) {
@@ -365,7 +508,7 @@ export default function AdminPage() {
         <EditItemModal
           item={editModal.item}
           onClose={closeEditModal}
-          onSave={handleSaveEdit}
+          onSave={editModal.item.id ? handleSaveEdit : handleSaveNewItem}
           onUpdate={updateEditItem}
         />
       )}
@@ -511,14 +654,191 @@ function OrdersSection({
   onOrderClick: (order: any) => void,
   onRefresh: () => void
 }) {
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
+
+  const updateOrderStatus = async (orderId: string, status: string) => {
+    setUpdatingOrder(orderId);
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${document.cookie
+            .split('; ')
+            .find(row => row.startsWith('admin-token='))
+            ?.split('=')[1] || ''}`
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (response.ok) {
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-green-500';
+        notification.textContent = `Order status updated to ${status}`;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 3000);
+
+        // Refresh orders list
+        onRefresh();
+      } else {
+        throw new Error('Failed to update order status');
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      
+      // Show error notification
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-red-500';
+      notification.textContent = 'Failed to update order status';
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 3000);
+    } finally {
+      setUpdatingOrder(null);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
+      confirmed: { color: 'bg-green-100 text-green-800', label: 'Confirmed' },
+      preparing: { color: 'bg-blue-100 text-blue-800', label: 'Preparing' },
+      ready: { color: 'bg-purple-100 text-purple-800', label: 'Ready' },
+      delivered: { color: 'bg-gray-100 text-gray-800', label: 'Delivered' },
+      cancelled: { color: 'bg-red-100 text-red-800', label: 'Cancelled' }
+    };
+
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    return <Badge className={config.color}>{config.label}</Badge>;
+  };
+
+  const getStatusActions = (order: any) => {
+    const currentStatus = order.status || 'pending';
+    
+    switch (currentStatus) {
+      case 'pending':
+        return (
+          <div className="flex space-x-2">
+            <Button 
+              size="sm" 
+              onClick={(e) => {
+                e.stopPropagation();
+                updateOrderStatus(order._id, 'confirmed');
+              }}
+              disabled={updatingOrder === order._id}
+              className="bg-green-500 hover:bg-green-600"
+            >
+              {updatingOrder === order._id ? (
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+              ) : (
+                'Confirm'
+              )}
+            </Button>
+            <Button 
+              size="sm" 
+              variant="destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                updateOrderStatus(order._id, 'cancelled');
+              }}
+              disabled={updatingOrder === order._id}
+            >
+              Cancel
+            </Button>
+          </div>
+        );
+      case 'confirmed':
+        return (
+          <Button 
+            size="sm" 
+            onClick={(e) => {
+              e.stopPropagation();
+              updateOrderStatus(order._id, 'preparing');
+            }}
+            disabled={updatingOrder === order._id}
+            className="bg-blue-500 hover:bg-blue-600"
+          >
+            {updatingOrder === order._id ? (
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+            ) : (
+              'Start Preparing'
+            )}
+          </Button>
+        );
+      case 'preparing':
+        return (
+          <Button 
+            size="sm" 
+            onClick={(e) => {
+              e.stopPropagation();
+              updateOrderStatus(order._id, 'ready');
+            }}
+            disabled={updatingOrder === order._id}
+            className="bg-purple-500 hover:bg-purple-600"
+          >
+            {updatingOrder === order._id ? (
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+            ) : (
+              'Mark Ready'
+            )}
+          </Button>
+        );
+      case 'ready':
+        return (
+          <Button 
+            size="sm" 
+            onClick={(e) => {
+              e.stopPropagation();
+              updateOrderStatus(order._id, 'delivered');
+            }}
+            disabled={updatingOrder === order._id}
+            className="bg-gray-500 hover:bg-gray-600"
+          >
+            {updatingOrder === order._id ? (
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+            ) : (
+              'Mark Delivered'
+            )}
+          </Button>
+        );
+      default:
+        return null;
+    }
+  };
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">All Orders</h2>
-        <Button onClick={onRefresh} disabled={loading} variant="outline">
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center space-x-4">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="preparing">Preparing</option>
+            <option value="ready">Ready</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <Button onClick={onRefresh} disabled={loading} variant="outline">
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -534,21 +854,40 @@ function OrdersSection({
             </div>
           ) : (
             <div className="divide-y">
-              {orders.map((order: any) => (
+              {orders
+                .filter((order: any) => statusFilter === 'all' || order.status === statusFilter)
+                .map((order: any) => (
                 <div 
                   key={order._id || order.orderId}
-                  className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => onOrderClick(order)}
+                  className="p-4 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Order #{order.orderId?.slice(-6) || 'N/A'}</p>
-                      <p className="text-sm text-gray-600">Table {order.tableNumber}</p>
-                      <p className="text-xs text-gray-500">{new Date(order.timestamp || order.createdAt).toLocaleString()}</p>
+                    <div className="flex-1 cursor-pointer" onClick={() => onOrderClick(order)}>
+                      <div className="flex items-center space-x-3">
+                        <div>
+                          <p className="font-medium">Order #{order.orderId?.slice(-6) || 'N/A'}</p>
+                          <p className="text-sm text-gray-600">Table {order.tableNumber}</p>
+                          <p className="text-xs text-gray-500">{new Date(order.timestamp || order.createdAt).toLocaleString()}</p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {getStatusBadge(order.status || 'pending')}
+                          <Badge variant="outline">{order.items?.length || 0} items</Badge>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium">₹{order.totalAmount || order.orderSummary?.grandTotal}</p>
-                      <Badge variant="outline">{order.items?.length || 0} items</Badge>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className="font-medium">₹{order.totalAmount || order.orderSummary?.grandTotal}</p>
+                        <p className="text-xs text-gray-500">
+                          {order.paymentStatus === 'paid' ? 'Paid' : 'Pending Payment'}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {order.paymentMethod === 'phonepe' ? 'PhonePe' : order.paymentMethod === 'cash' ? 'Cash' : 'Unknown'}
+                        </p>
+                      </div>
+                      <div className="flex flex-col space-y-2">
+                        {getStatusActions(order)}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -562,16 +901,58 @@ function OrdersSection({
 }
 
 // Menu Management Section
-function MenuManagementSection({ menuItems, onToggleVisibility, onEditItem }: { 
+function MenuManagementSection({ 
+  menuItems, 
+  onToggleVisibility, 
+  onEditItem, 
+  onCreateItem, 
+  onDeleteItem 
+}: { 
   menuItems: any[], 
   onToggleVisibility: (id: string) => void,
-  onEditItem: (item: any) => void
+  onEditItem: (item: any) => void,
+  onCreateItem: () => void,
+  onDeleteItem: (id: string) => Promise<void>
 }) {
+  const handleDeleteItem = async (id: string, itemName: string) => {
+    if (confirm(`Are you sure you want to delete "${itemName}"? This action cannot be undone.`)) {
+      try {
+        await onDeleteItem(id);
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-green-500';
+        notification.textContent = 'Menu item deleted successfully!';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 3000);
+      } catch (error) {
+        console.error('Error deleting menu item:', error);
+        // Show error notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-red-500';
+        notification.textContent = 'Failed to delete menu item';
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 3000);
+      }
+    }
+  };
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Menu Management</h2>
-        <Button className="bg-gradient-to-r from-orange-500 to-red-500">
+        <Button 
+          onClick={onCreateItem}
+          className="bg-gradient-to-r from-orange-500 to-red-500"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add New Item
         </Button>
@@ -613,6 +994,13 @@ function MenuManagementSection({ menuItems, onToggleVisibility, onEditItem }: {
                   >
                     {item.isDisabled ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                   </Button>
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={() => handleDeleteItem(item.id, item.name)}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
                 </div>
               </div>
             </CardContent>
@@ -628,6 +1016,9 @@ function AnalyticsSection({ analytics }: { analytics: any }) {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-900">Business Analytics</h2>
+      
+      {/* AI Dashboard */}
+      <AIDashboard analytics={analytics} orders={[]} />
       
       {/* Popular Items */}
       <Card>
@@ -723,7 +1114,7 @@ function EditItemModal({ item, onClose, onSave, onUpdate }: {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-900">Edit Menu Item</h2>
+          <h2 className="text-xl font-bold text-gray-900">{item.id ? 'Edit Menu Item' : 'Add New Menu Item'}</h2>
           <Button onClick={onClose} variant="ghost" size="sm">
             <X className="w-5 h-5" />
           </Button>
@@ -847,7 +1238,7 @@ function EditItemModal({ item, onClose, onSave, onUpdate }: {
               Cancel
             </Button>
             <Button onClick={onSave} className="bg-gradient-to-r from-orange-500 to-red-500">
-              Save Changes
+              {item.id ? 'Save Changes' : 'Create Item'}
             </Button>
           </div>
         </div>
@@ -858,6 +1249,8 @@ function EditItemModal({ item, onClose, onSave, onUpdate }: {
 
 // Order Details Modal
 function OrderDetailsModal({ order, onClose }: { order: any, onClose: () => void }) {
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
   if (!order) return null;
 
   // Handle different order data structures
@@ -866,6 +1259,139 @@ function OrderDetailsModal({ order, onClose }: { order: any, onClose: () => void
   const timestamp = order.timestamp || order.createdAt;
   const totalAmount = order.totalAmount || order.orderSummary?.grandTotal;
   const items = order.items || [];
+  const currentStatus = order.status || 'pending';
+  const paymentStatus = order.paymentStatus || 'pending';
+
+  const updateOrderStatus = async (status: string) => {
+    setUpdatingStatus(true);
+    try {
+      const response = await fetch(`/api/orders/${order._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${document.cookie
+            .split('; ')
+            .find(row => row.startsWith('admin-token='))
+            ?.split('=')[1] || ''}`
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (response.ok) {
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-green-500';
+        notification.textContent = `Order status updated to ${status}`;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 3000);
+
+        // Close modal and refresh
+        onClose();
+        window.location.reload(); // Simple refresh for now
+      } else {
+        throw new Error('Failed to update order status');
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      
+      // Show error notification
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-red-500';
+      notification.textContent = 'Failed to update order status';
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 3000);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const updatePaymentStatus = async (paymentStatus: string) => {
+    setUpdatingStatus(true);
+    try {
+      const response = await fetch(`/api/orders/${order._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${document.cookie
+            .split('; ')
+            .find(row => row.startsWith('admin-token='))
+            ?.split('=')[1] || ''}`
+        },
+        body: JSON.stringify({ paymentStatus })
+      });
+
+      if (response.ok) {
+        // Show success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-green-500';
+        notification.textContent = `Payment status updated to ${paymentStatus}`;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          if (document.body.contains(notification)) {
+            document.body.removeChild(notification);
+          }
+        }, 3000);
+
+        // Close modal and refresh
+        onClose();
+        window.location.reload(); // Simple refresh for now
+      } else {
+        throw new Error('Failed to update payment status');
+      }
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+      
+      // Show error notification
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-red-500';
+      notification.textContent = 'Failed to update payment status';
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 3000);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
+      confirmed: { color: 'bg-green-100 text-green-800', label: 'Confirmed' },
+      preparing: { color: 'bg-blue-100 text-blue-800', label: 'Preparing' },
+      ready: { color: 'bg-purple-100 text-purple-800', label: 'Ready' },
+      delivered: { color: 'bg-gray-100 text-gray-800', label: 'Delivered' },
+      cancelled: { color: 'bg-red-100 text-red-800', label: 'Cancelled' }
+    };
+
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    return <Badge className={config.color}>{config.label}</Badge>;
+  };
+
+  const getPaymentStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending Payment' },
+      paid: { color: 'bg-green-100 text-green-800', label: 'Paid' },
+      failed: { color: 'bg-red-100 text-red-800', label: 'Payment Failed' }
+    };
+
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    return <Badge className={config.color}>{config.label}</Badge>;
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -896,6 +1422,149 @@ function OrderDetailsModal({ order, onClose }: { order: any, onClose: () => void
               <p className="text-sm text-gray-600">Total Amount</p>
               <p className="font-medium text-lg">₹{totalAmount}</p>
             </div>
+            <div>
+              <p className="text-sm text-gray-600">Order Status</p>
+              <div className="flex items-center space-x-2">
+                {getStatusBadge(currentStatus)}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Payment Status</p>
+              <div className="flex items-center space-x-2">
+                {getPaymentStatusBadge(paymentStatus)}
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Payment Method</p>
+              <p className="font-medium">
+                {order.paymentMethod === 'phonepe' ? 'PhonePe' : order.paymentMethod === 'cash' ? 'Cash' : 'Unknown'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Order Status Management */}
+        <div className="bg-blue-50 p-4 rounded-lg mb-4">
+          <h3 className="font-semibold text-gray-900 mb-3">Order Status Management</h3>
+          <div className="flex flex-wrap gap-2">
+            {currentStatus === 'pending' && (
+              <>
+                <Button 
+                  onClick={() => updateOrderStatus('confirmed')}
+                  disabled={updatingStatus}
+                  className="bg-green-500 hover:bg-green-600"
+                >
+                  {updatingStatus ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    'Confirm Order'
+                  )}
+                </Button>
+                <Button 
+                  onClick={() => updateOrderStatus('cancelled')}
+                  disabled={updatingStatus}
+                  variant="destructive"
+                >
+                  Cancel Order
+                </Button>
+              </>
+            )}
+            {currentStatus === 'confirmed' && (
+              <Button 
+                onClick={() => updateOrderStatus('preparing')}
+                disabled={updatingStatus}
+                className="bg-blue-500 hover:bg-blue-600"
+              >
+                {updatingStatus ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  'Start Preparing'
+                )}
+              </Button>
+            )}
+            {currentStatus === 'preparing' && (
+              <Button 
+                onClick={() => updateOrderStatus('ready')}
+                disabled={updatingStatus}
+                className="bg-purple-500 hover:bg-purple-600"
+              >
+                {updatingStatus ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  'Mark Ready'
+                )}
+              </Button>
+            )}
+            {currentStatus === 'ready' && (
+              <Button 
+                onClick={() => updateOrderStatus('delivered')}
+                disabled={updatingStatus}
+                className="bg-gray-500 hover:bg-gray-600"
+              >
+                {updatingStatus ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                ) : (
+                  'Mark Delivered'
+                )}
+              </Button>
+            )}
+            {(currentStatus === 'delivered' || currentStatus === 'cancelled') && (
+              <p className="text-sm text-gray-600">
+                Order is {currentStatus === 'delivered' ? 'completed' : 'cancelled'}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Payment Status Management */}
+        <div className="bg-green-50 p-4 rounded-lg mb-4">
+          <h3 className="font-semibold text-gray-900 mb-3">Payment Status Management</h3>
+          <div className="flex flex-wrap gap-2">
+            {paymentStatus === 'pending' && (
+              <>
+                <Button 
+                  onClick={() => updatePaymentStatus('paid')}
+                  disabled={updatingStatus}
+                  className="bg-green-500 hover:bg-green-600"
+                >
+                  {updatingStatus ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    'Mark as Paid'
+                  )}
+                </Button>
+                <Button 
+                  onClick={() => updatePaymentStatus('failed')}
+                  disabled={updatingStatus}
+                  variant="destructive"
+                >
+                  Mark as Failed
+                </Button>
+              </>
+            )}
+            {paymentStatus === 'paid' && (
+              <p className="text-sm text-green-600">
+                ✅ Payment completed successfully
+              </p>
+            )}
+            {paymentStatus === 'failed' && (
+              <>
+                <Button 
+                  onClick={() => updatePaymentStatus('pending')}
+                  disabled={updatingStatus}
+                  className="bg-yellow-500 hover:bg-yellow-600"
+                >
+                  Reset to Pending
+                </Button>
+                <Button 
+                  onClick={() => updatePaymentStatus('paid')}
+                  disabled={updatingStatus}
+                  className="bg-green-500 hover:bg-green-600"
+                >
+                  Mark as Paid
+                </Button>
+              </>
+            )}
           </div>
         </div>
 

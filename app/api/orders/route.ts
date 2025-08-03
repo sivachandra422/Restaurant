@@ -13,7 +13,15 @@ export async function POST(request: NextRequest) {
       try {
         await dbConnect();
         console.log('Database connected successfully');
-        
+
+        // Ensure each item has a correct subtotal
+        if (Array.isArray(orderData.items)) {
+          orderData.items = orderData.items.map((item: any) => ({
+            ...item,
+            subtotal: (item.price || 0) * (item.quantity || 0)
+          }));
+        }
+
         const order = new Order(orderData);
         console.log('Order model created:', order);
         
@@ -114,7 +122,7 @@ export async function GET(request: NextRequest) {
 
 function formatWebhookPayload(orderData: any) {
   return {
-    restaurantName: "Sri Kanya Restaurant",
+    restaurantName: "Sri Kanya Family Restaurant",
     orderId: orderData.orderId,
     timestamp: orderData.timestamp,
     tableNumber: orderData.tableNumber,

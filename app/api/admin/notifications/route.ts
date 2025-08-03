@@ -9,7 +9,15 @@ export async function GET(request: NextRequest) {
     
     const { db } = await connectToDatabase();
     
-    let notifications = [];
+    // Check if database is available
+    if (!db) {
+      return NextResponse.json(
+        { error: 'Database not available' },
+        { status: 503 }
+      );
+    }
+    
+    let notifications: any[] = [];
     
     switch (type) {
       case 'orders':
@@ -42,6 +50,14 @@ export async function POST(request: NextRequest) {
     
     const { db } = await connectToDatabase();
     
+    // Check if database is available
+    if (!db) {
+      return NextResponse.json(
+        { error: 'Database not available' },
+        { status: 503 }
+      );
+    }
+    
     const notification = {
       type,
       title,
@@ -72,6 +88,14 @@ export async function PATCH(request: NextRequest) {
     
     const { db } = await connectToDatabase();
     
+    // Check if database is available
+    if (!db) {
+      return NextResponse.json(
+        { error: 'Database not available' },
+        { status: 503 }
+      );
+    }
+    
     await db.collection('notifications').updateOne(
       { id },
       { $set: { read } }
@@ -94,7 +118,7 @@ async function getOrderNotifications(db: any, limit: number) {
     .limit(limit)
     .toArray();
   
-  return orders.map(order => ({
+  return orders.map((order: any) => ({
     id: `order-${order._id}`,
     type: 'order',
     title: `New Order #${order.orderId?.slice(-6) || 'N/A'}`,
@@ -147,11 +171,11 @@ async function getSystemNotifications(db: any, limit: number) {
 async function getAlertNotifications(db: any, limit: number) {
   const orders = await db.collection('orders').find({}).toArray();
   
-  const alerts = [];
+  const alerts: any[] = [];
   
   // Check for high-value orders
-  const highValueOrders = orders.filter(order => (order.totalAmount || 0) > 1000);
-  highValueOrders.forEach(order => {
+  const highValueOrders = orders.filter((order: any) => (order.totalAmount || 0) > 1000);
+  highValueOrders.forEach((order: any) => {
     alerts.push({
       id: `alert-high-value-${order._id}`,
       type: 'alert',
@@ -166,7 +190,7 @@ async function getAlertNotifications(db: any, limit: number) {
   
   // Check for repeat customers
   const customerOrders = new Map();
-  orders.forEach(order => {
+  orders.forEach((order: any) => {
     const table = order.tableNumber;
     customerOrders.set(table, (customerOrders.get(table) || 0) + 1);
   });
@@ -190,7 +214,7 @@ async function getAlertNotifications(db: any, limit: number) {
   
   // Check for peak hours
   const hourlyOrders = new Map();
-  orders.forEach(order => {
+  orders.forEach((order: any) => {
     const hour = new Date(order.timestamp || order.createdAt).getHours();
     hourlyOrders.set(hour, (hourlyOrders.get(hour) || 0) + 1);
   });

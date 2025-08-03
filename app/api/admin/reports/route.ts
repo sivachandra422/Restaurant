@@ -11,6 +11,14 @@ export async function GET(request: NextRequest) {
     
     const { db } = await connectToDatabase();
     
+    // Check if database is available
+    if (!db) {
+      return NextResponse.json(
+        { error: 'Database not available' },
+        { status: 503 }
+      );
+    }
+    
     // Build date filter
     const dateFilter: any = {};
     if (startDate && endDate) {
@@ -232,7 +240,7 @@ function generateFinancialReport(orders: any[]) {
   
   // Financial breakdown
   const financialData = {
-    totalRevenue,
+    totalRevenue: revenue,
     totalOrders: orderCount,
     averageOrderValue: orderCount > 0 ? revenue / orderCount : 0,
     revenueByDay: calculateRevenueByDay(orders),

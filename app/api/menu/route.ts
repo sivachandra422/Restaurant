@@ -3,6 +3,29 @@ import dbConnect from '@/lib/mongodb';
 import { MenuItem } from '@/lib/models/MenuItem';
 import { sriKanyaMenu } from '@/data/sriKanyaMenu';
 import { getFoodImage, getLocalFallbackImage } from '@/lib/imageMappings';
+import { jwtVerify } from 'jose';
+
+// JWT secret (should match the one used in login)
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'your-secret-key'
+);
+
+// Helper function to verify admin authentication
+async function verifyAdminAuth(request: NextRequest) {
+  try {
+    const token = request.cookies.get('admin-token')?.value || 
+                  request.headers.get('authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return { isAuthenticated: false, error: 'No token provided' };
+    }
+
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    return { isAuthenticated: true, user: payload };
+  } catch (error) {
+    return { isAuthenticated: false, error: 'Invalid token' };
+  }
+}
 
 // Force dynamic rendering to prevent static generation errors
 export const dynamic = 'force-dynamic';
@@ -77,9 +100,15 @@ export async function GET() {
   }
 }
 
-// POST - Create new menu item
+// POST - Create new menu item (requires admin authentication)
 export async function POST(request: NextRequest) {
   try {
+    // Verify admin authentication
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.isAuthenticated) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     await dbConnect();
     
     // If no MongoDB URI is provided, return error
@@ -88,8 +117,29 @@ export async function POST(request: NextRequest) {
     }
     
     const body = await request.json();
+    
+    // Generate unique ID if not provided
+    if (!body.id) {
+      body.id = `menu-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    }
+    
     const menuItem = new MenuItem(body);
     await menuItem.save();
+    
+    // Broadcast update to all connected clients
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/menu/broadcast`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          type: 'menuUpdate', 
+          itemId: menuItem.id,
+          action: 'created'
+        })
+      });
+    } catch (broadcastError) {
+      console.error('Failed to broadcast update:', broadcastError);
+    }
     
     return NextResponse.json(menuItem);
   } catch (error) {

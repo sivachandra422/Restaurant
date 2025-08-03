@@ -13,12 +13,12 @@ import { Toaster } from '@/components/ui/toaster';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Sri Kanya Restaurant - Authentic Indian Cuisine',
+  title: 'Sri Kanya Family Restaurant - Authentic Indian Cuisine',
   description: 'Discover our authentic Indian dishes, crafted with traditional recipes and fresh ingredients',
   keywords: 'Indian restaurant, biryani, curry, authentic cuisine, Sri Kanya',
-  authors: [{ name: 'Sri Kanya Restaurant' }],
+  authors: [{ name: 'Sri Kanya Family Restaurant' }],
   openGraph: {
-    title: 'Sri Kanya Restaurant - Authentic Indian Cuisine',
+    title: 'Sri Kanya Family Restaurant - Authentic Indian Cuisine',
     description: 'Discover our authentic Indian dishes, crafted with traditional recipes and fresh ingredients',
     type: 'website',
   },

@@ -7,7 +7,7 @@ const ADMIN_USERS = [
   {
     id: '1',
     username: 'admin',
-    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // 'password'
+    password: process.env.ADMIN_PASSWORD || 'srikanya2024', // Use environment variable
     role: 'admin' as const,
     permissions: ['read', 'write', 'delete', 'manage_users'],
     lastLogin: new Date()
@@ -15,7 +15,7 @@ const ADMIN_USERS = [
   {
     id: '2',
     username: 'manager',
-    password: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // 'password'
+    password: process.env.ADMIN_PASSWORD || 'srikanya2024', // Use environment variable
     role: 'manager' as const,
     permissions: ['read', 'write'],
     lastLogin: new Date()
@@ -25,6 +25,8 @@ const ADMIN_USERS = [
 export async function POST(request: NextRequest) {
   try {
     const { username, password } = await request.json();
+
+    console.log('Login attempt:', { username, password });
 
     // Validate input
     if (!username || !password) {
@@ -37,20 +39,24 @@ export async function POST(request: NextRequest) {
     // Find user
     const user = ADMIN_USERS.find(u => u.username === username);
     if (!user) {
+      console.log('User not found:', username);
       return NextResponse.json(
         { message: 'Invalid credentials' },
         { status: 401 }
       );
     }
 
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    // Verify password (simple comparison for development)
+    const isValidPassword = user.password === password;
     if (!isValidPassword) {
+      console.log('Invalid password for user:', username);
       return NextResponse.json(
         { message: 'Invalid credentials' },
         { status: 401 }
       );
     }
+
+    console.log('Login successful for user:', username);
 
     // Generate JWT token
     const token = jwt.sign(

@@ -5,6 +5,14 @@ export async function GET(request: NextRequest) {
   try {
     const { db } = await connectToDatabase();
     
+    // Check if database is available
+    if (!db) {
+      return NextResponse.json(
+        { error: 'Database not available' },
+        { status: 503 }
+      );
+    }
+    
     // Get settings from database or return defaults
     const settings = await db.collection('settings').findOne({}) || getDefaultSettings();
     
@@ -21,7 +29,19 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
+    // Remove _id if present to avoid immutable field error
+    if (body._id) {
+      delete body._id;
+    }
     const { db } = await connectToDatabase();
+    
+    // Check if database is available
+    if (!db) {
+      return NextResponse.json(
+        { error: 'Database not available' },
+        { status: 503 }
+      );
+    }
     
     // Update settings
     await db.collection('settings').updateOne(
@@ -43,12 +63,12 @@ export async function PUT(request: NextRequest) {
 function getDefaultSettings() {
   return {
     restaurant: {
-      name: 'Sri Kanya Restaurant',
-      description: 'Authentic Indian cuisine with a modern twist',
+      name: 'Sri Kanya Family restaurant',
+      description: 'Authentic Indian Cuisine & Traditional Flavors',
       contact: {
-        phone: '+91 98765 43210',
-        email: 'info@srikanya.com',
-        address: '123 Main Street, City, State - 123456'
+        phone: '+91-9876543210',
+        email: 'srikanya.dharmavaram@gmail.com',
+        address: 'Dharmavaram, Andhra Pradesh - 533430'
       },
       social: {
         facebook: 'https://facebook.com/srikanya',
@@ -57,19 +77,19 @@ function getDefaultSettings() {
       }
     },
     operatingHours: {
-      monday: { open: '10:00', close: '22:00', closed: false },
-      tuesday: { open: '10:00', close: '22:00', closed: false },
-      wednesday: { open: '10:00', close: '22:00', closed: false },
-      thursday: { open: '10:00', close: '22:00', closed: false },
-      friday: { open: '10:00', close: '23:00', closed: false },
-      saturday: { open: '10:00', close: '23:00', closed: false },
-      sunday: { open: '11:00', close: '21:00', closed: false }
+      monday: { open: '08:00', close: '23:00', closed: false },
+      tuesday: { open: '08:00', close: '23:00', closed: false },
+      wednesday: { open: '08:00', close: '23:00', closed: false },
+      thursday: { open: '08:00', close: '23:00', closed: false },
+      friday: { open: '08:00', close: '23:00', closed: false },
+      saturday: { open: '08:00', close: '23:00', closed: false },
+      sunday: { open: '08:00', close: '23:00', closed: false }
     },
     payment: {
-      acceptedMethods: ['cash', 'card', 'upi', 'digital_wallet'],
-      taxRate: 5.0,
-      serviceCharge: 2.5,
-      minimumOrder: 100,
+      acceptedMethods: ['cash', 'phonepe'],
+      taxRate: 0.0,
+      serviceCharge: 0.0,
+      minimumOrder: 50,
       currency: 'INR',
       currencySymbol: '₹'
     },

@@ -1,9 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import { MenuItem } from '@/lib/models/MenuItem';
+import { jwtVerify } from 'jose';
 
 // Force dynamic rendering to prevent static generation errors
 export const dynamic = 'force-dynamic';
+
+// JWT secret (should match the one used in login)
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'your-secret-key'
+);
+
+// Helper function to verify admin authentication
+async function verifyAdminAuth(request: NextRequest) {
+  try {
+    const token = request.cookies.get('admin-token')?.value || 
+                  request.headers.get('authorization')?.replace('Bearer ', '');
+
+    if (!token) {
+      return { isAuthenticated: false, error: 'No token provided' };
+    }
+
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    return { isAuthenticated: true, user: payload };
+  } catch (error) {
+    return { isAuthenticated: false, error: 'Invalid token' };
+  }
+}
 
 // GET - Fetch single menu item
 export async function GET(
@@ -31,12 +54,18 @@ export async function GET(
   }
 }
 
-// PUT - Update menu item
+// PUT - Update menu item (requires admin authentication)
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // Verify admin authentication
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.isAuthenticated) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     await dbConnect();
     
     // If no MongoDB URI is provided, return error
@@ -61,6 +90,21 @@ export async function PUT(
     if (!menuItem) {
       return NextResponse.json({ error: 'Menu item not found' }, { status: 404 });
     }
+
+    // Broadcast update to all connected clients
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/menu/broadcast`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          type: 'menuUpdate', 
+          itemId: params.id,
+          action: 'updated'
+        })
+      });
+    } catch (broadcastError) {
+      console.error('Failed to broadcast update:', broadcastError);
+    }
     
     return NextResponse.json(menuItem);
   } catch (error) {
@@ -69,12 +113,18 @@ export async function PUT(
   }
 }
 
-// DELETE - Delete menu item
+// DELETE - Delete menu item (requires admin authentication)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // Verify admin authentication
+    const authResult = await verifyAdminAuth(request);
+    if (!authResult.isAuthenticated) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     await dbConnect();
     
     // If no MongoDB URI is provided, return error
@@ -86,6 +136,21 @@ export async function DELETE(
     
     if (!menuItem) {
       return NextResponse.json({ error: 'Menu item not found' }, { status: 404 });
+    }
+
+    // Broadcast update to all connected clients
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/menu/broadcast`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          type: 'menuUpdate', 
+          itemId: params.id,
+          action: 'deleted'
+        })
+      });
+    } catch (broadcastError) {
+      console.error('Failed to broadcast update:', broadcastError);
     }
     
     return NextResponse.json({ message: 'Menu item deleted successfully' });

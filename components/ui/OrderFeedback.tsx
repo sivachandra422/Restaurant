@@ -35,7 +35,7 @@ export function OrderFeedback({ orderId, onSubmit, onClose }: OrderFeedbackProps
       <div className="bg-white rounded-2xl p-6 max-w-md w-full">
         <div className="text-center mb-6">
           <h3 className="text-xl font-bold text-gray-900 mb-2">Rate Your Experience</h3>
-          <p className="text-gray-600 text-sm">How was your order from Sri Kanya Restaurant?</p>
+          <p className="text-gray-600 text-sm">How was your order from Sri Kanya Family Restaurant?</p>
         </div>
 
         {/* Star Rating */}
