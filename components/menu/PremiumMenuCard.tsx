@@ -171,7 +171,7 @@ export function PremiumMenuCard({
   };
 
   return (
-    <Card className="menu-card group overflow-hidden border-0 shadow-soft hover:shadow-glow bg-white">
+    <Card className="menu-card group overflow-hidden border-0 shadow-soft hover:shadow-glow bg-white transform transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1">
       <CardContent className="p-0">
         {/* Image Section */}
         <div ref={imageRef} className="relative aspect-[4/3] overflow-hidden bg-gray-100">
@@ -193,7 +193,7 @@ export function PremiumMenuCard({
               alt={item.name}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className={`object-cover transition-all duration-500 ${
+              className={`object-cover transition-all duration-700 ${
                 imageLoading ? 'opacity-0' : 'opacity-100 group-hover:scale-110'
               }`}
               onError={handleImageError}
@@ -205,45 +205,57 @@ export function PremiumMenuCard({
             />
           )}
           
-          {/* Overlay on hover */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300" />
+          {/* Enhanced Overlay on hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300" />
           
-          {/* Favorite Button */}
+          {/* Favorite Button with enhanced animation */}
           <button
             onClick={handleFavoriteClick}
-            className="absolute top-2 left-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-200 hover:bg-white hover:scale-110 focus-ring"
+            className="absolute top-2 left-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 hover:bg-white hover:scale-110 focus-ring transform hover:rotate-12"
           >
             <Heart 
-              className={`w-4 h-4 transition-all duration-200 ${
+              className={`w-4 h-4 transition-all duration-300 ${
                 isItemFavorite(item.id) 
-                  ? 'text-red-500 fill-current' 
+                  ? 'text-red-500 fill-current scale-110' 
                   : 'text-gray-600 hover:text-red-500'
               }`}
             />
           </button>
           
-          {/* Badges */}
+          {/* Enhanced Badges with animations */}
           <div className="absolute top-2 right-2 flex flex-col gap-1 max-w-[calc(100%-1rem)]">
             {/* Veg Badge - Always show if applicable */}
             {item.isVeg && (
-              <Badge className="bg-green-500 text-white text-xs px-2 py-1 shadow-md">
+              <Badge className="bg-green-500 text-white text-xs px-2 py-1 shadow-md transform transition-all duration-300 hover:scale-105 animate-fadeInUp">
                 Veg
               </Badge>
             )}
             
             {/* Signature Badge - Priority badge */}
             {item.isSignature && (
-              <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs px-2 py-1 shadow-md">
+              <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs px-2 py-1 shadow-md transform transition-all duration-300 hover:scale-105 animate-fadeInUp">
                 Signature
               </Badge>
             )}
             
             {/* Trending Badge - Only show if not signature and trending */}
             {item.trending && !item.isSignature && (
-              <Badge className="pulse-glow bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 shadow-md">
+              <Badge className="pulse-glow bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 shadow-md transform transition-all duration-300 hover:scale-105 animate-fadeInUp">
                 Trending
               </Badge>
             )}
+          </div>
+
+          {/* Quick Add Button - Appears on hover */}
+          <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+            <Button
+              onClick={handleAddClick}
+              className="w-full bg-white/95 backdrop-blur-sm text-gray-900 hover:bg-white font-medium transition-all duration-200 transform hover:scale-105"
+              size="sm"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Quick Add
+            </Button>
           </div>
         </div>
 
@@ -254,27 +266,32 @@ export function PremiumMenuCard({
             <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-1 line-clamp-1 group-hover:text-orange-600 transition-colors duration-200">
               {item.name}
             </h3>
-            <p className="text-xs sm:text-sm text-gray-600 line-clamp-2 leading-relaxed">
-              {item.description}
-            </p>
+            <div className="description-container">
+              <p className="text-xs sm:text-sm text-gray-600 description-text">
+                {item.description}
+              </p>
+            </div>
           </div>
 
-          {/* Price and Time */}
+          {/* Enhanced Price and Time Section */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2">
-              <span className="font-bold text-lg sm:text-xl text-gray-900">
+              <span className="font-bold text-lg sm:text-xl text-gray-900 group-hover:text-orange-600 transition-colors duration-200">
                 ₹{item.price}
               </span>
+              {item.isSignature && (
+                <span className="text-xs text-orange-600 font-medium">⭐ Premium</span>
+              )}
             </div>
             <WaitTimeIndicator item={item} />
           </div>
 
-          {/* Add to Cart Section */}
+          {/* Enhanced Add to Cart Section */}
           <div className="flex items-center justify-between">
             {quantity === 0 ? (
               <Button
                 onClick={handleAddClick}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium ripple focus-ring transition-all duration-200 transform hover:scale-105 active:scale-95"
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium ripple focus-ring transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add to Cart
@@ -285,12 +302,12 @@ export function PremiumMenuCard({
                   onClick={handleDecreaseClick}
                   variant="outline"
                   size="sm"
-                  className="w-8 h-8 p-0 rounded-full ripple focus-ring"
+                  className="w-8 h-8 p-0 rounded-full ripple focus-ring transition-all duration-200 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
                 >
                   <Minus className="w-3 h-3" />
                 </Button>
                 
-                <span className="flex-1 text-center font-semibold text-gray-900">
+                <span className="flex-1 text-center font-semibold text-gray-900 text-lg">
                   {quantity}
                 </span>
                 
@@ -298,7 +315,7 @@ export function PremiumMenuCard({
                   onClick={handleIncreaseClick}
                   variant="outline"
                   size="sm"
-                  className={`w-8 h-8 p-0 rounded-full ripple focus-ring ${
+                  className={`w-8 h-8 p-0 rounded-full ripple focus-ring transition-all duration-200 hover:bg-green-50 hover:border-green-300 hover:text-green-600 ${
                     isAtMaxQuantity ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                   disabled={isAtMaxQuantity}

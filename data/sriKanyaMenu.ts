@@ -23,7 +23,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chicken_dum_biryani_half',
       name: 'Chicken Dum Biryani (Half)',
-      description: 'Aromatic basmati rice layered with tender chicken, slow-cooked with traditional spices and saffron',
+      description: 'Aromatic basmati rice layered with tender chicken, slow-cooked with traditional spices and saffron. Perfect blend of flavors.',
       price: 160,
       category: 'biryanis',
       isVeg: false,
@@ -36,7 +36,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chicken_dum_biryani_full',
       name: 'Chicken Dum Biryani (Full)',
-      description: 'Aromatic basmati rice layered with tender chicken, slow-cooked with traditional spices and saffron',
+      description: 'Aromatic basmati rice layered with tender chicken, slow-cooked with traditional spices and saffron. Rich and flavorful.',
       price: 220,
       category: 'biryanis',
       isVeg: false,
@@ -49,7 +49,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chicken_biryani',
       name: 'Chicken Biryani',
-      description: 'Traditional chicken biryani with fragrant basmati rice and aromatic spices',
+      description: 'Traditional chicken biryani with fragrant basmati rice and aromatic spices. Classic preparation with tender meat.',
       price: 160,
       category: 'biryanis',
       isVeg: false,
@@ -58,7 +58,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'mughlai_biryani',
       name: 'Mughlai Biryani',
-      description: 'Royal Mughlai-style biryani with rich flavors and tender meat',
+      description: 'Royal Mughlai-style biryani with rich flavors and tender meat. Luxurious preparation with premium ingredients.',
       price: 300,
       category: 'biryanis',
       isVeg: false,
@@ -68,7 +68,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'lolipop_biryani',
       name: 'Lolipop Biryani',
-      description: 'Unique biryani featuring succulent chicken lolipops with aromatic rice',
+      description: 'Unique biryani featuring succulent chicken lolipops with aromatic rice. Special preparation with unique presentation.',
       price: 250,
       category: 'biryanis',
       isVeg: false,
@@ -78,7 +78,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'joint_biryani',
       name: 'Joint Biryani',
-      description: 'Special biryani preparation with tender meat pieces and fragrant rice',
+      description: 'Special biryani preparation with tender meat pieces and fragrant rice. Traditional recipe with authentic taste.',
       price: 220,
       category: 'biryanis',
       isVeg: false,
@@ -87,7 +87,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'prawns_biryani',
       name: 'Prawns Biryani',
-      description: 'Coastal-style biryani with fresh prawns and aromatic spices',
+      description: 'Coastal-style biryani with fresh prawns and aromatic spices. Seafood delight with coastal flavors.',
       price: 280,
       category: 'biryanis',
       isVeg: false,
@@ -96,7 +96,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'sp_chicken_biryani',
       name: 'Special Chicken Biryani',
-      description: 'Chef\'s special chicken biryani with premium ingredients and unique preparation',
+      description: 'Chef\'s special chicken biryani with premium ingredients and unique preparation. Signature dish with special spices.',
       price: 250,
       category: 'biryanis',
       isVeg: false,
@@ -106,7 +106,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'mix_biryani',
       name: 'Mixed Biryani',
-      description: 'Delicious combination of chicken and mutton in aromatic biryani rice',
+      description: 'Delicious combination of chicken and mutton in aromatic biryani rice. Perfect blend of two meats.',
       price: 300,
       category: 'biryanis',
       isVeg: false,
@@ -115,7 +115,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'mutton_biryani',
       name: 'Mutton Biryani',
-      description: 'Traditional mutton biryani with tender meat and fragrant basmati rice',
+      description: 'Traditional mutton biryani with tender meat and fragrant basmati rice. Rich and hearty preparation.',
       price: 300,
       category: 'biryanis',
       isVeg: false,
@@ -124,7 +124,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'kaju_biryani',
       name: 'Kaju Biryani',
-      description: 'Rich biryani with cashews and aromatic spices',
+      description: 'Rich biryani with cashews and aromatic spices. Vegetarian delight with nutty flavors.',
       price: 200,
       category: 'biryanis',
       isVeg: true,
@@ -133,7 +133,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'paneer_biryani',
       name: 'Paneer Biryani',
-      description: 'Vegetarian biryani with fresh paneer and aromatic spices',
+      description: 'Vegetarian biryani with fresh paneer and aromatic spices. Protein-rich vegetarian option.',
       price: 180,
       category: 'biryanis',
       isVeg: true,
@@ -142,7 +142,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'mushroom_biryani',
       name: 'Mushroom Biryani',
-      description: 'Delicious mushroom biryani with aromatic spices',
+      description: 'Delicious mushroom biryani with aromatic spices. Earthy flavors with traditional preparation.',
       price: 160,
       category: 'biryanis',
       isVeg: true,
@@ -151,7 +151,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'mixed_veg_biryani',
       name: 'Mixed Vegetable Biryani',
-      description: 'Colorful vegetable biryani with fresh seasonal vegetables',
+      description: 'Colorful vegetable biryani with fresh seasonal vegetables. Healthy and nutritious option.',
       price: 150,
       category: 'biryanis',
       isVeg: true,
@@ -163,7 +163,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'kaju_tomato',
       name: 'Kaju Tomato',
-      description: 'Rich tomato gravy with cashews and aromatic spices',
+      description: 'Rich tomato gravy with cashews and aromatic spices. Creamy texture with tangy tomato base.',
       price: 180,
       category: 'vegCurries',
       isVeg: true,
@@ -172,7 +172,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'kaju_paneer',
       name: 'Kaju Paneer',
-      description: 'Creamy paneer curry with cashews and rich gravy',
+      description: 'Creamy paneer curry with cashews and rich gravy. Protein-rich dish with nutty flavors.',
       price: 200,
       category: 'vegCurries',
       isVeg: true,
@@ -181,7 +181,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'mushroom_curry',
       name: 'Mushroom Curry',
-      description: 'Delicious mushroom curry with aromatic spices',
+      description: 'Delicious mushroom curry with aromatic spices. Earthy flavors with rich gravy.',
       price: 160,
       category: 'vegCurries',
       isVeg: true,
@@ -190,7 +190,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'paneer_butter_masala',
       name: 'Paneer Butter Masala',
-      description: 'Creamy and rich paneer curry with butter and aromatic spices',
+      description: 'Creamy and rich paneer curry with butter and aromatic spices. Classic preparation with smooth texture.',
       price: 180,
       category: 'vegCurries',
       isVeg: true,
@@ -199,7 +199,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'methi_chaman',
       name: 'Methi Chaman',
-      description: 'Fenugreek-flavored paneer curry with rich gravy',
+      description: 'Fenugreek-flavored paneer curry with rich gravy. Unique taste with health benefits.',
       price: 170,
       category: 'vegCurries',
       isVeg: true,
@@ -208,7 +208,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'plain_palak',
       name: 'Plain Palak',
-      description: 'Simple spinach curry with basic spices',
+      description: 'Simple spinach curry with basic spices. Healthy and nutritious green preparation.',
       price: 120,
       category: 'vegCurries',
       isVeg: true,
@@ -217,7 +217,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'palak_paneer',
       name: 'Palak Paneer',
-      description: 'Spinach curry with fresh paneer cubes',
+      description: 'Spinach curry with fresh paneer cubes. Protein-rich dish with iron-packed spinach.',
       price: 160,
       category: 'vegCurries',
       isVeg: true,
@@ -226,7 +226,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'kaju_masala',
       name: 'Kaju Masala',
-      description: 'Rich cashew curry with aromatic spices',
+      description: 'Rich cashew curry with aromatic spices. Creamy texture with nutty undertones.',
       price: 190,
       category: 'vegCurries',
       isVeg: true,
@@ -235,7 +235,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chilly_paneer_mushroom',
       name: 'Chilly Paneer Mushroom',
-      description: 'Spicy paneer and mushroom curry with green chilies',
+      description: 'Spicy paneer and mushroom curry with green chilies. Hot and spicy preparation.',
       price: 180,
       category: 'vegCurries',
       isVeg: true,
@@ -244,7 +244,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'manchurian_paneer_mushroom',
       name: 'Manchurian Paneer Mushroom',
-      description: 'Indo-Chinese style paneer and mushroom curry',
+      description: 'Indo-Chinese style paneer and mushroom curry. Fusion dish with bold flavors.',
       price: 190,
       category: 'vegCurries',
       isVeg: true,
@@ -253,7 +253,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'veg_manchurian',
       name: 'Veg Manchurian',
-      description: 'Vegetable balls in spicy Indo-Chinese gravy',
+      description: 'Vegetable balls in spicy Indo-Chinese gravy. Popular fusion dish with crispy texture.',
       price: 160,
       category: 'vegCurries',
       isVeg: true,
@@ -262,7 +262,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'kaju_fry',
       name: 'Kaju Fry',
-      description: 'Crispy fried cashews with aromatic spices',
+      description: 'Crispy fried cashews with aromatic spices. Crunchy appetizer with rich flavors.',
       price: 200,
       category: 'vegCurries',
       isVeg: true,
@@ -271,7 +271,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: '65_paneer_mushroom',
       name: '65 Paneer Mushroom',
-      description: 'Spicy paneer and mushroom preparation with curry leaves',
+      description: 'Spicy paneer and mushroom preparation with curry leaves. South Indian style with aromatic spices.',
       price: 180,
       category: 'vegCurries',
       isVeg: true,
@@ -283,7 +283,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chilly_chicken',
       name: 'Chilly Chicken',
-      description: 'Spicy chicken curry with green chilies and aromatic spices',
+      description: 'Spicy chicken curry with green chilies and aromatic spices. Hot and fiery preparation.',
       price: 200,
       category: 'nonVegCurries',
       isVeg: false,
@@ -292,7 +292,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'manchurian_chicken',
       name: 'Manchurian Chicken',
-      description: 'Indo-Chinese style chicken curry with rich gravy',
+      description: 'Indo-Chinese style chicken curry with rich gravy. Fusion dish with bold flavors.',
       price: 220,
       category: 'nonVegCurries',
       isVeg: false,
@@ -301,7 +301,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'dragon_chicken',
       name: 'Dragon Chicken',
-      description: 'Spicy dragon-style chicken with bold flavors',
+      description: 'Spicy dragon-style chicken with bold flavors. Extra spicy preparation with unique taste.',
       price: 240,
       category: 'nonVegCurries',
       isVeg: false,
@@ -310,7 +310,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'kaju_chicken_balls',
       name: 'Kaju Chicken Balls',
-      description: 'Chicken balls with cashews in rich gravy',
+      description: 'Chicken balls with cashews in rich gravy. Protein-rich dish with nutty flavors.',
       price: 250,
       category: 'nonVegCurries',
       isVeg: false,
@@ -319,7 +319,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chicken_555',
       name: 'Chicken 555',
-      description: 'Special chicken preparation with unique spices',
+      description: 'Special chicken preparation with unique spices. Chef\'s special with distinctive taste.',
       price: 220,
       category: 'nonVegCurries',
       isVeg: false,
@@ -328,7 +328,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chicken_65',
       name: 'Chicken 65',
-      description: 'Spicy chicken preparation with curry leaves',
+      description: 'Spicy chicken preparation with curry leaves. South Indian style with aromatic spices.',
       price: 200,
       category: 'nonVegCurries',
       isVeg: false,
@@ -337,7 +337,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chicken_fry',
       name: 'Chicken Fry',
-      description: 'Crispy fried chicken with aromatic spices',
+      description: 'Crispy fried chicken with aromatic spices. Golden brown with perfect crunch.',
       price: 220,
       category: 'nonVegCurries',
       isVeg: false,
@@ -346,7 +346,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'lolipop_chicken',
       name: 'Lolipop Chicken',
-      description: 'Succulent chicken lolipops with rich gravy',
+      description: 'Succulent chicken lolipops with rich gravy. Fun presentation with tender meat.',
       price: 240,
       category: 'nonVegCurries',
       isVeg: false,
@@ -355,7 +355,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'whigs_fry',
       name: 'Wings Fry',
-      description: 'Crispy chicken wings with aromatic spices',
+      description: 'Crispy chicken wings with aromatic spices. Perfect appetizer with golden texture.',
       price: 200,
       category: 'nonVegCurries',
       isVeg: false,
@@ -364,7 +364,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'fish_fry',
       name: 'Fish Fry',
-      description: 'Crispy fried fish with aromatic spices',
+      description: 'Crispy fried fish with aromatic spices. Fresh fish with perfect seasoning.',
       price: 250,
       category: 'nonVegCurries',
       isVeg: false,
@@ -373,7 +373,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'loose_prawns_chilli',
       name: 'Loose Prawns Chilli',
-      description: 'Spicy prawns with green chilies and aromatic spices',
+      description: 'Spicy prawns with green chilies and aromatic spices. Seafood delight with bold flavors.',
       price: 280,
       category: 'nonVegCurries',
       isVeg: false,
@@ -382,7 +382,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chicken_bone',
       name: 'Chicken Bone',
-      description: 'Traditional chicken curry with bone-in pieces',
+      description: 'Traditional chicken curry with bone-in pieces. Authentic preparation with rich flavors.',
       price: 180,
       category: 'nonVegCurries',
       isVeg: false,
@@ -391,7 +391,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chicken_boneless',
       name: 'Chicken Boneless',
-      description: 'Boneless chicken curry with rich gravy',
+      description: 'Boneless chicken curry with rich gravy. Tender meat with smooth texture.',
       price: 200,
       category: 'nonVegCurries',
       isVeg: false,
@@ -400,7 +400,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'kaju_chicken',
       name: 'Kaju Chicken',
-      description: 'Chicken curry with cashews and rich gravy',
+      description: 'Chicken curry with cashews and rich gravy. Nutty flavors with tender meat.',
       price: 220,
       category: 'nonVegCurries',
       isVeg: false,
@@ -409,7 +409,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'hyderabadi_chicken',
       name: 'Hyderabadi Chicken',
-      description: 'Traditional Hyderabadi-style chicken curry',
+      description: 'Traditional Hyderabadi-style chicken curry. Authentic recipe with local spices.',
       price: 200,
       category: 'nonVegCurries',
       isVeg: false,
@@ -418,7 +418,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'kadai_chicken',
       name: 'Kadai Chicken',
-      description: 'Kadai-style chicken with bell peppers and aromatic spices',
+      description: 'Kadai-style chicken with bell peppers and aromatic spices. Wok-cooked with fresh vegetables.',
       price: 220,
       category: 'nonVegCurries',
       isVeg: false,
@@ -427,7 +427,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chicken_pawan_kalyan',
       name: 'Chicken Pawan Kalyan',
-      description: 'Special chicken preparation with unique spices',
+      description: 'Special chicken preparation with unique spices. Named after the famous actor\'s style.',
       price: 200,
       category: 'nonVegCurries',
       isVeg: false,
@@ -436,7 +436,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'methi_chicken',
       name: 'Methi Chicken',
-      description: 'Fenugreek-flavored chicken curry',
+      description: 'Fenugreek-flavored chicken curry. Unique taste with health benefits.',
       price: 190,
       category: 'nonVegCurries',
       isVeg: false,
@@ -445,7 +445,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'palak_chicken',
       name: 'Palak Chicken',
-      description: 'Spinach chicken curry with rich gravy',
+      description: 'Spinach chicken curry with rich gravy. Iron-rich dish with tender meat.',
       price: 180,
       category: 'nonVegCurries',
       isVeg: false,
@@ -454,7 +454,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chicken_mughlai',
       name: 'Chicken Mughlai',
-      description: 'Royal Mughlai-style chicken curry',
+      description: 'Royal Mughlai-style chicken curry. Luxurious preparation with rich flavors.',
       price: 220,
       category: 'nonVegCurries',
       isVeg: false,
@@ -463,7 +463,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'mutton_curry',
       name: 'Mutton Curry',
-      description: 'Traditional mutton curry with rich gravy',
+      description: 'Traditional mutton curry with rich gravy. Slow-cooked with authentic spices.',
       price: 250,
       category: 'nonVegCurries',
       isVeg: false,
@@ -472,7 +472,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'mutton_fry',
       name: 'Mutton Fry',
-      description: 'Crispy fried mutton with aromatic spices',
+      description: 'Crispy fried mutton with aromatic spices. Golden brown with perfect texture.',
       price: 280,
       category: 'nonVegCurries',
       isVeg: false,
@@ -481,7 +481,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'prawn_curry',
       name: 'Prawn Curry',
-      description: 'Traditional prawn curry with rich gravy',
+      description: 'Traditional prawn curry with rich gravy. Fresh seafood with coastal flavors.',
       price: 300,
       category: 'nonVegCurries',
       isVeg: false,
@@ -490,7 +490,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'egg_keema',
       name: 'Egg Keema',
-      description: 'Spicy egg keema with aromatic spices',
+      description: 'Spicy egg keema with aromatic spices. Protein-rich dish with bold flavors.',
       price: 140,
       category: 'nonVegCurries',
       isVeg: false,
@@ -499,7 +499,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'egg_bhurji',
       name: 'Egg Bhurji',
-      description: 'Scrambled eggs with onions and spices',
+      description: 'Scrambled eggs with onions and spices. Simple yet delicious preparation.',
       price: 120,
       category: 'nonVegCurries',
       isVeg: false,
@@ -511,7 +511,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'veg_fried_rice',
       name: 'Veg Fried Rice',
-      description: 'Vegetable fried rice with fresh vegetables and aromatic spices',
+      description: 'Vegetable fried rice with fresh vegetables and aromatic spices. Healthy and colorful preparation.',
       price: 150,
       category: 'friedRiceNoodles',
       isVeg: true,
@@ -520,7 +520,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'paneer_fried_rice',
       name: 'Paneer Fried Rice',
-      description: 'Paneer fried rice with fresh paneer and aromatic spices',
+      description: 'Paneer fried rice with fresh paneer and aromatic spices. Protein-rich vegetarian option.',
       price: 170,
       category: 'friedRiceNoodles',
       isVeg: true,
@@ -529,7 +529,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'mushroom_fried_rice',
       name: 'Mushroom Fried Rice',
-      description: 'Mushroom fried rice with fresh mushrooms and aromatic spices',
+      description: 'Mushroom fried rice with fresh mushrooms and aromatic spices. Earthy flavors with perfect texture.',
       price: 160,
       category: 'friedRiceNoodles',
       isVeg: true,
@@ -538,7 +538,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'mix_fried_rice_veg',
       name: 'Mix Fried Rice (Veg)',
-      description: 'Mixed vegetable fried rice with variety of vegetables',
+      description: 'Mixed vegetable fried rice with variety of vegetables. Colorful and nutritious preparation.',
       price: 160,
       category: 'friedRiceNoodles',
       isVeg: true,
@@ -547,7 +547,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'sp_veg_fried_rice',
       name: 'Special Veg Fried Rice',
-      description: 'Special vegetable fried rice with premium ingredients',
+      description: 'Special vegetable fried rice with premium ingredients. Chef\'s special with unique flavors.',
       price: 180,
       category: 'friedRiceNoodles',
       isVeg: true,
@@ -556,7 +556,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chicken_fried_rice',
       name: 'Chicken Fried Rice',
-      description: 'Chicken fried rice with tender chicken pieces',
+      description: 'Chicken fried rice with tender chicken pieces. Protein-rich with perfect balance.',
       price: 180,
       category: 'friedRiceNoodles',
       isVeg: false,
@@ -565,7 +565,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'egg_fried_rice',
       name: 'Egg Fried Rice',
-      description: 'Egg fried rice with scrambled eggs and aromatic spices',
+      description: 'Egg fried rice with scrambled eggs and aromatic spices. Simple yet satisfying preparation.',
       price: 150,
       category: 'friedRiceNoodles',
       isVeg: false,
@@ -574,7 +574,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'mix_fried_rice_nonveg',
       name: 'Mix Fried Rice (Non-Veg)',
-      description: 'Mixed non-vegetarian fried rice with variety of meats',
+      description: 'Mixed non-vegetarian fried rice with variety of meats. Rich and flavorful combination.',
       price: 200,
       category: 'friedRiceNoodles',
       isVeg: false,
@@ -583,7 +583,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'sp_nonveg_fried_rice',
       name: 'Special Non-Veg Fried Rice',
-      description: 'Special non-vegetarian fried rice with premium ingredients',
+      description: 'Special non-vegetarian fried rice with premium ingredients. Signature dish with unique preparation.',
       price: 220,
       category: 'friedRiceNoodles',
       isVeg: false,
@@ -593,7 +593,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'mutton_fried_rice',
       name: 'Mutton Fried Rice',
-      description: 'Mutton fried rice with tender mutton pieces',
+      description: 'Mutton fried rice with tender mutton pieces. Rich and hearty preparation.',
       price: 220,
       category: 'friedRiceNoodles',
       isVeg: false,
@@ -602,7 +602,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'prawns_fried_rice',
       name: 'Prawns Fried Rice',
-      description: 'Prawn fried rice with fresh prawns and aromatic spices',
+      description: 'Prawn fried rice with fresh prawns and aromatic spices. Seafood delight with coastal flavors.',
       price: 240,
       category: 'friedRiceNoodles',
       isVeg: false,
@@ -611,7 +611,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'schezwan_fried_rice',
       name: 'Schezwan Fried Rice',
-      description: 'Spicy Schezwan-style fried rice with bold flavors',
+      description: 'Spicy Schezwan-style fried rice with bold flavors. Hot and spicy Indo-Chinese preparation.',
       price: 170,
       category: 'friedRiceNoodles',
       isVeg: true,
@@ -620,7 +620,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'veg_noodles',
       name: 'Veg Noodles',
-      description: 'Vegetable noodles with fresh vegetables and aromatic spices',
+      description: 'Vegetable noodles with fresh vegetables and aromatic spices. Healthy and colorful preparation.',
       price: 150,
       category: 'friedRiceNoodles',
       isVeg: true,
@@ -629,7 +629,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'egg_noodles',
       name: 'Egg Noodles',
-      description: 'Egg noodles with scrambled eggs and aromatic spices',
+      description: 'Egg noodles with scrambled eggs and aromatic spices. Simple yet delicious preparation.',
       price: 150,
       category: 'friedRiceNoodles',
       isVeg: false,
@@ -638,7 +638,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chicken_noodles',
       name: 'Chicken Noodles',
-      description: 'Chicken noodles with tender chicken pieces',
+      description: 'Chicken noodles with tender chicken pieces. Protein-rich with perfect texture.',
       price: 180,
       category: 'friedRiceNoodles',
       isVeg: false,
@@ -647,7 +647,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chicken_schezwan_noodles',
       name: 'Chicken Schezwan Noodles',
-      description: 'Spicy Schezwan-style chicken noodles with bold flavors',
+      description: 'Spicy Schezwan-style chicken noodles with bold flavors. Hot and spicy fusion dish.',
       price: 200,
       category: 'friedRiceNoodles',
       isVeg: false,
@@ -659,7 +659,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'pulka',
       name: 'Pulka',
-      description: 'Soft whole wheat bread cooked on tawa',
+      description: 'Soft whole wheat bread cooked on tawa. Traditional Indian bread with perfect texture.',
       price: 7,
       category: 'breadsRoti',
       isVeg: true,
