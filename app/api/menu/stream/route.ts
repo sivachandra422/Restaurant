@@ -1,111 +1,128 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import { MenuItem } from '@/lib/models/MenuItem';
 
-// Force dynamic rendering for SSE
+// Force dynamic rendering for SSE endpoint - never statically generate this
 export const dynamic = 'force-dynamic';
 
-// SSE endpoint for real-time menu updates
-export async function GET() {
-  try {
-    await dbConnect();
+// Global variable to store menu updates
+declare global {
+  var menuUpdates: Array<{ timestamp: number; data: any }>;
+}
 
-    // Set up SSE headers
+if (!global.menuUpdates) {
+  global.menuUpdates = [];
+}
+
+export async function GET(request: NextRequest) {
+  try {
     const encoder = new TextEncoder();
+    let isActive = true;
+    let lastUpdate = Date.now();
+
     const stream = new ReadableStream({
       start(controller) {
-        let lastUpdate = Date.now();
-        let isActive = true;
-        let interval: NodeJS.Timeout | null = null;
-
         // Send initial connection message
         try {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connected', timestamp: lastUpdate })}\n\n`));
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'connected', timestamp: Date.now() })}\n\n`));
         } catch (error) {
           console.error('Failed to send initial message:', error);
           return;
         }
 
-        // Check for updates every 30 seconds
-        interval = setInterval(async () => {
+        // Function to safely send data
+        const safeEnqueue = (data: any) => {
+          if (!isActive) return false;
           try {
-            // Check if we should stop
-            if (!isActive) {
-              if (interval) {
-                clearInterval(interval);
-                interval = null;
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+            return true;
+          } catch (error) {
+            console.error('Failed to enqueue data:', error);
+            isActive = false;
+            return false;
+          }
+        };
+
+        // Function to check for updates
+        const checkForUpdates = async () => {
+          if (!isActive) return;
+
+          try {
+            // Check for menu updates from broadcast
+            if (global.menuUpdates && global.menuUpdates.length > 0) {
+              const latestUpdate = global.menuUpdates[global.menuUpdates.length - 1];
+              if (latestUpdate.timestamp > lastUpdate) {
+                const success = safeEnqueue({
+                  type: 'menuUpdate',
+                  timestamp: latestUpdate.timestamp,
+                  data: latestUpdate
+                });
+                if (success) {
+                  lastUpdate = latestUpdate.timestamp;
+                }
+                return;
               }
+            }
+
+            // If no database, just send heartbeat
+            if (!process.env.MONGODB_URI) {
+              safeEnqueue({ type: 'heartbeat', timestamp: Date.now() });
               return;
             }
 
-            // Check if controller is still active before sending data
+            // Get the latest update timestamp from database
             try {
-              // Check for menu updates from broadcast
-              if (global.menuUpdates && global.menuUpdates.length > 0) {
-                const latestUpdate = global.menuUpdates[global.menuUpdates.length - 1];
-                if (latestUpdate.timestamp > lastUpdate) {
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-                    type: 'menuUpdate', 
-                    timestamp: latestUpdate.timestamp,
-                    data: latestUpdate
-                  })}\n\n`));
-                  lastUpdate = latestUpdate.timestamp;
-                }
-              } else if (!process.env.MONGODB_URI) {
-                // If no database, just send heartbeat
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`));
-              } else {
-                // Get the latest update timestamp from database
-                const latestItem = await MenuItem.findOne().sort({ updatedAt: -1 });
-                const currentUpdate = latestItem ? latestItem.updatedAt.getTime() : Date.now();
+              await dbConnect();
+              const latestItem = await MenuItem.findOne().sort({ updatedAt: -1 });
+              const currentUpdate = latestItem ? latestItem.updatedAt.getTime() : Date.now();
 
-                // If there's a new update, send it
-                if (currentUpdate > lastUpdate) {
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ 
-                    type: 'update', 
-                    timestamp: currentUpdate,
-                    message: 'Menu has been updated'
-                  })}\n\n`));
+              // If there's a new update, send it
+              if (currentUpdate > lastUpdate) {
+                const success = safeEnqueue({
+                  type: 'update',
+                  timestamp: currentUpdate,
+                  message: 'Menu has been updated'
+                });
+                if (success) {
                   lastUpdate = currentUpdate;
-                } else {
-                  // Send heartbeat to keep connection alive
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'heartbeat', timestamp: Date.now() })}\n\n`));
                 }
+              } else {
+                // Send heartbeat to keep connection alive
+                safeEnqueue({ type: 'heartbeat', timestamp: Date.now() });
               }
-            } catch (enqueueError) {
-              console.error('Failed to send data:', enqueueError);
-              isActive = false;
-              if (interval) {
-                clearInterval(interval);
-                interval = null;
-              }
+            } catch (dbError) {
+              console.error('Database error in stream:', dbError);
+              // Send heartbeat even if database fails
+              safeEnqueue({ type: 'heartbeat', timestamp: Date.now() });
             }
           } catch (error) {
             console.error('SSE error:', error);
-            // Only try to send error if controller is still active and not closed
-            try {
-              if (isActive) {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'error', message: 'Connection error' })}\n\n`));
-              }
-            } catch (enqueueError) {
-              console.error('Failed to send error message:', enqueueError);
-              isActive = false;
-              if (interval) {
-                clearInterval(interval);
-                interval = null;
-              }
-            }
+            safeEnqueue({ type: 'error', message: 'Connection error' });
           }
+        };
+
+        // Set up interval for checking updates
+        const interval = setInterval(() => {
+          if (!isActive) {
+            clearInterval(interval);
+            return;
+          }
+          checkForUpdates();
         }, 30000); // Check every 30 seconds
 
-        // Clean up on close
-        return () => {
+        // Clean up function
+        const cleanup = () => {
           isActive = false;
           if (interval) {
             clearInterval(interval);
-            interval = null;
           }
         };
+
+        // Handle stream close
+        return cleanup;
+      },
+      cancel() {
+        isActive = false;
       }
     });
 
@@ -120,6 +137,11 @@ export async function GET() {
     });
   } catch (error) {
     console.error('SSE setup error:', error);
-    return NextResponse.json({ error: 'Failed to establish SSE connection' }, { status: 500 });
+    return new Response(JSON.stringify({ error: 'Failed to establish SSE connection' }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
   }
 } 

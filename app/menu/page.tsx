@@ -25,6 +25,7 @@ import { OrderHistory } from '@/components/ui/OrderHistory';
 import { ElegantCheckoutForm } from '@/components/checkout/ElegantCheckoutForm';
 import AIChatbot from '@/components/ui/AIChatbot';
 import Image from 'next/image';
+import { t, tWithParams } from '@/lib/translations';
 
 export default function MenuPage() {
   const searchParams = useSearchParams();
@@ -135,7 +136,7 @@ export default function MenuPage() {
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-500 truncate flex items-center">
                   <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-                  Authentic Indian Cuisine
+                  {t('authentic_indian', language)}
                 </p>
               </div>
             </div>
@@ -146,7 +147,7 @@ export default function MenuPage() {
               {(state.tableNumber || searchParams.get('table')) && (
                 <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-600 bg-gradient-to-r from-orange-50 to-red-50 px-3 py-2 rounded-lg border border-orange-200 shadow-soft">
                   <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
-                  <span className="font-medium">Table {state.tableNumber || searchParams.get('table')}</span>
+                  <span className="font-medium">{t('table', language)} {state.tableNumber || searchParams.get('table')}</span>
                 </div>
               )}
               
@@ -161,7 +162,7 @@ export default function MenuPage() {
               {isSyncing && (
                 <div className="hidden sm:flex items-center space-x-2 text-xs text-orange-600 bg-orange-50 px-3 py-2 rounded-lg border border-orange-200">
                   <RefreshCw className="w-3 h-3 animate-spin" />
-                  <span>Syncing...</span>
+                  <span>{t('syncing', language)}</span>
                 </div>
               )}
               
@@ -175,7 +176,7 @@ export default function MenuPage() {
                 className="h-9 w-9 sm:h-10 sm:w-auto p-0 sm:px-3 ripple focus-ring hover:bg-orange-50 transition-all duration-200 group"
               >
                 <Clock className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
-                <span className="hidden sm:inline text-xs ml-2">Orders</span>
+                <span className="hidden sm:inline text-xs ml-2">{t('orders', language)}</span>
               </Button>
               
               <PremiumCartIcon />
@@ -196,19 +197,21 @@ export default function MenuPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div className="flex items-center justify-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
             <Crown className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 animate-bounce" />
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-shadow">Our Menu</h2>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-shadow">{t('our_menu', language)}</h2>
             <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 animate-pulse" />
           </div>
           <p className="text-sm sm:text-base lg:text-lg opacity-95 max-w-3xl mx-auto leading-relaxed text-shadow">
-            Discover our authentic Indian dishes, crafted with traditional recipes and fresh ingredients. 
-            Every dish tells a story of heritage and flavor.
+            {t('discover_dishes', language)}
+          </p>
+          <p className="text-xs sm:text-sm lg:text-base opacity-90 max-w-2xl mx-auto mt-2 sm:mt-3 leading-relaxed text-shadow">
+            {t('every_dish_story', language)}
           </p>
           
           {/* Enhanced Real-time indicator */}
           {isSyncing && (
             <div className="mt-4 sm:mt-6 flex items-center justify-center space-x-3 text-orange-100 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20">
               <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
-              <span className="text-sm sm:text-base">Updating menu in real-time...</span>
+              <span className="text-sm sm:text-base">{t('updating_menu', language)}</span>
             </div>
           )}
         </div>
@@ -224,7 +227,7 @@ export default function MenuPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   type="text"
-                  placeholder="Search for dishes, ingredients, or categories..."
+                  placeholder={t('search_placeholder', language)}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 h-10 sm:h-11 text-sm border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200"
@@ -243,7 +246,7 @@ export default function MenuPage() {
               {searchQuery && filteredItems.length > 0 && (
                 <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 mt-1 max-h-48 overflow-y-auto">
                   <div className="p-2">
-                    <p className="text-xs text-gray-500 mb-2">Found {filteredItems.length} items</p>
+                    <p className="text-xs text-gray-500 mb-2">{tWithParams('search_results', language, { count: filteredItems.length })}</p>
                     {filteredItems.slice(0, 3).map((item) => (
                       <div
                         key={item.id}
@@ -268,7 +271,7 @@ export default function MenuPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
-                          <p className="text-xs text-gray-500">₹{item.price}</p>
+                          <p className="text-xs text-gray-500">{t('currency', language)}{item.price}</p>
                         </div>
                       </div>
                     ))}
@@ -282,22 +285,22 @@ export default function MenuPage() {
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="h-10 sm:h-11 text-sm border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200">
                   <SortAsc className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Sort by" />
+                  <SelectValue placeholder={t('sort', language)} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="name" className="hover:bg-orange-50">
                     <div className="flex items-center">
-                      <span>Name</span>
+                      <span>{t('name', language)}</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="price-low" className="hover:bg-orange-50">
                     <div className="flex items-center">
-                      <span>Price: Low to High</span>
+                      <span>{t('price_low', language)}</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="price-high" className="hover:bg-orange-50">
                     <div className="flex items-center">
-                      <span>Price: High to Low</span>
+                      <span>{t('price_high', language)}</span>
                     </div>
                   </SelectItem>
                 </SelectContent>
@@ -312,7 +315,7 @@ export default function MenuPage() {
                 onClick={() => setSelectedCategory('all')}
                 className="h-10 sm:h-11 transition-all duration-200"
               >
-                All
+                {t('all_items', language)}
               </Button>
               <Button
                 variant={selectedCategory === 'biryanis' ? 'default' : 'outline'}
@@ -320,7 +323,7 @@ export default function MenuPage() {
                 onClick={() => setSelectedCategory('biryanis')}
                 className="h-10 sm:h-11 transition-all duration-200"
               >
-                Biryanis
+                {t('biryanis', language)}
               </Button>
               <Button
                 variant={selectedCategory === 'vegCurries' ? 'default' : 'outline'}
@@ -328,7 +331,7 @@ export default function MenuPage() {
                 onClick={() => setSelectedCategory('vegCurries')}
                 className="h-10 sm:h-11 transition-all duration-200"
               >
-                Veg
+                {t('veg', language)}
               </Button>
             </div>
           </div>
@@ -355,8 +358,8 @@ export default function MenuPage() {
                 <RefreshCw className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-4 text-orange-500 animate-spin" />
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-orange-200 to-transparent animate-pulse rounded-full"></div>
               </div>
-              <h3 className="text-lg sm:text-xl font-semibold text-gray-700 mb-2">Loading your menu...</h3>
-              <p className="text-sm text-gray-500">Fetching the latest dishes and specials</p>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-700 mb-2">{t('loading_menu', language)}</h3>
+              <p className="text-sm text-gray-500">{t('fetching_latest', language)}</p>
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="text-center py-12 sm:py-16">
@@ -364,9 +367,9 @@ export default function MenuPage() {
                 <ChefHat className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 mx-auto text-gray-300" />
                 <div className="absolute inset-0 bg-gradient-to-r from-orange-100 to-red-100 rounded-full blur-xl opacity-50"></div>
               </div>
-              <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-700 mb-3">No items found</h3>
+              <h3 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-700 mb-3">{t('no_items_found', language)}</h3>
               <p className="text-sm sm:text-base text-gray-500 mb-6 max-w-md mx-auto">
-                Try adjusting your search criteria or browse our categories below
+                {t('try_different_search', language)}
               </p>
               <div className="flex flex-wrap justify-center gap-2">
                 {menuCategories.slice(0, 4).map((category) => (
@@ -388,7 +391,7 @@ export default function MenuPage() {
               <div className="mb-6 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600">
-                    Showing {filteredItems.length} of {allMenuItems.length} items
+                    {tWithParams('showing_items', language, { count: filteredItems.length, total: allMenuItems.length })}
                   </span>
                   {searchQuery && (
                     <Badge variant="secondary" className="text-xs">
@@ -397,7 +400,7 @@ export default function MenuPage() {
                   )}
                 </div>
                 <div className="flex items-center space-x-2 text-xs text-gray-500">
-                  <span>Sort by: {sortBy === 'name' ? 'Name' : sortBy === 'price-low' ? 'Price (Low to High)' : 'Price (High to Low)'}</span>
+                  <span>{tWithParams('sort_by', language, { option: t(sortBy, language) })}</span>
                 </div>
               </div>
 
@@ -439,7 +442,7 @@ export default function MenuPage() {
               {filteredItems.length > 20 && (
                 <div className="text-center mt-8 pt-6 border-t border-gray-100">
                   <p className="text-sm text-gray-500">
-                    Showing {Math.min(filteredItems.length, 20)} of {filteredItems.length} items
+                    {tWithParams('showing_items', language, { count: Math.min(filteredItems.length, 20), total: filteredItems.length })}
                   </p>
                 </div>
               )}
@@ -492,7 +495,7 @@ export default function MenuPage() {
             
             {/* Tooltip */}
             <div className="absolute bottom-full right-0 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-              Order History
+              {t('order_history', language)}
               <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
             </div>
           </div>

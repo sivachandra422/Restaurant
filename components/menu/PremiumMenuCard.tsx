@@ -11,7 +11,8 @@ import { getFoodImage, getFallbackImage, getLocalFallbackImage } from '@/lib/ima
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCustomerExperience } from '@/contexts/CustomerExperienceContext';
-import { t } from '@/lib/translations';
+import { t, tWithParams } from '@/lib/translations';
+import { getLocalizedText } from '@/data/sriKanyaMenu';
 import { WaitTimeIndicator } from '@/components/ui/WaitTimeIndicator';
 
 interface PremiumMenuCardProps {
@@ -39,6 +40,10 @@ export function PremiumMenuCard({
   const [fallbackAttempt, setFallbackAttempt] = useState(0);
   const [isInView, setIsInView] = useState(false);
   const imageRef = useRef<HTMLDivElement>(null);
+  
+  // Get localized text for the current language
+  const localizedName = getLocalizedText(item, 'name', language);
+  const localizedDescription = getLocalizedText(item, 'description', language);
   
   // Get the proper image URL for this item with robust fallback system
   const primaryImageUrl = item.image || getFoodImage(item.id); // Use database image first
@@ -190,7 +195,7 @@ export function PremiumMenuCard({
           {isInView && (
             <Image
               src={currentImageUrl}
-              alt={item.name}
+              alt={localizedName}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className={`object-cover transition-all duration-700 ${
@@ -202,6 +207,7 @@ export function PremiumMenuCard({
               loading={shouldPreload ? "eager" : "lazy"}
               placeholder="blur"
               blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+              unoptimized={currentImageUrl.startsWith('https://res.cloudinary.com/')} // Prevent server-side optimization for Cloudinary
             />
           )}
           
@@ -227,21 +233,21 @@ export function PremiumMenuCard({
             {/* Veg Badge - Always show if applicable */}
             {item.isVeg && (
               <Badge className="bg-green-500 text-white text-xs px-2 py-1 shadow-md transform transition-all duration-300 hover:scale-105 animate-fadeInUp">
-                Veg
+                {t('veg', language)}
               </Badge>
             )}
             
             {/* Signature Badge - Priority badge */}
             {item.isSignature && (
               <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs px-2 py-1 shadow-md transform transition-all duration-300 hover:scale-105 animate-fadeInUp">
-                Signature
+                {t('signature', language)}
               </Badge>
             )}
             
             {/* Trending Badge - Only show if not signature and trending */}
             {item.trending && !item.isSignature && (
               <Badge className="pulse-glow bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 shadow-md transform transition-all duration-300 hover:scale-105 animate-fadeInUp">
-                Trending
+                {t('trending', language)}
               </Badge>
             )}
           </div>
@@ -254,7 +260,7 @@ export function PremiumMenuCard({
               size="sm"
             >
               <Plus className="w-4 h-4 mr-1" />
-              Quick Add
+              {t('quick_add', language)}
             </Button>
           </div>
         </div>
@@ -264,11 +270,11 @@ export function PremiumMenuCard({
           {/* Title and Description */}
           <div className="mb-3">
             <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-1 line-clamp-1 group-hover:text-orange-600 transition-colors duration-200">
-              {item.name}
+              {localizedName}
             </h3>
             <div className="description-container">
               <p className="text-xs sm:text-sm text-gray-600 description-text">
-                {item.description}
+                {localizedDescription}
               </p>
             </div>
           </div>
@@ -277,10 +283,10 @@ export function PremiumMenuCard({
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2">
               <span className="font-bold text-lg sm:text-xl text-gray-900 group-hover:text-orange-600 transition-colors duration-200">
-                ₹{item.price}
+                {t('currency', language)}{item.price}
               </span>
               {item.isSignature && (
-                <span className="text-xs text-orange-600 font-medium">⭐ Premium</span>
+                <span className="text-xs text-orange-600 font-medium">⭐ {t('premium', language)}</span>
               )}
             </div>
             <WaitTimeIndicator item={item} />
@@ -294,7 +300,7 @@ export function PremiumMenuCard({
                 className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium ripple focus-ring transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
               >
                 <Plus className="w-4 h-4 mr-1" />
-                Add to Cart
+                {t('add_to_cart', language)}
               </Button>
             ) : (
               <div className="flex items-center space-x-2 w-full">

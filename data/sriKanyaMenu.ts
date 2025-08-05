@@ -2,7 +2,11 @@
 export interface MenuItem {
   id: string;
   name: string;
+  nameHi?: string; // Hindi name
+  nameTe?: string; // Telugu name
   description: string;
+  descriptionHi?: string; // Hindi description
+  descriptionTe?: string; // Telugu description
   price: number;
   category: string;
   isVeg: boolean;
@@ -18,12 +22,26 @@ export interface MenuItem {
   isDisabled?: boolean; // Whether item is disabled/hidden from customers
 }
 
+// Helper function to get localized text
+export function getLocalizedText(item: any, field: 'name' | 'description', language: 'en' | 'hi' | 'te'): string {
+  if (language === 'en') {
+    return item[field];
+  }
+  
+  const localizedField = `${field}${language === 'hi' ? 'Hi' : 'Te'}`;
+  return item[localizedField] || item[field]; // Fallback to English
+}
+
 export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
   biryanis: [
     {
       id: 'chicken_dum_biryani_half',
       name: 'Chicken Dum Biryani (Half)',
+      nameHi: 'चिकन दम बिरयानी (आधा)',
+      nameTe: 'చికెన్ దమ్ బిర్యానీ (సగం)',
       description: 'Aromatic basmati rice layered with tender chicken, slow-cooked with traditional spices and saffron. Perfect blend of flavors.',
+      descriptionHi: 'सुगंधित बासमती चावल में नरम चिकन की परतें, पारंपरिक मसालों और केसर के साथ धीमी आंच पर पकाया गया। स्वाद का सर्वश्रेष्ठ मिश्रण।',
+      descriptionTe: 'మెత్తని చికెన్‌తో పొరలుగా ఉన్న సుగంధ బాస్మతి బియ్యం, సాంప్రదాయ మసాలాలతో మరియు కుంకుమపువ్వుతో నెమ్మదిగా వండబడింది. రుచుల యొక్క పరిపూర్ణ మిశ్రమం.',
       price: 160,
       category: 'biryanis',
       isVeg: false,
@@ -36,7 +54,11 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'chicken_dum_biryani_full',
       name: 'Chicken Dum Biryani (Full)',
+      nameHi: 'चिकन दम बिरयानी (पूरा)',
+      nameTe: 'చికెన్ దమ్ బిర్యానీ (పూర్తి)',
       description: 'Aromatic basmati rice layered with tender chicken, slow-cooked with traditional spices and saffron. Rich and flavorful.',
+      descriptionHi: 'सुगंधित बासमती चावल में नरम चिकन की परतें, पारंपरिक मसालों और केसर के साथ धीमी आंच पर पकाया गया। समृद्ध और स्वादिष्ट।',
+      descriptionTe: 'మెత్తని చికెన్‌తో పొరలుగా ఉన్న సుగంధ బాస్మతి బియ్యం, సాంప్రదాయ మసాలాలతో మరియు కుంకుమపువ్వుతో నెమ్మదిగా వండబడింది. సంపన్న మరియు రుచికరమైన.',
       price: 220,
       category: 'biryanis',
       isVeg: false,
@@ -190,7 +212,11 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
     {
       id: 'paneer_butter_masala',
       name: 'Paneer Butter Masala',
+      nameHi: 'पनीर बटर मसाला',
+      nameTe: 'పనీర్ బటర్ మసాలా',
       description: 'Creamy and rich paneer curry with butter and aromatic spices. Classic preparation with smooth texture.',
+      descriptionHi: 'मक्खन और सुगंधित मसालों के साथ क्रीमी और समृद्ध पनीर करी। चिकनी बनावट के साथ क्लासिक तैयारी।',
+      descriptionTe: 'వెన్న మరియు సుగంధ మసాలాలతో క్రీమీ మరియు సంపన్న పనీర్ కూర. మృదువైన నిర్మాణంతో క్లాసిక్ తయారీ.',
       price: 180,
       category: 'vegCurries',
       isVeg: true,
