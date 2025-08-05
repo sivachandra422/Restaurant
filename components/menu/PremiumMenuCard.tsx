@@ -211,9 +211,6 @@ export function PremiumMenuCard({
             />
           )}
           
-          {/* Enhanced Overlay on hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300" />
-          
           {/* Favorite Button with enhanced animation */}
           <button
             onClick={handleFavoriteClick}
@@ -252,17 +249,8 @@ export function PremiumMenuCard({
             )}
           </div>
 
-          {/* Quick Add Button - Appears on hover */}
-          <div className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-            <Button
-              onClick={handleAddClick}
-              className="w-full bg-white/95 backdrop-blur-sm text-gray-900 hover:bg-white font-medium transition-all duration-200 transform hover:scale-105"
-              size="sm"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              {t('quick_add', language)}
-            </Button>
-          </div>
+          {/* Enhanced Overlay on hover - removed Quick Add button */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300" />
         </div>
 
         {/* Content Section */}
