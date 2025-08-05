@@ -32,7 +32,7 @@ export function PremiumMenuCard({
 }: PremiumMenuCardProps) {
   const { getMaxQuantity } = useCart();
   const { language } = useLanguage();
-  const { isFavorite: isItemFavorite, addToFavorites, removeFromFavorites } = useCustomerExperience();
+  const { isFavorite: isItemFavorite, addToFavorites, removeFromFavorites, favorites } = useCustomerExperience();
   
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
@@ -125,9 +125,15 @@ export function PremiumMenuCard({
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log('Favorite button clicked for item:', item.id);
+    console.log('Current favorites:', favorites);
+    console.log('Is currently favorite:', isItemFavorite(item.id));
+    
     if (isItemFavorite(item.id)) {
+      console.log('Removing from favorites');
       removeFromFavorites(item.id);
     } else {
+      console.log('Adding to favorites');
       addToFavorites(item.id);
     }
   };
@@ -206,7 +212,8 @@ export function PremiumMenuCard({
           {/* Favorite Button with enhanced animation */}
           <button
             onClick={handleFavoriteClick}
-            className="absolute top-2 left-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 hover:bg-white hover:scale-110 focus-ring transform hover:rotate-12"
+            className="absolute top-2 left-2 w-8 h-8 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 hover:bg-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transform hover:rotate-12 z-10 shadow-md"
+            style={{ zIndex: 10 }}
           >
             <Heart 
               className={`w-4 h-4 transition-all duration-300 ${

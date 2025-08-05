@@ -29,8 +29,8 @@ function getLocalizedCategoryText(category: Category, field: 'name' | 'descripti
     return category[field];
   }
   
-  const localizedField = `${field}${language === 'hi' ? 'Hi' : 'Te'}`;
-  return category[localizedField] || category[field]; // Fallback to English
+  const localizedField = `${field}${language === 'hi' ? 'Hi' : 'Te'}` as keyof Category;
+  return (category[localizedField] as string) || category[field]; // Fallback to English
 }
 
 export function ElegantCategoryTabs({
