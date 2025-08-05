@@ -1,41 +1,42 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
-import { OrderUpdate, NotificationData } from '@/lib/websocket';
 
 interface Order {
   _id: string;
   orderId: string;
-  tableNumber: number;
+  tableNumber: string;
   items: Array<{
-    id: string;
+    itemId: string;
     name: string;
-    quantity: number;
     price: number;
-    subtotal: number;
+    quantity: number;
+    isVeg: boolean;
+    category: string;
   }>;
   totalAmount: number;
-  status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+  paymentStatus: 'pending' | 'paid' | 'failed';
+  paymentMethod: string;
+  customerName?: string;
+  customerPhone?: string;
+  specialInstructions?: string;
   timestamp: Date;
+  createdAt: Date;
+  lastUpdated: Date;
   estimatedTime?: number;
   notes?: string;
-  lastUpdated?: Date;
 }
 
 interface RealTimeOrderContextType {
   orders: Order[];
-  activeOrders: Order[];
-  pendingOrders: Order[];
-  preparingOrders: Order[];
-  readyOrders: Order[];
   isConnected: boolean;
+  error: string | null;
+  fetchOrders: () => Promise<void>;
+  updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
+  updatePaymentStatus: (orderId: string, paymentStatus: Order['paymentStatus']) => Promise<void>;
+  createTestOrder: () => Promise<void>;
   lastUpdate: Date | null;
-  updateOrderStatus: (orderId: string, status: Order['status'], estimatedTime?: number, notes?: string) => Promise<void>;
-  bulkUpdateOrders: (updates: Array<{ orderId: string; status: Order['status']; estimatedTime?: number }>) => Promise<void>;
-  refreshOrders: () => Promise<void>;
-  connect: () => void;
-  disconnect: () => void;
 }
 
 const RealTimeOrderContext = createContext<RealTimeOrderContextType | undefined>(undefined);
@@ -43,200 +44,232 @@ const RealTimeOrderContext = createContext<RealTimeOrderContextType | undefined>
 export function RealTimeOrderProvider({ children }: { children: React.ReactNode }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [socket, setSocket] = useState<Socket | null>(null);
-
-  // Filter orders by status
-  const activeOrders = orders.filter(order => 
-    ['pending', 'preparing', 'ready'].includes(order.status)
-  );
-  const pendingOrders = orders.filter(order => order.status === 'pending');
-  const preparingOrders = orders.filter(order => order.status === 'preparing');
-  const readyOrders = orders.filter(order => order.status === 'ready');
-
-  // Initialize WebSocket connection
-  const connect = useCallback(() => {
-    if (socket?.connected) return;
-
-    const newSocket = io(process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'http://localhost:3000', {
-      transports: ['websocket', 'polling'],
-      autoConnect: true
-    });
-
-    newSocket.on('connect', () => {
-      console.log('Real-time order connection established');
-      setIsConnected(true);
-      
-      // Authenticate as admin
-      const adminToken = localStorage.getItem('admin-token');
-      if (adminToken) {
-        newSocket.emit('admin_auth', { token: adminToken });
-      }
-    });
-
-    newSocket.on('disconnect', () => {
-      console.log('Real-time order connection disconnected');
-      setIsConnected(false);
-    });
-
-    newSocket.on('order_status_update', (orderUpdate: OrderUpdate) => {
-      console.log('Received order status update:', orderUpdate);
-      setOrders(prevOrders => {
-        const updatedOrders = prevOrders.map(order => 
-          order.orderId === orderUpdate.orderId 
-            ? { 
-                ...order, 
-                status: orderUpdate.status,
-                estimatedTime: orderUpdate.estimatedTime,
-                lastUpdated: orderUpdate.timestamp
-              }
-            : order
-        );
-        return updatedOrders;
-      });
-      setLastUpdate(new Date());
-    });
-
-    newSocket.on('notification', (notification: NotificationData) => {
-      console.log('Received notification:', notification);
-      // Handle notifications (could show toast, update UI, etc.)
-      if (notification.type === 'new_order') {
-        // Refresh orders when new order comes in
-        refreshOrders();
-      }
-    });
-
-    setSocket(newSocket);
-  }, [socket]);
-
-  const disconnect = useCallback(() => {
-    if (socket) {
-      socket.disconnect();
-      setSocket(null);
-      setIsConnected(false);
-    }
-  }, [socket]);
+  const [eventSource, setEventSource] = useState<EventSource | null>(null);
 
   // Fetch orders from API
-  const refreshOrders = useCallback(async () => {
+  const fetchOrders = useCallback(async () => {
     try {
-      const response = await fetch('/api/admin/orders/realtime');
+      const response = await fetch('/api/orders');
       if (response.ok) {
         const data = await response.json();
-        setOrders(data.orders || []);
+        setOrders(data.orders || data || []);
         setLastUpdate(new Date());
+        setError(null);
+      } else {
+        throw new Error('Failed to fetch orders');
       }
-    } catch (error) {
-      console.error('Error fetching orders:', error);
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setError('Failed to fetch orders');
     }
   }, []);
+
+  // Initialize SSE connection
+  const initializeSSE = useCallback(() => {
+    try {
+      // Close existing connection if any
+      if (eventSource) {
+        eventSource.close();
+      }
+
+      const sse = new EventSource('/api/admin/orders/realtime/stream');
+      setEventSource(sse);
+
+      sse.onopen = () => {
+        console.log('SSE connection established');
+        setIsConnected(true);
+        setError(null);
+      };
+
+      sse.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('SSE message received:', data);
+
+          switch (data.type) {
+            case 'connected':
+              console.log('SSE connected:', data.message);
+              break;
+            
+            case 'initial-orders':
+              setOrders(data.orders || []);
+              setLastUpdate(new Date());
+              break;
+            
+            case 'new-order':
+              setOrders(prev => [data.order, ...prev]);
+              setLastUpdate(new Date());
+              // Play notification sound for new orders
+              playNotificationSound();
+              break;
+            
+            case 'order-updated':
+              setOrders(prev => 
+                prev.map(order => 
+                  order._id === data.order._id ? data.order : order
+                )
+              );
+              setLastUpdate(new Date());
+              break;
+            
+            case 'order-deleted':
+              setOrders(prev => 
+                prev.filter(order => order._id !== data.orderId)
+              );
+              setLastUpdate(new Date());
+              break;
+            
+            case 'heartbeat':
+              // Keep connection alive
+              break;
+            
+            default:
+              console.log('Unknown SSE message type:', data.type);
+          }
+        } catch (err) {
+          console.error('Error parsing SSE message:', err);
+        }
+      };
+
+      sse.onerror = (event) => {
+        console.error('SSE connection error:', event);
+        setIsConnected(false);
+        setError('Connection lost. Trying to reconnect...');
+        
+        // Attempt to reconnect after 5 seconds
+        setTimeout(() => {
+          if (!isConnected) {
+            initializeSSE();
+          }
+        }, 5000);
+      };
+
+    } catch (err) {
+      console.error('Error initializing SSE:', err);
+      setError('Failed to establish real-time connection');
+    }
+  }, [eventSource, isConnected]);
 
   // Update order status
-  const updateOrderStatus = useCallback(async (
-    orderId: string, 
-    status: Order['status'], 
-    estimatedTime?: number,
-    notes?: string
-  ) => {
+  const updateOrderStatus = useCallback(async (orderId: string, status: Order['status']) => {
     try {
-      const response = await fetch('/api/admin/orders/realtime', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId, status, estimatedTime, notes })
+      const response = await fetch(`/api/admin/orders/realtime/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status })
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Order status updated:', data);
-        
-        // Update local state
-        setOrders(prevOrders => 
-          prevOrders.map(order => 
-            order.orderId === orderId 
-              ? { ...order, status, estimatedTime, notes, lastUpdated: new Date() }
-              : order
-          )
-        );
-        
-        setLastUpdate(new Date());
-      } else {
+      if (!response.ok) {
         throw new Error('Failed to update order status');
       }
-    } catch (error) {
-      console.error('Error updating order status:', error);
-      throw error;
+
+      const result = await response.json();
+      console.log('Order status updated:', result);
+      return result;
+    } catch (err) {
+      console.error('Error updating order status:', err);
+      throw err;
     }
   }, []);
 
-  // Bulk update orders
-  const bulkUpdateOrders = useCallback(async (
-    updates: Array<{ orderId: string; status: Order['status']; estimatedTime?: number }>
-  ) => {
+  // Update payment status
+  const updatePaymentStatus = useCallback(async (orderId: string, paymentStatus: Order['paymentStatus']) => {
     try {
-      const response = await fetch('/api/admin/orders/realtime', {
+      const response = await fetch(`/api/admin/orders/realtime/${orderId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ updates })
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ paymentStatus })
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Bulk orders updated:', data);
-        
-        // Update local state
-        setOrders(prevOrders => 
-          prevOrders.map(order => {
-            const update = updates.find(u => u.orderId === order.orderId);
-            return update 
-              ? { ...order, status: update.status, estimatedTime: update.estimatedTime, lastUpdated: new Date() }
-              : order;
-          })
-        );
-        
-        setLastUpdate(new Date());
-      } else {
-        throw new Error('Failed to bulk update orders');
+      if (!response.ok) {
+        throw new Error('Failed to update payment status');
       }
-    } catch (error) {
-      console.error('Error bulk updating orders:', error);
-      throw error;
+
+      const result = await response.json();
+      console.log('Payment status updated:', result);
+      return result;
+    } catch (err) {
+      console.error('Error updating payment status:', err);
+      throw err;
     }
   }, []);
 
-  // Connect on mount
-  useEffect(() => {
-    connect();
-    refreshOrders();
+  // Create test order
+  const createTestOrder = useCallback(async () => {
+    try {
+      const response = await fetch('/api/test/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
 
-    return () => {
-      disconnect();
-    };
-  }, [connect, disconnect, refreshOrders]);
-
-  // Auto-refresh orders every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (isConnected) {
-        refreshOrders();
+      if (!response.ok) {
+        throw new Error('Failed to create test order');
       }
-    }, 30000);
 
-    return () => clearInterval(interval);
-  }, [isConnected, refreshOrders]);
+      const result = await response.json();
+      console.log('Test order created:', result);
+      return result;
+    } catch (err) {
+      console.error('Error creating test order:', err);
+      throw err;
+    }
+  }, []);
+
+  // Play notification sound
+  const playNotificationSound = () => {
+    try {
+      // Create a simple notification sound
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+      
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (err) {
+      console.log('Could not play notification sound:', err);
+    }
+  };
+
+  // Initialize on mount
+  useEffect(() => {
+    fetchOrders();
+    initializeSSE();
+
+    // Cleanup on unmount
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
+  }, []);
 
   const value: RealTimeOrderContextType = {
     orders,
-    activeOrders,
-    pendingOrders,
-    preparingOrders,
-    readyOrders,
     isConnected,
-    lastUpdate,
+    error,
+    fetchOrders,
     updateOrderStatus,
-    bulkUpdateOrders,
-    refreshOrders,
-    connect,
-    disconnect
+    updatePaymentStatus,
+    createTestOrder,
+    lastUpdate
   };
 
   return (

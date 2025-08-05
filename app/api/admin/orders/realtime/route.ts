@@ -1,183 +1,102 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import { webSocketManager, OrderUpdate, NotificationData } from '@/lib/websocket';
+import { Order } from '@/lib/models/Order';
+import { ObjectId } from 'mongodb';
+import sseEventEmitter from '@/lib/sse-events';
 
 export const dynamic = 'force-dynamic';
 
-// GET - Get real-time order status
-export async function GET(request: NextRequest) {
+// GET - Fetch all orders
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const orderId = searchParams.get('orderId');
-    
     const { db } = await connectToDatabase();
-    
     if (!db) {
       return NextResponse.json(
-        { error: 'Database not available' },
-        { status: 503 }
+        { success: false, error: 'Database connection failed' },
+        { status: 500 }
       );
     }
-
-    if (orderId) {
-      const order = await db.collection('orders').findOne({ orderId });
-      return NextResponse.json({ order });
-    }
-
-    // Get all active orders
-    const activeOrders = await db.collection('orders')
-      .find({ 
-        status: { $in: ['pending', 'preparing', 'ready'] } 
-      })
-      .sort({ timestamp: -1 })
-      .toArray();
-
-    return NextResponse.json({ orders: activeOrders });
+    const orders = await db.collection('orders').find({}).sort({ createdAt: -1 }).toArray();
+    return NextResponse.json({ 
+      success: true, 
+      orders,
+      count: orders.length 
+    });
   } catch (error) {
-    console.error('Real-time orders API Error:', error);
+    console.error('Error fetching orders:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch orders' },
+      { success: false, error: 'Failed to fetch orders' },
       { status: 500 }
     );
   }
 }
 
-// POST - Update order status in real-time
+// POST - Create new order
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { orderId, status, estimatedTime, notes } = body;
-    
     const { db } = await connectToDatabase();
-    
     if (!db) {
       return NextResponse.json(
-        { error: 'Database not available' },
-        { status: 503 }
+        { success: false, error: 'Database connection failed' },
+        { status: 500 }
+      );
+    }
+    const newOrder = new Order(body);
+    const result = await db.collection('orders').insertOne(newOrder);
+    
+    const createdOrder = { ...newOrder.toObject(), _id: result.insertedId };
+    
+    // Emit SSE event for new order
+    sseEventEmitter.emit('order-event', { type: 'new-order', order: createdOrder });
+
+    return NextResponse.json({ success: true, order: createdOrder });
+  } catch (error) {
+    console.error('Error creating order:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to create order' },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT - Update order status or payment status
+export async function PUT(request: NextRequest) {
+  try {
+    const { orderId, status, paymentStatus } = await request.json();
+    const { db } = await connectToDatabase();
+    if (!db) {
+      return NextResponse.json(
+        { success: false, error: 'Database connection failed' },
+        { status: 500 }
       );
     }
 
-    // Update order in database
+    const updateData: any = { lastUpdated: new Date() };
+    if (status) updateData.status = status;
+    if (paymentStatus) updateData.paymentStatus = paymentStatus;
+
     const result = await db.collection('orders').findOneAndUpdate(
-      { orderId },
-      { 
-        $set: { 
-          status, 
-          estimatedTime,
-          notes,
-          lastUpdated: new Date() 
-        } 
-      },
+      { _id: new ObjectId(orderId) },
+      { $set: updateData },
       { returnDocument: 'after' }
     );
 
-    if (!result) {
+    if (!result || !result.value) {
       return NextResponse.json(
-        { error: 'Order not found' },
+        { success: false, error: 'Order not found' },
         { status: 404 }
       );
     }
 
-    const order = result;
+    // Emit SSE event for order update
+    sseEventEmitter.emit('order-event', { type: 'order-updated', order: result.value });
 
-    // Create order update for WebSocket broadcast
-    const orderUpdate: OrderUpdate = {
-      orderId: order.orderId,
-      status: order.status,
-      tableNumber: order.tableNumber,
-      timestamp: new Date(),
-      estimatedTime: order.estimatedTime
-    };
-
-    // Broadcast order update via WebSocket
-    webSocketManager.broadcastOrderUpdate(orderUpdate);
-
-    // Send notification based on status
-    const notification: NotificationData = {
-      type: 'status_change',
-      title: `Order #${orderId.slice(-6)} Status Updated`,
-      message: `Order status changed to ${status}`,
-      priority: status === 'ready' ? 'high' : 'medium',
-      data: { orderId, status, tableNumber: order.tableNumber },
-      timestamp: new Date()
-    };
-
-    webSocketManager.broadcastNotification(notification);
-
-    return NextResponse.json({ 
-      success: true, 
-      order,
-      message: `Order status updated to ${status}` 
-    });
+    return NextResponse.json({ success: true, order: result.value });
   } catch (error) {
-    console.error('Update order status error:', error);
+    console.error('Error updating order:', error);
     return NextResponse.json(
-      { error: 'Failed to update order status' },
-      { status: 500 }
-    );
-  }
-}
-
-// PUT - Bulk update multiple orders
-export async function PUT(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { updates } = body; // Array of { orderId, status, estimatedTime }
-    
-    const { db } = await connectToDatabase();
-    
-    if (!db) {
-      return NextResponse.json(
-        { error: 'Database not available' },
-        { status: 503 }
-      );
-    }
-
-    const results = [];
-    const orderUpdates: OrderUpdate[] = [];
-
-    for (const update of updates) {
-      const result = await db.collection('orders').findOneAndUpdate(
-        { orderId: update.orderId },
-        { 
-          $set: { 
-            status: update.status, 
-            estimatedTime: update.estimatedTime,
-            lastUpdated: new Date() 
-          } 
-        },
-        { returnDocument: 'after' }
-      );
-
-      if (result) {
-        results.push(result);
-        
-        const orderUpdate: OrderUpdate = {
-          orderId: result.orderId,
-          status: result.status,
-          tableNumber: result.tableNumber,
-          timestamp: new Date(),
-          estimatedTime: result.estimatedTime
-        };
-        
-        orderUpdates.push(orderUpdate);
-      }
-    }
-
-    // Broadcast all updates
-    orderUpdates.forEach(update => {
-      webSocketManager.broadcastOrderUpdate(update);
-    });
-
-    return NextResponse.json({ 
-      success: true, 
-      updatedOrders: results.length,
-      message: `Updated ${results.length} orders` 
-    });
-  } catch (error) {
-    console.error('Bulk update orders error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update orders' },
+      { success: false, error: 'Failed to update order' },
       { status: 500 }
     );
   }

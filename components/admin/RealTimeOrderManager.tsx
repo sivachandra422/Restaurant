@@ -1,143 +1,56 @@
 'use client';
 
 import React, { useState } from 'react';
-import { 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  Play, 
-  Pause, 
-  StopCircle,
-  RefreshCw,
-  Wifi,
-  WifiOff,
-  Timer,
-  MessageSquare,
-  Eye,
-  Edit,
-  Users,
-  DollarSign
-} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useRealTimeOrders } from '@/contexts/RealTimeOrderContext';
-
-interface Order {
-  _id: string;
-  orderId: string;
-  tableNumber: number;
-  items: Array<{
-    id: string;
-    name: string;
-    quantity: number;
-    price: number;
-    subtotal: number;
-  }>;
-  totalAmount: number;
-  status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled';
-  timestamp: Date;
-  estimatedTime?: number;
-  notes?: string;
-  lastUpdated?: Date;
-}
+import { 
+  RefreshCw, 
+  Plus, 
+  Eye, 
+  Clock, 
+  DollarSign, 
+  Users, 
+  TrendingUp,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+  Wifi,
+  WifiOff
+} from 'lucide-react';
 
 export default function RealTimeOrderManager() {
   const { 
     orders, 
-    activeOrders, 
-    pendingOrders, 
-    preparingOrders, 
-    readyOrders,
     isConnected, 
-    lastUpdate, 
+    error, 
+    fetchOrders, 
     updateOrderStatus, 
-    bulkUpdateOrders,
-    refreshOrders 
+    updatePaymentStatus, 
+    createTestOrder,
+    lastUpdate 
   } = useRealTimeOrders();
 
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
+  const [creatingTestOrder, setCreatingTestOrder] = useState(false);
 
-  const getStatusBadge = (status: Order['status']) => {
-    const statusConfig = {
-      pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-      preparing: { color: 'bg-blue-100 text-blue-800', icon: Play },
-      ready: { color: 'bg-green-100 text-green-800', icon: CheckCircle },
-      served: { color: 'bg-gray-100 text-gray-800', icon: StopCircle },
-      cancelled: { color: 'bg-red-100 text-red-800', icon: AlertCircle }
-    };
+  // Filter orders by status
+  const pendingOrders = orders.filter(order => order.status === 'pending');
+  const preparingOrders = orders.filter(order => order.status === 'preparing');
+  const readyOrders = orders.filter(order => order.status === 'ready');
+  const deliveredOrders = orders.filter(order => order.status === 'delivered');
 
-    const config = statusConfig[status];
-    const Icon = config.icon;
+  // Calculate analytics
+  const totalOrders = orders.length;
+  const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+  const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+  const activeOrders = orders.filter(order => ['pending', 'preparing', 'ready'].includes(order.status)).length;
 
-    return (
-      <Badge className={`${config.color} flex items-center gap-1`}>
-        <Icon className="w-3 h-3" />
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
-  };
-
-  const getStatusActions = (order: Order) => {
-    const actions = [];
-
-    if (order.status === 'pending') {
-      actions.push(
-        <Button
-          key="start-preparing"
-          size="sm"
-          variant="outline"
-          onClick={() => handleStatusUpdate(order.orderId, 'preparing')}
-          disabled={updatingOrder === order.orderId}
-          className="text-blue-600 border-blue-200 hover:bg-blue-50"
-        >
-          <Play className="w-3 h-3 mr-1" />
-          Start Preparing
-        </Button>
-      );
-    }
-
-    if (order.status === 'preparing') {
-      actions.push(
-        <Button
-          key="mark-ready"
-          size="sm"
-          variant="outline"
-          onClick={() => handleStatusUpdate(order.orderId, 'ready')}
-          disabled={updatingOrder === order.orderId}
-          className="text-green-600 border-green-200 hover:bg-green-50"
-        >
-          <CheckCircle className="w-3 h-3 mr-1" />
-          Mark Ready
-        </Button>
-      );
-    }
-
-    if (order.status === 'ready') {
-      actions.push(
-        <Button
-          key="mark-served"
-          size="sm"
-          variant="outline"
-          onClick={() => handleStatusUpdate(order.orderId, 'served')}
-          disabled={updatingOrder === order.orderId}
-          className="text-gray-600 border-gray-200 hover:bg-gray-50"
-        >
-          <StopCircle className="w-3 h-3 mr-1" />
-          Mark Served
-        </Button>
-      );
-    }
-
-    return actions;
-  };
-
-  const handleStatusUpdate = async (orderId: string, status: Order['status']) => {
+  const handleStatusUpdate = async (orderId: string, status: string) => {
     setUpdatingOrder(orderId);
     try {
-      await updateOrderStatus(orderId, status);
+      await updateOrderStatus(orderId, status as any);
     } catch (error) {
       console.error('Error updating order status:', error);
     } finally {
@@ -145,82 +58,59 @@ export default function RealTimeOrderManager() {
     }
   };
 
-  const formatTime = (date: Date | string) => {
-    return new Date(date).toLocaleTimeString('en-IN', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const handlePaymentUpdate = async (orderId: string, paymentStatus: string) => {
+    setUpdatingOrder(orderId);
+    try {
+      await updatePaymentStatus(orderId, paymentStatus as any);
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+    } finally {
+      setUpdatingOrder(null);
+    }
   };
 
-  const formatDuration = (minutes?: number) => {
-    if (!minutes) return 'N/A';
-    return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+  const handleCreateTestOrder = async () => {
+    setCreatingTestOrder(true);
+    try {
+      await createTestOrder();
+    } catch (error) {
+      console.error('Error creating test order:', error);
+    } finally {
+      setCreatingTestOrder(false);
+    }
   };
 
-  const OrderCard = ({ order }: { order: Order }) => (
-    <Card key={order.orderId} className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-gray-500" />
-            <span className="font-medium">Table {order.tableNumber}</span>
-            <span className="text-sm text-gray-500">#{order.orderId.slice(-6)}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {getStatusBadge(order.status)}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setSelectedOrder(order);
-                setShowOrderDetails(true);
-              }}
-            >
-              <Eye className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending', icon: Clock },
+      confirmed: { color: 'bg-blue-100 text-blue-800', label: 'Confirmed', icon: CheckCircle },
+      preparing: { color: 'bg-orange-100 text-orange-800', label: 'Preparing', icon: Clock },
+      ready: { color: 'bg-green-100 text-green-800', label: 'Ready', icon: CheckCircle },
+      delivered: { color: 'bg-gray-100 text-gray-800', label: 'Delivered', icon: CheckCircle },
+      cancelled: { color: 'bg-red-100 text-red-800', label: 'Cancelled', icon: XCircle }
+    };
 
-        <div className="space-y-2 mb-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Items:</span>
-            <span className="font-medium">{order.items.length}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Total:</span>
-            <span className="font-medium text-green-600">₹{order.totalAmount}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Time:</span>
-            <span className="font-medium">{formatTime(order.timestamp)}</span>
-          </div>
-          {order.estimatedTime && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Est. Time:</span>
-              <span className="font-medium flex items-center gap-1">
-                <Timer className="w-3 h-3" />
-                {formatDuration(order.estimatedTime)}
-              </span>
-            </div>
-          )}
-        </div>
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    const Icon = config.icon;
+    return (
+      <Badge className={config.color}>
+        <Icon className="w-3 h-3 mr-1" />
+        {config.label}
+      </Badge>
+    );
+  };
 
-        {order.notes && (
-          <div className="mb-3 p-2 bg-gray-50 rounded text-sm">
-            <div className="flex items-center gap-1 text-gray-600 mb-1">
-              <MessageSquare className="w-3 h-3" />
-              Notes:
-            </div>
-            <p className="text-gray-700">{order.notes}</p>
-          </div>
-        )}
+  const getPaymentStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
+      paid: { color: 'bg-green-100 text-green-800', label: 'Paid' },
+      failed: { color: 'bg-red-100 text-red-800', label: 'Failed' },
+      refunded: { color: 'bg-gray-100 text-gray-800', label: 'Refunded' }
+    };
 
-        <div className="flex gap-2">
-          {getStatusActions(order)}
-        </div>
-      </CardContent>
-    </Card>
-  );
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    return <Badge className={config.color}>{config.label}</Badge>;
+  };
 
   return (
     <div className="space-y-6">
@@ -229,235 +119,346 @@ export default function RealTimeOrderManager() {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Real-Time Order Management</h2>
           <p className="text-sm text-gray-600">
-            Live order tracking and status management
+            Live order tracking and management
+            {lastUpdate && (
+              <span className="ml-2">
+                • Last updated: {lastUpdate.toLocaleTimeString()}
+              </span>
+            )}
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center space-x-4">
+          {/* Connection Status */}
+          <div className="flex items-center space-x-2">
             {isConnected ? (
-              <div className="flex items-center gap-1 text-green-600">
-                <Wifi className="w-4 h-4" />
-                <span className="text-sm font-medium">Connected</span>
-              </div>
+              <Wifi className="w-4 h-4 text-green-500" />
             ) : (
-              <div className="flex items-center gap-1 text-red-600">
-                <WifiOff className="w-4 h-4" />
-                <span className="text-sm font-medium">Disconnected</span>
-              </div>
+              <WifiOff className="w-4 h-4 text-red-500" />
             )}
+            <span className={`text-sm ${isConnected ? 'text-green-600' : 'text-red-600'}`}>
+              {isConnected ? 'Connected' : 'Disconnected'}
+            </span>
           </div>
-          <Button onClick={refreshOrders} variant="outline" size="sm">
+          
+          {/* Test Order Button */}
+          <Button 
+            onClick={handleCreateTestOrder}
+            disabled={creatingTestOrder}
+            variant="outline"
+            size="sm"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            {creatingTestOrder ? 'Creating...' : 'Test Order'}
+          </Button>
+          
+          {/* Refresh Button */}
+          <Button 
+            onClick={fetchOrders}
+            variant="outline"
+            size="sm"
+          >
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
           </Button>
-          <Button 
-            onClick={async () => {
-              try {
-                const response = await fetch('/api/test/create-order', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ tableNumber: Math.floor(Math.random() * 10) + 1 })
-                });
-                if (response.ok) {
-                  console.log('Test order created');
-                }
-              } catch (error) {
-                console.error('Error creating test order:', error);
-              }
-            }} 
-            variant="outline" 
-            size="sm"
-            className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-          >
-            Create Test Order
-          </Button>
         </div>
       </div>
 
-      {/* Order Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+      {/* Error Display */}
+      {error && (
+        <Card className="border-red-200 bg-red-50">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Active</p>
-                <p className="text-2xl font-bold text-gray-900">{activeOrders.length}</p>
-              </div>
-              <div className="p-2 bg-blue-100 rounded-full">
-                <Clock className="w-6 h-6 text-blue-600" />
-              </div>
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="w-4 h-4 text-red-500" />
+              <span className="text-red-700">{error}</span>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Analytics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalOrders}</div>
+            <p className="text-xs text-muted-foreground">All time orders</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{pendingOrders.length}</p>
-              </div>
-              <div className="p-2 bg-yellow-100 rounded-full">
-                <Clock className="w-6 h-6 text-yellow-600" />
-              </div>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Orders</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{activeOrders}</div>
+            <p className="text-xs text-muted-foreground">Currently processing</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Preparing</p>
-                <p className="text-2xl font-bold text-blue-600">{preparingOrders.length}</p>
-              </div>
-              <div className="p-2 bg-blue-100 rounded-full">
-                <Play className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₹{totalRevenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Total earnings</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Ready</p>
-                <p className="text-2xl font-bold text-green-600">{readyOrders.length}</p>
-              </div>
-              <div className="p-2 bg-green-100 rounded-full">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Order Value</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₹{averageOrderValue.toFixed(0)}</div>
+            <p className="text-xs text-muted-foreground">Per order average</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Order Lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Order Sections */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending Orders */}
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-yellow-600" />
-            Pending Orders ({pendingOrders.length})
-          </h3>
-          <div className="space-y-4">
-            {pendingOrders.map(order => (
-              <OrderCard key={order.orderId} order={order} />
-            ))}
-            {pendingOrders.length === 0 && (
-              <Card>
-                <CardContent className="p-6 text-center text-gray-500">
-                  No pending orders
-                </CardContent>
-              </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Clock className="w-5 h-5 text-yellow-500" />
+              <span>Pending Orders ({pendingOrders.length})</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {pendingOrders.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No pending orders</p>
+            ) : (
+              <div className="space-y-3">
+                {pendingOrders.map((order) => (
+                  <OrderCard
+                    key={order._id}
+                    order={order}
+                    onStatusUpdate={handleStatusUpdate}
+                    onPaymentUpdate={handlePaymentUpdate}
+                    updatingOrder={updatingOrder}
+                    getStatusBadge={getStatusBadge}
+                    getPaymentStatusBadge={getPaymentStatusBadge}
+                  />
+                ))}
+              </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Preparing Orders */}
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Play className="w-5 h-5 text-blue-600" />
-            Preparing ({preparingOrders.length})
-          </h3>
-          <div className="space-y-4">
-            {preparingOrders.map(order => (
-              <OrderCard key={order.orderId} order={order} />
-            ))}
-            {preparingOrders.length === 0 && (
-              <Card>
-                <CardContent className="p-6 text-center text-gray-500">
-                  No orders being prepared
-                </CardContent>
-              </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Clock className="w-5 h-5 text-orange-500" />
+              <span>Preparing Orders ({preparingOrders.length})</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {preparingOrders.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No orders being prepared</p>
+            ) : (
+              <div className="space-y-3">
+                {preparingOrders.map((order) => (
+                  <OrderCard
+                    key={order._id}
+                    order={order}
+                    onStatusUpdate={handleStatusUpdate}
+                    onPaymentUpdate={handlePaymentUpdate}
+                    updatingOrder={updatingOrder}
+                    getStatusBadge={getStatusBadge}
+                    getPaymentStatusBadge={getPaymentStatusBadge}
+                  />
+                ))}
+              </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Ready Orders */}
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            Ready to Serve ({readyOrders.length})
-          </h3>
-          <div className="space-y-4">
-            {readyOrders.map(order => (
-              <OrderCard key={order.orderId} order={order} />
-            ))}
-            {readyOrders.length === 0 && (
-              <Card>
-                <CardContent className="p-6 text-center text-gray-500">
-                  No orders ready
-                </CardContent>
-              </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span>Ready Orders ({readyOrders.length})</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {readyOrders.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No orders ready</p>
+            ) : (
+              <div className="space-y-3">
+                {readyOrders.map((order) => (
+                  <OrderCard
+                    key={order._id}
+                    order={order}
+                    onStatusUpdate={handleStatusUpdate}
+                    onPaymentUpdate={handlePaymentUpdate}
+                    updatingOrder={updatingOrder}
+                    getStatusBadge={getStatusBadge}
+                    getPaymentStatusBadge={getPaymentStatusBadge}
+                  />
+                ))}
+              </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Delivered Orders */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <CheckCircle className="w-5 h-5 text-gray-500" />
+              <span>Recent Delivered ({deliveredOrders.slice(0, 5).length})</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {deliveredOrders.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No delivered orders</p>
+            ) : (
+              <div className="space-y-3">
+                {deliveredOrders.slice(0, 5).map((order) => (
+                  <OrderCard
+                    key={order._id}
+                    order={order}
+                    onStatusUpdate={handleStatusUpdate}
+                    onPaymentUpdate={handlePaymentUpdate}
+                    updatingOrder={updatingOrder}
+                    getStatusBadge={getStatusBadge}
+                    getPaymentStatusBadge={getPaymentStatusBadge}
+                    showActions={false}
+                  />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+// Order Card Component
+function OrderCard({ 
+  order, 
+  onStatusUpdate, 
+  onPaymentUpdate, 
+  updatingOrder, 
+  getStatusBadge, 
+  getPaymentStatusBadge,
+  showActions = true 
+}: {
+  order: any;
+  onStatusUpdate: (orderId: string, status: string) => void;
+  onPaymentUpdate: (orderId: string, paymentStatus: string) => void;
+  updatingOrder: string | null;
+  getStatusBadge: (status: string) => React.ReactNode;
+  getPaymentStatusBadge: (status: string) => React.ReactNode;
+  showActions?: boolean;
+}) {
+  const isUpdating = updatingOrder === order._id;
+
+  return (
+    <div className="border rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h4 className="font-medium">Order #{order.orderId?.slice(-6) || 'N/A'}</h4>
+          <p className="text-sm text-gray-600">Table {order.tableNumber}</p>
+          <p className="text-xs text-gray-500">
+            {new Date(order.createdAt).toLocaleString()}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="font-bold text-lg">₹{order.totalAmount}</p>
+          <div className="flex items-center space-x-2 mt-1">
+            {getStatusBadge(order.status)}
+            {getPaymentStatusBadge(order.paymentStatus)}
           </div>
         </div>
       </div>
 
-      {/* Order Details Modal */}
-      {showOrderDetails && selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold">Order Details</h3>
+      {/* Order Items */}
+      <div className="mb-3">
+        <p className="text-sm font-medium mb-1">Items:</p>
+        <div className="space-y-1">
+          {order.items?.slice(0, 3).map((item: any, index: number) => (
+            <div key={index} className="flex justify-between text-sm">
+              <span>{item.quantity}x {item.name}</span>
+              <span>₹{item.price * item.quantity}</span>
+            </div>
+          ))}
+          {order.items?.length > 3 && (
+            <p className="text-xs text-gray-500">+{order.items.length - 3} more items</p>
+          )}
+        </div>
+      </div>
+
+      {/* Actions */}
+      {showActions && (
+        <div className="flex items-center justify-between">
+          <div className="flex space-x-2">
+            {order.status === 'pending' && (
+              <>
+                <Button
+                  size="sm"
+                  onClick={() => onStatusUpdate(order._id, 'confirmed')}
+                  disabled={isUpdating}
+                  className="bg-green-500 hover:bg-green-600"
+                >
+                  {isUpdating ? 'Updating...' : 'Confirm'}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => onStatusUpdate(order._id, 'cancelled')}
+                  disabled={isUpdating}
+                >
+                  Cancel
+                </Button>
+              </>
+            )}
+            {order.status === 'confirmed' && (
               <Button
-                variant="ghost"
                 size="sm"
-                onClick={() => setShowOrderDetails(false)}
+                onClick={() => onStatusUpdate(order._id, 'preparing')}
+                disabled={isUpdating}
+                className="bg-blue-500 hover:bg-blue-600"
               >
-                ✕
+                {isUpdating ? 'Updating...' : 'Start Preparing'}
               </Button>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Order ID</p>
-                  <p className="font-medium">#{selectedOrder.orderId.slice(-6)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Table</p>
-                  <p className="font-medium">{selectedOrder.tableNumber}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Status</p>
-                  <div className="mt-1">{getStatusBadge(selectedOrder.status)}</div>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Total Amount</p>
-                  <p className="font-medium text-green-600">₹{selectedOrder.totalAmount}</p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-sm text-gray-600 mb-2">Order Items</p>
-                <div className="space-y-2">
-                  {selectedOrder.items.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
-                      </div>
-                      <p className="font-medium">₹{item.subtotal}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {selectedOrder.notes && (
-                <div>
-                  <p className="text-sm text-gray-600 mb-2">Notes</p>
-                  <p className="p-2 bg-gray-50 rounded">{selectedOrder.notes}</p>
-                </div>
-              )}
-
-              <div className="flex gap-2 pt-4">
-                {getStatusActions(selectedOrder)}
-              </div>
-            </div>
+            )}
+            {order.status === 'preparing' && (
+              <Button
+                size="sm"
+                onClick={() => onStatusUpdate(order._id, 'ready')}
+                disabled={isUpdating}
+                className="bg-purple-500 hover:bg-purple-600"
+              >
+                {isUpdating ? 'Updating...' : 'Mark Ready'}
+              </Button>
+            )}
+            {order.status === 'ready' && (
+              <Button
+                size="sm"
+                onClick={() => onStatusUpdate(order._id, 'delivered')}
+                disabled={isUpdating}
+                className="bg-gray-500 hover:bg-gray-600"
+              >
+                {isUpdating ? 'Updating...' : 'Mark Delivered'}
+              </Button>
+            )}
           </div>
+          
+          <Button size="sm" variant="outline">
+            <Eye className="w-4 h-4" />
+          </Button>
         </div>
       )}
     </div>

@@ -1,81 +1,79 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import { webSocketManager, NotificationData } from '@/lib/websocket';
+import sseEventEmitter from '@/lib/sse-events';
+import { Order } from '@/lib/models/Order';
 
 export const dynamic = 'force-dynamic';
 
+// POST - Create test order
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { tableNumber = 1, items = [] } = body;
-    
     const { db } = await connectToDatabase();
-    
     if (!db) {
       return NextResponse.json(
-        { error: 'Database not available' },
-        { status: 503 }
+        { success: false, error: 'Database connection failed' },
+        { status: 500 }
       );
     }
+    // Generate random order data
+    const tableNumbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+    const menuItems = [
+      { name: 'Chicken Biryani', price: 250, isVeg: false, category: 'biryani' },
+      { name: 'Paneer Butter Masala', price: 180, isVeg: true, category: 'curries' },
+      { name: 'Chicken Fried Rice', price: 160, isVeg: false, category: 'fried_rice' },
+      { name: 'Veg Noodles', price: 120, isVeg: true, category: 'noodles' },
+      { name: 'Chicken 65', price: 200, isVeg: false, category: 'starters' },
+      { name: 'Pulka', price: 20, isVeg: true, category: 'breads' },
+    ];
 
-    // Create a test order
-    const testOrder = {
-      orderId: `TEST-${Date.now()}`,
-      tableNumber,
-      items: items.length > 0 ? items : [
-        {
-          id: 'chicken_biryani',
-          name: 'Chicken Dum Biryani (Full)',
-          quantity: 1,
-          price: 400,
-          subtotal: 400
-        },
-        {
-          id: 'chicken_65',
-          name: 'Chicken 65',
-          quantity: 1,
-          price: 300,
-          subtotal: 300
-        }
-      ],
-      totalAmount: items.length > 0 
-        ? items.reduce((sum: number, item: any) => sum + item.subtotal, 0)
-        : 700,
-      status: 'pending',
-      timestamp: new Date(),
-      estimatedTime: 25,
-      notes: 'Test order for real-time testing'
-    };
-
-    // Insert order into database
-    const result = await db.collection('orders').insertOne(testOrder);
-
-    // Send notification via WebSocket
-    const notification: NotificationData = {
-      type: 'new_order',
-      title: `New Order #${testOrder.orderId.slice(-6)}`,
-      message: `New order received from Table ${tableNumber} for ₹${testOrder.totalAmount}`,
-      priority: 'high',
-      data: {
-        orderId: testOrder.orderId,
-        tableNumber: testOrder.tableNumber,
-        totalAmount: testOrder.totalAmount,
-        itemCount: testOrder.items.length
-      },
-      timestamp: new Date()
-    };
-
-    webSocketManager.broadcastNotification(notification);
-
-    return NextResponse.json({ 
-      success: true, 
-      order: testOrder,
-      message: 'Test order created successfully' 
+    const randomTable = tableNumbers[Math.floor(Math.random() * tableNumbers.length)];
+    const numItems = Math.floor(Math.random() * 3) + 1; // 1 to 3 items
+    const items = Array.from({ length: numItems }).map(() => {
+      const item = menuItems[Math.floor(Math.random() * menuItems.length)];
+      const quantity = Math.floor(Math.random() * 2) + 1; // 1 or 2 quantity
+      return {
+        itemId: item.name.toLowerCase().replace(/\s/g, '_'),
+        name: item.name,
+        price: item.price,
+        quantity: quantity,
+        isVeg: item.isVeg,
+      };
     });
+
+    const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const statuses = ['pending', 'preparing', 'ready', 'served', 'cancelled'];
+    const paymentStatuses = ['pending', 'paid', 'refunded'];
+
+    const newOrderData = {
+      orderId: `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      tableNumber: randomTable,
+      items: items,
+      totalAmount: totalAmount,
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+      paymentStatus: paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)],
+      paymentMethod: 'Cash', // Default
+      customerName: `Guest ${randomTable}`,
+      customerPhone: `+91${Math.floor(1000000000 + Math.random() * 9000000000)}`,
+      specialInstructions: Math.random() > 0.7 ? 'Make it spicy' : '',
+      estimatedTime: Math.floor(Math.random() * 30) + 10, // 10-40 minutes
+      notes: '',
+      createdAt: new Date(),
+      lastUpdated: new Date(),
+    };
+
+    const newOrder = new Order(newOrderData);
+    const result = await db.collection('orders').insertOne(newOrder);
+
+    const createdOrder = { ...newOrder.toObject(), _id: result.insertedId };
+
+    // Emit SSE event for new order
+    sseEventEmitter.emit('order-event', { type: 'new-order', order: createdOrder });
+
+    return NextResponse.json({ success: true, order: createdOrder });
   } catch (error) {
-    console.error('Create test order error:', error);
+    console.error('Error creating test order:', error);
     return NextResponse.json(
-      { error: 'Failed to create test order' },
+      { success: false, error: 'Failed to create test order' },
       { status: 500 }
     );
   }
