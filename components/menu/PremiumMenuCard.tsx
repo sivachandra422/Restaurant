@@ -90,7 +90,6 @@ export function PremiumMenuCard({
     setCurrentImageUrl(primaryImageUrl);
     
     // Test image accessibility for debugging
-    console.log(`Loading image for ${item.id}: ${primaryImageUrl}`);
   }, [item.id, primaryImageUrl]);
 
   const handleAddClick = (e: React.MouseEvent) => {
@@ -134,20 +133,17 @@ export function PremiumMenuCard({
   };
 
   const handleImageError = () => {
-    console.log(`Image failed to load for ${item.id}: ${currentImageUrl}`);
     
     if (fallbackAttempt === 0) {
       // First fallback: If we were using database image, try Cloudinary
       if (currentImageUrl.startsWith('/menu-images/')) {
         setFallbackAttempt(1);
         setCurrentImageUrl(cloudinaryFallbackUrl);
-        console.log(`Trying Cloudinary for ${item.id}: ${cloudinaryFallbackUrl}`);
       } else {
         // If we were using Cloudinary, try local image
         setFallbackAttempt(1);
         setImageError(true);
         setCurrentImageUrl(localFallbackUrl);
-        console.log(`Trying local fallback for ${item.id}: ${localFallbackUrl}`);
       }
     } else if (fallbackAttempt === 1) {
       // Second fallback: Try the opposite of what we tried first
@@ -155,23 +151,19 @@ export function PremiumMenuCard({
         setFallbackAttempt(2);
         setImageError(true);
         setCurrentImageUrl(localFallbackUrl);
-        console.log(`Trying local fallback for ${item.id}: ${localFallbackUrl}`);
       } else {
         setFallbackAttempt(2);
         setImageError(true);
         setCurrentImageUrl(cloudinaryFallbackUrl);
-        console.log(`Trying Cloudinary fallback for ${item.id}: ${cloudinaryFallbackUrl}`);
       }
     } else {
       // Final fallback: Use a default image
       setImageError(true);
       setCurrentImageUrl('/menu-images/chicken_biryani.jpg');
-      console.log(`Using default image for ${item.id}`);
     }
   };
 
   const handleImageLoad = () => {
-    console.log(`Image loaded successfully for ${item.id}: ${currentImageUrl}`);
     setImageLoading(false);
   };
 

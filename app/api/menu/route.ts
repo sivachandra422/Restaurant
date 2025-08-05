@@ -58,6 +58,24 @@ export async function GET() {
 
         await MenuItem.insertMany(menuItems);
         console.log('Database initialized with local images');
+      } else {
+        // Update existing items with translation data if they don't have it
+        const itemsToUpdate = Object.values(sriKanyaMenu).flat();
+        for (const item of itemsToUpdate) {
+          await MenuItem.findOneAndUpdate(
+            { id: item.id },
+            { 
+              $set: {
+                nameHi: item.nameHi,
+                nameTe: item.nameTe,
+                descriptionHi: item.descriptionHi,
+                descriptionTe: item.descriptionTe
+              }
+            },
+            { upsert: false } // Don't create new items, only update existing ones
+          );
+        }
+        console.log('Updated existing items with translation data');
       }
 
       // Return ALL items including disabled ones (for admin dashboard)

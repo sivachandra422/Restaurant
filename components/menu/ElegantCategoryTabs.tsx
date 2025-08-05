@@ -3,11 +3,17 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { t } from '@/lib/translations';
 
 interface Category {
   id: string;
   name: string;
+  nameHi?: string;
+  nameTe?: string;
   description: string;
+  descriptionHi?: string;
+  descriptionTe?: string;
   icon: string;
 }
 
@@ -17,11 +23,23 @@ interface ElegantCategoryTabsProps {
   onCategoryChange: (category: string) => void;
 }
 
+// Helper function to get localized text for categories
+function getLocalizedCategoryText(category: Category, field: 'name' | 'description', language: 'en' | 'hi' | 'te'): string {
+  if (language === 'en') {
+    return category[field];
+  }
+  
+  const localizedField = `${field}${language === 'hi' ? 'Hi' : 'Te'}`;
+  return category[localizedField] || category[field]; // Fallback to English
+}
+
 export function ElegantCategoryTabs({
   categories,
   activeCategory,
   onCategoryChange,
 }: ElegantCategoryTabsProps) {
+  const { language } = useLanguage();
+
   return (
     <div className="w-full bg-white">
       {/* Horizontal Scroll for All Screen Sizes */}
@@ -29,6 +47,8 @@ export function ElegantCategoryTabs({
         <div className="flex space-x-3 sm:space-x-4 p-3 sm:p-4 pb-4 sm:pb-6 min-w-max">
           {categories.map((category, index) => {
             const isActive = category.id === activeCategory;
+            const localizedName = getLocalizedCategoryText(category, 'name', language);
+            const localizedDescription = getLocalizedCategoryText(category, 'description', language);
             
             return (
               <button
@@ -52,14 +72,14 @@ export function ElegantCategoryTabs({
                 
                 {/* Category Name */}
                 <div className="font-semibold text-xs sm:text-sm mb-1 sm:mb-2 leading-tight">
-                  {category.name}
+                  {localizedName}
                 </div>
                 
                 {/* Description */}
                 <div className={`text-xs leading-tight line-clamp-2 transition-colors duration-200 ${
                   isActive ? 'text-orange-100' : 'text-gray-500 group-hover:text-gray-700'
                 }`}>
-                  {category.description}
+                  {localizedDescription}
                 </div>
                 
                 {/* Active Indicator */}

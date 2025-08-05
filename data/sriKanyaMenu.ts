@@ -194,7 +194,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
       nameHi: 'पनीर बिरयानी',
       nameTe: 'పనీర్ బిర్యానీ',
       description: 'Vegetarian biryani with fresh paneer and aromatic spices. Protein-rich vegetarian option.',
-      descriptionHi: 'फ्रेश पनीर और सुगंधित मसालों के साथ विशेष बिरयानी। प्रोटीन विशेष वిశेष वిషयం।',
+      descriptionHi: 'फ्रेश पनीर और सुगंधित मसालों के साथ विशेष बिरयानी। प्रोटीन विशेष वిशेष वిषयं।',
       descriptionTe: 'ఫ్రీస్ పనీర్ మరియు సుగంధ మసాలాలతో విశేష బియ్యం. ప్రోటీన విశేష విషయం.',
       price: 180,
       category: 'biryanis',
@@ -392,7 +392,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
       nameHi: '65 पनीर मूच्छ',
       nameTe: '65 పనీర్ మూచ్ఛ',
       description: 'Spicy paneer and mushroom preparation with curry leaves. South Indian style with aromatic spices.',
-      descriptionHi: 'करी पत्तियों के साथ विशेष 65 पनीर और मूच्छ करी। दक्षिణ भारतीय शैली और अरोमेटिक मसाले।',
+      descriptionHi: 'करी पत्तियों के साथ विशेष 65 पनीर और मूच्छ करी। दक्षिण भारतीय शैली और अरोमेटिक मसाले।',
       descriptionTe: 'కరీ పత్తులతో విశేష 65 పనీర్ మరియు మూచ్ఛ కూర. దక్షిణ భారతిక శైలి మరియు అరోమాటిక మసాలాలతో.',
       price: 180,
       category: 'vegCurries',
@@ -473,7 +473,7 @@ export const sriKanyaMenu: { [key: string]: Omit<MenuItem, 'image'>[] } = {
       nameHi: 'चिकन 65',
       nameTe: 'చికెన్ 65',
       description: 'Spicy chicken preparation with curry leaves. South Indian style with aromatic spices.',
-      descriptionHi: 'करी पत्तियों के साथ विशेष चिकन। दक्षिణ भारतीय शैली और अरोमेटिक मसाले।',
+      descriptionHi: 'करी पत्तियों के साथ विशेष चिकन। दक्षिण भारतीय शैली और अरोमेटिक मसाले।',
       descriptionTe: 'కరీ పత్తులతో విశేష చికెన్. దక్షిణ భారతిక శైలి మరియు అరోమాటిక మసాలాలతో.',
       price: 200,
       category: 'nonVegCurries',
@@ -962,31 +962,51 @@ export const menuCategories = [
   {
     id: 'biryanis',
     name: 'Signature Biryanis',
+    nameHi: 'सिग्नेचर बिरयानी',
+    nameTe: 'సిగ్నేచర్ బిర్యానీలు',
     description: 'Aromatic rice dishes cooked to perfection',
+    descriptionHi: 'सुगंधित चावल के व्यंजन पूर्णता तक पकाए गए',
+    descriptionTe: 'సుగంధ బియ్యం వంటకాలు పరిపూర్ణత వరకు వండబడ్డాయి',
     icon: '🍛'
   },
   {
     id: 'vegCurries', 
     name: 'Vegetarian Delicacies',
+    nameHi: 'शाकाहारी व्यंजन',
+    nameTe: 'శాకాహార వంటకాలు',
     description: 'Fresh vegetables in rich, flavorful gravies',
+    descriptionHi: 'समृद्ध और स्वादिष्ट ग्रेवी में ताजी सब्जियां',
+    descriptionTe: 'సంపన్న మరియు రుచికరమైన గ్రేవీలలో తాజా కూరగాయలు',
     icon: '🥗'
   },
   {
     id: 'nonVegCurries',
     name: 'Non-Vegetarian Specialties', 
+    nameHi: 'मांसाहारी विशेषताएं',
+    nameTe: 'మాంసాహార ప్రత్యేకతలు',
     description: 'Tender meats in traditional curries',
+    descriptionHi: 'पारंपरिक करी में नरम मांस',
+    descriptionTe: 'సాంప్రదాయ కూరలలో మెత్తని మాంసం',
     icon: '🍗'
   },
   {
     id: 'friedRiceNoodles',
     name: 'Fried Rice & Noodles',
+    nameHi: 'फ्राइड राइस और नूडल्स',
+    nameTe: 'ఫ్రైడ్ రైస్ & నూడెల్స్',
     description: 'Indo-Chinese favorites and comfort food',
+    descriptionHi: 'भारतीय-चीनी पसंदीदा और आरामदायक भोजन',
+    descriptionTe: 'ఇండో-చైనీ ఇష్టమైన మరియు సౌకర్యవంతమైన ఆహారం',
     icon: '🍜'
   },
   {
     id: 'breadsRoti',
     name: 'Breads & Roti',
+    nameHi: 'ब्रेड और रोटी',
+    nameTe: 'బ్రెడ్ & రోటీ',
     description: 'Traditional Indian breads',
+    descriptionHi: 'पारंपरिक भारतीय ब्रेड',
+    descriptionTe: 'సాంప్రదాయ భారతీయ రొట్టెలు',
     icon: '🫓'
   }
 ];

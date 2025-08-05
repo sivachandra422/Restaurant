@@ -3,7 +3,11 @@ import mongoose from 'mongoose';
 const menuItemSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
   name: { type: String, required: true },
+  nameHi: { type: String }, // Hindi name
+  nameTe: { type: String }, // Telugu name
   description: { type: String, required: true },
+  descriptionHi: { type: String }, // Hindi description
+  descriptionTe: { type: String }, // Telugu description
   price: { type: Number, required: true },
   category: { type: String, required: true },
   isVeg: { type: Boolean, default: false },
