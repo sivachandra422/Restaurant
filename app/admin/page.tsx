@@ -43,7 +43,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAdmin } from '@/contexts/AdminContext';
 import { useAnalytics } from '@/contexts/AnalyticsContext';
 import { useMenu } from '@/contexts/MenuContext';
-import { useRealTimeOrders } from '@/contexts/RealTimeOrderContext';
+// import { useRealTimeOrders } from '@/contexts/RealTimeOrderContext';
 import { menuCategories } from '@/data/sriKanyaMenu';
 import AdvancedDashboard from '@/components/admin/AdvancedDashboard';
 import AIDashboard from '@/components/admin/AIDashboard';
@@ -51,7 +51,7 @@ import ReportsSection from '@/components/admin/ReportsSection';
 import SettingsSection from '@/components/admin/SettingsSection';
 import BackupSection from '@/components/admin/BackupSection';
 import RealTimeTest from '@/components/admin/RealTimeTest';
-import RealTimeOrderManager from '@/components/admin/RealTimeOrderManager';
+// import RealTimeOrderManager from '@/components/admin/RealTimeOrderManager';
 
 interface EditModalState {
   isOpen: boolean;
@@ -68,7 +68,7 @@ export default function AdminPage() {
   const { state: adminState, logout, setSection, checkAuth, getAuthHeaders } = useAdmin();
   const { analytics } = useAnalytics();
   const { getAllItems, updateMenuItem, toggleItemVisibility, createMenuItem, deleteMenuItem } = useMenu();
-  const { isConnected: ordersConnected } = useRealTimeOrders();
+  // const { isConnected: ordersConnected } = useRealTimeOrders();
   
   console.log('AdminPage render - State:', {
     isAuthenticated: adminState.isAuthenticated,
@@ -446,7 +446,14 @@ export default function AdminPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {adminState.currentSection === 'dashboard' && (
-          <RealTimeOrderManager />
+          <AdvancedDashboard 
+            analytics={analyticsData}
+            orders={realOrders}
+            settings={settings}
+            notifications={notifications}
+            onRefresh={fetchRealOrders}
+            onOrderClick={(order) => setOrderDetailsModal({ isOpen: true, order })} 
+          />
         )}
         {adminState.currentSection === 'orders' && (
           <OrdersSection 
