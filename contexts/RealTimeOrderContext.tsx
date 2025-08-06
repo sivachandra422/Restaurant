@@ -1,42 +1,41 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 
-interface Order {
+export interface Order {
   _id: string;
   orderId: string;
+  customerName: string;
   tableNumber: string;
   items: Array<{
     itemId: string;
     name: string;
     price: number;
     quantity: number;
-    isVeg: boolean;
-    category: string;
+    subtotal: number;
   }>;
   totalAmount: number;
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+  status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
   paymentStatus: 'pending' | 'paid' | 'failed';
-  paymentMethod: string;
-  customerName?: string;
-  customerPhone?: string;
-  specialInstructions?: string;
-  timestamp: Date;
-  createdAt: Date;
-  lastUpdated: Date;
+  paymentMethod: 'cash' | 'card' | 'upi' | 'online';
   estimatedTime?: number;
   notes?: string;
+  rating?: number;
+  feedback?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface RealTimeOrderContextType {
   orders: Order[];
   isConnected: boolean;
   error: string | null;
-  fetchOrders: () => Promise<void>;
-  updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
-  updatePaymentStatus: (orderId: string, paymentStatus: Order['paymentStatus']) => Promise<void>;
-  createTestOrder: () => Promise<void>;
   lastUpdate: Date | null;
+  fetchOrders: () => Promise<void>;
+  initializeSSE: () => void;
+  updateOrderStatus: (orderId: string, status: Order['status']) => Promise<any>;
+  updatePaymentStatus: (orderId: string, paymentStatus: Order['paymentStatus']) => Promise<any>;
+  createTestOrder: () => Promise<void>;
 }
 
 const RealTimeOrderContext = createContext<RealTimeOrderContextType | undefined>(undefined);
@@ -46,7 +45,8 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  const [eventSource, setEventSource] = useState<EventSource | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch orders from API
   const fetchOrders = useCallback(async () => {
@@ -54,7 +54,8 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
       const response = await fetch('/api/orders');
       if (response.ok) {
         const data = await response.json();
-        setOrders(data.orders || data || []);
+        const orders = data.orders || data || [];
+        setOrders(orders);
         setLastUpdate(new Date());
         setError(null);
       } else {
@@ -68,14 +69,26 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
 
   // Initialize SSE connection
   const initializeSSE = useCallback(() => {
-    try {
-      // Close existing connection if any
-      if (eventSource) {
-        eventSource.close();
-      }
+    // Skip during build time
+    if (typeof window === 'undefined' || process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+      console.log('Skipping SSE connection during build time');
+      return;
+    }
 
+    if (eventSourceRef.current) {
+      console.log('SSE connection already exists, closing...');
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
+
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
+    try {
       const sse = new EventSource('/api/admin/orders/realtime/stream');
-      setEventSource(sse);
+      eventSourceRef.current = sse;
 
       sse.onopen = () => {
         console.log('SSE connection established');
@@ -99,24 +112,46 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
               break;
             
             case 'new-order':
-              setOrders(prev => [data.order, ...prev]);
+              setOrders(prev => {
+                // Check if order already exists to avoid duplicates
+                const exists = prev.some(order => order._id === data.order._id || order.orderId === data.order.orderId);
+                if (exists) return prev;
+                return [data.order, ...prev];
+              });
               setLastUpdate(new Date());
               // Play notification sound for new orders
               playNotificationSound();
+              // Dispatch custom event for other components
+              window.dispatchEvent(new CustomEvent('new-order', { detail: { order: data.order } }));
               break;
             
             case 'order-updated':
               setOrders(prev => 
                 prev.map(order => 
-                  order._id === data.order._id ? data.order : order
+                  (order._id === data.order._id || order.orderId === data.order.orderId) ? data.order : order
                 )
               );
               setLastUpdate(new Date());
+              // Dispatch custom event for other components
+              window.dispatchEvent(new CustomEvent('order-updated', { detail: { order: data.order } }));
+              break;
+            
+            case 'feedback-submitted':
+              setOrders(prev => 
+                prev.map(order => 
+                  (order._id === data.order._id || order.orderId === data.order.orderId) ? data.order : order
+                )
+              );
+              setLastUpdate(new Date());
+              // Dispatch custom event for feedback updates
+              window.dispatchEvent(new CustomEvent('feedback-submitted', { 
+                detail: { order: data.order, rating: data.rating, feedback: data.feedback } 
+              }));
               break;
             
             case 'order-deleted':
               setOrders(prev => 
-                prev.filter(order => order._id !== data.orderId)
+                prev.filter(order => order._id !== data.orderId && order.orderId !== data.orderId)
               );
               setLastUpdate(new Date());
               break;
@@ -133,29 +168,32 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
         }
       };
 
-      sse.onerror = (event) => {
-        console.error('SSE connection error:', event);
+      sse.onerror = (error) => {
+        console.error('SSE connection error:', error);
         setIsConnected(false);
-        setError('Connection lost. Trying to reconnect...');
+        setError('SSE connection lost');
+        
+        // Close the connection
+        sse.close();
+        eventSourceRef.current = null;
         
         // Attempt to reconnect after 5 seconds
-        setTimeout(() => {
-          if (!isConnected) {
-            initializeSSE();
-          }
+        reconnectTimeoutRef.current = setTimeout(() => {
+          console.log('Attempting to reconnect SSE...');
+          initializeSSE();
         }, 5000);
       };
 
-    } catch (err) {
-      console.error('Error initializing SSE:', err);
-      setError('Failed to establish real-time connection');
+    } catch (error) {
+      console.error('Error initializing SSE:', error);
+      setError('Failed to initialize SSE connection');
     }
-  }, [eventSource, isConnected]);
+  }, []);
 
   // Update order status
   const updateOrderStatus = useCallback(async (orderId: string, status: Order['status']) => {
     try {
-      const response = await fetch(`/api/admin/orders/realtime/${orderId}`, {
+      const response = await fetch(`/api/orders/${orderId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -169,6 +207,10 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
 
       const result = await response.json();
       console.log('Order status updated:', result);
+      
+      // Trigger analytics update
+      window.dispatchEvent(new CustomEvent('order-updated'));
+      
       return result;
     } catch (err) {
       console.error('Error updating order status:', err);
@@ -179,7 +221,7 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
   // Update payment status
   const updatePaymentStatus = useCallback(async (orderId: string, paymentStatus: Order['paymentStatus']) => {
     try {
-      const response = await fetch(`/api/admin/orders/realtime/${orderId}`, {
+      const response = await fetch(`/api/orders/${orderId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -193,6 +235,10 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
 
       const result = await response.json();
       console.log('Payment status updated:', result);
+      
+      // Trigger analytics update
+      window.dispatchEvent(new CustomEvent('order-updated'));
+      
       return result;
     } catch (err) {
       console.error('Error updating payment status:', err);
@@ -205,9 +251,6 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
     try {
       const response = await fetch('/api/test/create-order', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
       });
 
       if (!response.ok) {
@@ -216,6 +259,10 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
 
       const result = await response.json();
       console.log('Test order created:', result);
+      
+      // Trigger analytics update
+      window.dispatchEvent(new CustomEvent('new-order'));
+      
       return result;
     } catch (err) {
       console.error('Error creating test order:', err);
@@ -223,7 +270,7 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
     }
   }, []);
 
-  // Play notification sound
+  // Play notification sound for new orders
   const playNotificationSound = () => {
     try {
       // Create a simple notification sound
@@ -236,40 +283,57 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
       
       oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
       oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
       
       gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
       
       oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
-    } catch (err) {
-      console.log('Could not play notification sound:', err);
+      oscillator.stop(audioContext.currentTime + 0.2);
+    } catch (error) {
+      console.log('Could not play notification sound:', error);
     }
   };
 
-  // Initialize on mount
+  // Initialize SSE connection on mount
   useEffect(() => {
-    fetchOrders();
-    initializeSSE();
-
+    let isActive = true;
+    
+    const setupConnection = () => {
+      if (!isActive) return;
+      initializeSSE();
+    };
+    
+    setupConnection();
+    
     // Cleanup on unmount
     return () => {
-      if (eventSource) {
-        eventSource.close();
+      isActive = false;
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
       }
     };
-  }, []);
+  }, [initializeSSE]);
+
+  // Fetch initial orders
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const value: RealTimeOrderContextType = {
     orders,
     isConnected,
     error,
+    lastUpdate,
     fetchOrders,
+    initializeSSE,
     updateOrderStatus,
     updatePaymentStatus,
     createTestOrder,
-    lastUpdate
   };
 
   return (

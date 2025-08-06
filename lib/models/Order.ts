@@ -65,6 +65,8 @@ const orderSchema = new mongoose.Schema({
   },
   estimatedTime: { type: Number }, // in minutes
   notes: { type: String },
+  rating: { type: Number, min: 1, max: 5 },
+  feedback: { type: String },
 }, {
   timestamps: true,
   indexes: [

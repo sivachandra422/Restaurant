@@ -102,14 +102,43 @@ export function CustomerExperienceProvider({ children }: { children: React.React
     return [];
   };
 
-  const submitFeedback = (orderId: string, rating: number, feedback?: string) => {
-    setOrderHistory(prev => 
-      prev.map(order => 
-        order.orderId === orderId 
-          ? { ...order, rating, feedback }
-          : order
-      )
-    );
+  const submitFeedback = async (orderId: string, rating: number, feedback?: string) => {
+    try {
+      // Call the API to submit feedback
+      const response = await fetch(`/api/orders/${orderId}/rating`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ rating, feedback }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit feedback');
+      }
+
+      const result = await response.json();
+      console.log('Feedback submitted successfully:', result);
+
+      // Update local state
+      setOrderHistory(prev => 
+        prev.map(order => 
+          order.orderId === orderId 
+            ? { ...order, rating, feedback }
+            : order
+        )
+      );
+
+      // Dispatch custom event for real-time updates
+      window.dispatchEvent(new CustomEvent('feedback-submitted', {
+        detail: { orderId, rating, feedback }
+      }));
+
+      return result;
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      throw error;
+    }
   };
 
   const value: CustomerExperienceContextType = {

@@ -205,35 +205,7 @@ export default function AdminPage() {
     }
   }, [adminState.isAuthenticated, adminState.preferences.autoRefresh, fetchRealOrders, fetchAnalytics, fetchSettings, fetchNotifications]);
 
-  // Generate report
-  const handleGenerateReport = async (type: string, filters: any) => {
-    try {
-      const queryParams = new URLSearchParams({
-        type,
-        ...filters
-      });
-      const response = await fetch(`/api/admin/reports?${queryParams}`, {
-        headers: getAuthHeaders()
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setReportsData(data);
-        return data;
-      }
-    } catch (error) {
-      console.error('Error generating report:', error);
-    }
-  };
 
-  // Export report
-  const handleExportReport = (type: string, format: string, filters: any) => {
-    const queryParams = new URLSearchParams({
-      type,
-      format,
-      ...filters
-    });
-    window.open(`/api/admin/reports?${queryParams}`, '_blank');
-  };
 
   const handleLogout = () => {
     logout();
@@ -468,10 +440,7 @@ export default function AdminPage() {
         {adminState.currentSection === 'analytics' && (
           <div>
             <RealTimeTest />
-            <ReportsSection 
-              onGenerateReport={handleGenerateReport}
-              onExportReport={handleExportReport}
-            />
+                        <ReportsSection />
           </div>
         )}
         {adminState.currentSection === 'backup' && (
@@ -1062,33 +1031,187 @@ function AnalyticsSection({ analytics }: { analytics: any }) {
 
 // Feedback Section
 function FeedbackSection({ analytics }: { analytics: any }) {
+  const [feedbackData, setFeedbackData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch individual feedback data
+  const fetchFeedback = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/orders');
+      if (response.ok) {
+        const data = await response.json();
+        const orders = data.orders || data || [];
+        
+        // Filter orders with ratings and feedback
+        const ordersWithFeedback = orders
+          .filter((order: any) => order.rating && order.rating > 0)
+          .map((order: any) => ({
+            orderId: order.orderId || order._id,
+            tableNumber: order.tableNumber,
+            rating: order.rating,
+            feedback: order.feedback,
+            items: order.items,
+            totalAmount: order.totalAmount,
+            createdAt: order.createdAt || order.timestamp,
+            customerName: order.customerName || 'Anonymous'
+          }))
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        setFeedbackData(ordersWithFeedback);
+      }
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchFeedback();
+  }, [fetchFeedback]);
+
+  // Listen for order updates to refresh feedback
+  useEffect(() => {
+    const handleOrderUpdate = (event: CustomEvent) => {
+      console.log('Feedback section received order update:', event.detail);
+      // Add a small delay to ensure the order is saved to database
+      setTimeout(() => {
+        fetchFeedback();
+      }, 1000);
+    };
+
+    const handleNewOrder = (event: CustomEvent) => {
+      console.log('Feedback section received new order:', event.detail);
+      // Add a small delay to ensure the order is saved to database
+      setTimeout(() => {
+        fetchFeedback();
+      }, 1000);
+    };
+
+    const handleFeedbackSubmitted = (event: CustomEvent) => {
+      console.log('Feedback section received feedback submission:', event.detail);
+      // Refresh feedback immediately when new feedback is submitted
+      fetchFeedback();
+    };
+
+    window.addEventListener('order-updated', handleOrderUpdate as EventListener);
+    window.addEventListener('new-order', handleNewOrder as EventListener);
+    window.addEventListener('feedback-submitted', handleFeedbackSubmitted as EventListener);
+
+    return () => {
+      window.removeEventListener('order-updated', handleOrderUpdate as EventListener);
+      window.removeEventListener('new-order', handleNewOrder as EventListener);
+      window.removeEventListener('feedback-submitted', handleFeedbackSubmitted as EventListener);
+    };
+  }, [fetchFeedback]);
+
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Customer Feedback</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-gray-900">Customer Feedback</h2>
+        <Button 
+          onClick={fetchFeedback} 
+          variant="outline" 
+          size="sm"
+          disabled={loading}
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
       
+      {/* Customer Satisfaction Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>Customer Satisfaction</CardTitle>
+          <CardTitle>Customer Satisfaction Overview</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center">
             <div className="text-4xl font-bold text-orange-500 mb-2">
-              {analytics.customerSatisfaction.toFixed(1)}/5
+              {analytics.customerSatisfaction ? analytics.customerSatisfaction.toFixed(1) : '0.0'}/5
             </div>
             <div className="flex justify-center space-x-1 mb-4">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star 
                   key={star} 
                   className={`w-6 h-6 ${
-                    star <= analytics.customerSatisfaction 
+                    analytics.customerSatisfaction && star <= analytics.customerSatisfaction 
                       ? 'text-yellow-400 fill-current' 
                       : 'text-gray-300'
                   }`} 
                 />
               ))}
             </div>
-            <p className="text-gray-600">Average customer rating</p>
+            <p className="text-gray-600">
+              Average customer rating ({analytics.totalRatings || 0} ratings)
+            </p>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Individual Feedback */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Customer Reviews</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+              <p className="text-sm text-gray-500 mt-2">Loading feedback...</p>
+            </div>
+          ) : feedbackData.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No customer feedback yet</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {feedbackData.map((feedback, index) => (
+                <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="font-medium">Order #{feedback.orderId?.slice(-6) || 'N/A'}</span>
+                        <Badge variant="outline">Table {feedback.tableNumber}</Badge>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {feedback.customerName} • {new Date(feedback.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center space-x-1 mb-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star 
+                            key={star} 
+                            className={`w-4 h-4 ${
+                              star <= feedback.rating 
+                                ? 'text-yellow-400 fill-current' 
+                                : 'text-gray-300'
+                            }`} 
+                          />
+                        ))}
+                      </div>
+                      <p className="text-sm font-medium">{feedback.rating}/5</p>
+                    </div>
+                  </div>
+                  
+                  {feedback.feedback && (
+                    <div className="mb-3">
+                      <p className="text-sm text-gray-700 bg-white p-3 rounded border">
+                        &ldquo;{feedback.feedback}&rdquo;
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="text-sm text-gray-600">
+                    <p>Order Total: ₹{feedback.totalAmount}</p>
+                    <p>Items: {feedback.items?.length || 0} items</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

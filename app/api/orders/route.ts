@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
+import { connectToDatabase } from '@/lib/mongodb';
 import { Order } from '@/lib/models/Order';
+import sseEventEmitter from '@/lib/sse-events';
 
 // POST - Create new order
 export async function POST(request: NextRequest) {
@@ -8,41 +9,50 @@ export async function POST(request: NextRequest) {
     const orderData = await request.json();
     console.log('Received order data:', orderData);
     
+    let savedOrder = null;
+    
     // If MongoDB is available, save to database
     if (process.env.MONGODB_URI) {
       try {
-        await dbConnect();
-        console.log('Database connected successfully');
+        const { db } = await connectToDatabase();
+        if (db) {
+          console.log('Database connected successfully');
 
-        // Ensure each item has a correct subtotal
-        if (Array.isArray(orderData.items)) {
-          orderData.items = orderData.items.map((item: any) => ({
-            ...item,
-            subtotal: (item.price || 0) * (item.quantity || 0)
-          }));
+          // Ensure each item has a correct subtotal
+          if (Array.isArray(orderData.items)) {
+            orderData.items = orderData.items.map((item: any) => ({
+              ...item,
+              subtotal: (item.price || 0) * (item.quantity || 0)
+            }));
+          }
+
+          const order = new Order(orderData);
+          console.log('Order model created:', order);
+          
+          savedOrder = await order.save();
+          console.log('Order saved to MongoDB successfully:', savedOrder._id);
+          
+          // Emit SSE event for real-time updates
+          sseEventEmitter.emit('order-event', {
+            type: 'new-order',
+            order: savedOrder.toObject()
+          });
+          
+          return NextResponse.json({ 
+            success: true, 
+            orderId: orderData.orderId,
+            order: savedOrder,
+            message: 'Order placed successfully and saved to database' 
+          });
+        } else {
+          console.log('Database connection not available, continuing without save');
         }
-
-        const order = new Order(orderData);
-        console.log('Order model created:', order);
-        
-        const savedOrder = await order.save();
-        console.log('Order saved to MongoDB successfully:', savedOrder._id);
-        
-        return NextResponse.json({ 
-          success: true, 
-          orderId: orderData.orderId,
-          message: 'Order placed successfully and saved to database' 
-        });
       } catch (dbError: any) {
         console.error('Failed to save order to MongoDB:', dbError);
         console.error('Order data that failed to save:', orderData);
         
-        // Return error response instead of continuing
-        return NextResponse.json({ 
-          success: false, 
-          error: 'Failed to save order to database',
-          details: dbError?.message || 'Unknown database error'
-        }, { status: 500 });
+        // Continue without database - don't fail the order
+        console.log('Continuing without database save due to error');
       }
     } else {
       console.log('No MongoDB URI provided, skipping database save');
@@ -77,6 +87,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       orderId: orderData.orderId,
+      order: savedOrder,
       message: 'Order placed successfully' 
     });
   } catch (error) {
@@ -94,7 +105,12 @@ export async function GET(request: NextRequest) {
     }
     
     try {
-      await dbConnect();
+      const { db } = await connectToDatabase();
+      
+      if (!db) {
+        console.log('Database connection not available, returning empty orders');
+        return NextResponse.json([]);
+      }
       
       const { searchParams } = new URL(request.url);
       const limit = parseInt(searchParams.get('limit') || '50');
@@ -124,7 +140,7 @@ function formatWebhookPayload(orderData: any) {
   return {
     restaurantName: "Sri Kanya Family Restaurant",
     orderId: orderData.orderId,
-    timestamp: orderData.timestamp,
+    timestamp: new Date().toISOString(),
     tableNumber: orderData.tableNumber,
     customerName: orderData.customerName || "",
     customerPhone: orderData.customerPhone || "",
@@ -132,7 +148,7 @@ function formatWebhookPayload(orderData: any) {
       name: item.name,
       quantity: item.quantity,
       price: item.price,
-      subtotal: item.price * item.quantity, // Calculate subtotal for webhook
+      subtotal: item.subtotal || (item.price * item.quantity),
       category: item.category,
       isVeg: item.isVeg,
       specialNotes: ""
@@ -140,26 +156,23 @@ function formatWebhookPayload(orderData: any) {
     specialInstructions: orderData.specialInstructions,
     totalAmount: orderData.totalAmount,
     estimatedTime: orderData.estimatedTime,
-    priority: orderData.priority,
-    quantityValidation: orderData.quantityValidation,
     kitchen: {
       orderId: orderData.orderId,
-      timestamp: orderData.timestamp,
+      timestamp: new Date().toISOString(),
       tableNumber: orderData.tableNumber,
       customerName: orderData.customerName || "",
       items: orderData.items.map((item: any) => ({
         name: item.name,
         quantity: item.quantity,
         price: item.price,
-        subtotal: item.price * item.quantity, // Calculate subtotal for webhook
+        subtotal: item.subtotal || (item.price * item.quantity),
         category: item.category,
         isVeg: item.isVeg,
         specialNotes: ""
       })),
       specialInstructions: orderData.specialInstructions,
       totalAmount: orderData.totalAmount,
-      estimatedTime: orderData.estimatedTime,
-      priority: orderData.priority
+      estimatedTime: orderData.estimatedTime
     }
   };
 }

@@ -17,7 +17,7 @@ interface CheckoutFormData {
 
 export function ElegantCheckoutForm() {
   const { state, setCheckoutOpen, clearCart } = useCart();
-  const { addOrder, addRating } = useAnalytics();
+
   const { addToOrderHistory } = useCustomerExperience();
   const [formData, setFormData] = useState<CheckoutFormData>({
     customerName: '',
@@ -92,29 +92,21 @@ export function ElegantCheckoutForm() {
 
     const orderData = {
       orderId: `SRK-${Date.now()}`,
-      sessionId: state.sessionId || `table-${state.tableNumber}-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      tableNumber: state.tableNumber || 0,
+      tableNumber: String(state.tableNumber || 0), // Convert to string to match schema
       customerName: formData.customerName,
       customerPhone: formData.customerPhone,
       items: state.items.map(item => ({
-        id: item.id,
+        itemId: item.id, // Use itemId to match schema
         name: item.name,
         quantity: item.quantity,
-        price: item.price, // Use price instead of unitPrice to match schema
+        price: item.price,
         category: item.category,
         isVeg: item.isVeg,
+        subtotal: item.price * item.quantity, // Add subtotal as required by schema
       })),
       specialInstructions: formData.specialInstructions,
       totalAmount: state.totalAmount,
-      estimatedTime: '20-25 minutes',
-      priority: 'NORMAL',
-      quantityValidation: {
-        totalItems: state.totalItems,
-        maxItemsPerOrder: 20,
-        hasBulkItems: state.items.some(item => item.quantity > 5),
-        bulkItemsCount: state.items.filter(item => item.quantity > 5).length
-      },
+      estimatedTime: 25, // Convert to number (minutes) to match schema
       status: 'pending',
       paymentMethod: formData.paymentMethod,
       paymentStatus: 'pending'
@@ -136,27 +128,13 @@ export function ElegantCheckoutForm() {
         // Add order to history
         addToOrderHistory({
           orderId: orderData.orderId,
-          timestamp: orderData.timestamp,
+          timestamp: new Date().toISOString(),
           items: state.items,
           totalAmount: state.totalAmount,
           tableNumber: state.tableNumber || 0,
         });
 
-        // Add order to analytics
-        addOrder({
-          orderId: orderData.orderId,
-          timestamp: orderData.timestamp,
-          items: state.items.map(item => ({
-            id: item.id,
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price,
-          })),
-          totalAmount: state.totalAmount,
-          tableNumber: state.tableNumber || 0,
-          customerName: formData.customerName,
-          preparationTime: 20, // Use consistent preparation time
-        });
+
 
         setOrderPlaced(true);
         setCurrentOrderId(orderData.orderId);
@@ -186,11 +164,21 @@ export function ElegantCheckoutForm() {
   const handleRatingSubmit = async (rating: number, feedback?: string) => {
     setIsRatingSubmitting(true);
     try {
-      addRating(currentOrderId, rating, feedback);
-      // Show success message briefly before closing
-      setTimeout(() => {
-        handleClose();
-      }, 2000);
+      // Submit rating to API
+      const response = await fetch(`/api/orders/${currentOrderId}/rating`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ rating, feedback }),
+      });
+
+      if (response.ok) {
+        // Show success message briefly before closing
+        setTimeout(() => {
+          handleClose();
+        }, 2000);
+      }
     } catch (error) {
       console.error('Error submitting rating:', error);
     } finally {

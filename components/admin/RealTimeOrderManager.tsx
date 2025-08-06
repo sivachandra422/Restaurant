@@ -50,9 +50,30 @@ export default function RealTimeOrderManager() {
   const handleStatusUpdate = async (orderId: string, status: string) => {
     setUpdatingOrder(orderId);
     try {
-      await updateOrderStatus(orderId, status as any);
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update order status');
+      }
+
+      const result = await response.json();
+      console.log('Order status updated:', result);
+      
+      // Trigger analytics update
+      window.dispatchEvent(new CustomEvent('order-updated', { 
+        detail: { order: result.order || result } 
+      }));
+      
+      return result;
     } catch (error) {
       console.error('Error updating order status:', error);
+      throw error;
     } finally {
       setUpdatingOrder(null);
     }
@@ -61,7 +82,14 @@ export default function RealTimeOrderManager() {
   const handlePaymentUpdate = async (orderId: string, paymentStatus: string) => {
     setUpdatingOrder(orderId);
     try {
-      await updatePaymentStatus(orderId, paymentStatus as any);
+      const result = await updatePaymentStatus(orderId, paymentStatus as any);
+      
+      // Trigger analytics update
+      window.dispatchEvent(new CustomEvent('order-updated', { 
+        detail: { order: result.order || result } 
+      }));
+      
+      return result;
     } catch (error) {
       console.error('Error updating payment status:', error);
     } finally {

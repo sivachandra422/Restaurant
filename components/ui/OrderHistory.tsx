@@ -19,11 +19,12 @@ export function OrderHistory({ onClose }: OrderHistoryProps) {
 
   const handleFeedbackSubmit = async (rating: number, feedback?: string) => {
     try {
-      submitFeedback(selectedOrderId, rating, feedback);
+      await submitFeedback(selectedOrderId, rating, feedback);
       setShowFeedback(false);
       setSelectedOrderId('');
     } catch (error) {
       console.error('Error submitting feedback:', error);
+      // You might want to show an error message to the user here
     }
   };
 

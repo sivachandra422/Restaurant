@@ -162,63 +162,82 @@ export function MenuProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Try to use SSE first, fallback to polling
     let eventSource: EventSource | null = null;
+    let interval: NodeJS.Timeout | null = null;
     
-    try {
-      eventSource = new EventSource('/api/menu/stream');
-      
-      eventSource.onmessage = async (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          // Only respond to admin dashboard changes (menuUpdate events)
-          if (data.type === 'menuUpdate') {
-            console.log('Admin dashboard change detected:', data.data);
+    const setupSSE = () => {
+      // Skip during build time
+      if (typeof window === 'undefined' || process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+        console.log('Skipping SSE connection during build time');
+        return;
+      }
+
+      try {
+        eventSource = new EventSource('/api/menu/stream');
+        
+        eventSource.onmessage = async (event) => {
+          try {
+            const data = JSON.parse(event.data);
             
-            // Show notification to user about admin changes
-            if (data.data) {
-              const updateData = data.data;
-              if (updateData.action === 'created') {
-                showNotification('New menu item has been added', 'info');
-              } else if (updateData.action === 'updated') {
-                showNotification('Menu item has been updated', 'info');
-              } else if (updateData.action === 'deleted') {
-                showNotification('Menu item has been removed', 'warning');
+            // Only respond to admin dashboard changes (menuUpdate events)
+            if (data.type === 'menuUpdate') {
+              console.log('Admin dashboard change detected:', data.data);
+              
+              // Show notification to user about admin changes
+              if (data.data) {
+                const updateData = data.data;
+                if (updateData.action === 'created') {
+                  showNotification('New menu item has been added', 'info');
+                } else if (updateData.action === 'updated') {
+                  showNotification('Menu item has been updated', 'info');
+                } else if (updateData.action === 'deleted') {
+                  showNotification('Menu item has been removed', 'warning');
+                }
               }
+              
+              await fetchMenuItems();
+              setLastServerUpdate(data.timestamp);
+              
+              // Dispatch custom event for immediate UI updates
+              window.dispatchEvent(new CustomEvent('menuUpdated', { 
+                detail: { timestamp: data.timestamp, type: data.type, source: 'admin' } 
+              }));
             }
-            
-            await fetchMenuItems();
-            setLastServerUpdate(data.timestamp);
-            
-            // Dispatch custom event for immediate UI updates
-            window.dispatchEvent(new CustomEvent('menuUpdated', { 
-              detail: { timestamp: data.timestamp, type: data.type, source: 'admin' } 
-            }));
+            // Ignore other types of updates (like heartbeat, general updates, etc.)
+          } catch (error) {
+            console.error('Error parsing SSE message:', error);
           }
-          // Ignore other types of updates (like heartbeat, general updates, etc.)
-        } catch (error) {
-          console.error('Error parsing SSE message:', error);
-        }
-      };
+        };
 
-      eventSource.onerror = (error) => {
-        console.error('SSE connection error:', error);
-        eventSource?.close();
-      };
+        eventSource.onerror = (error) => {
+          console.error('SSE connection error:', error);
+          if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+          }
+        };
 
-    } catch (error) {
-      console.error('SSE not supported, falling back to polling:', error);
-    }
+      } catch (error) {
+        console.error('SSE not supported, falling back to polling:', error);
+      }
+    };
+
+    // Setup SSE connection
+    setupSSE();
 
     // Fallback polling if SSE fails - reduced frequency to prevent frequent refreshes
-    const interval = setInterval(() => {
+    interval = setInterval(() => {
       if (!eventSource || eventSource.readyState === EventSource.CLOSED) {
         checkForUpdates();
       }
     }, 120000); // Check every 2 minutes instead of 30 seconds
 
     return () => {
-      clearInterval(interval);
-      eventSource?.close();
+      if (interval) {
+        clearInterval(interval);
+      }
+      if (eventSource) {
+        eventSource.close();
+      }
     };
   }, [lastServerUpdate]);
 

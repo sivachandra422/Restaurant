@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
-import dbConnect from '@/lib/mongodb';
+import { connectToDatabase } from '@/lib/mongodb';
 import { Order } from '@/lib/models/Order';
+import sseEventEmitter from '@/lib/sse-events';
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
 
@@ -34,7 +35,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
     }
 
-    await dbConnect();
+    const { db } = await connectToDatabase();
+    if (!db) {
+      return NextResponse.json({ error: 'Database not available' }, { status: 503 });
+    }
+
     const order = await Order.findById(params.id);
     
     if (!order) {
@@ -63,7 +68,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const body = await request.json();
     const { status, paymentStatus, estimatedTime, specialInstructions } = body;
 
-    await dbConnect();
+    const { db } = await connectToDatabase();
+    if (!db) {
+      return NextResponse.json({ error: 'Database not available' }, { status: 503 });
+    }
+
     const order = await Order.findById(params.id);
     
     if (!order) {
@@ -78,6 +87,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     
     order.updatedAt = new Date();
     await order.save();
+
+    // Emit SSE event for real-time updates
+    sseEventEmitter.emit('order-event', {
+      type: 'order-updated',
+      order: order.toObject()
+    });
 
     return NextResponse.json(order);
   } catch (error) {
@@ -98,7 +113,11 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
     }
 
-    await dbConnect();
+    const { db } = await connectToDatabase();
+    if (!db) {
+      return NextResponse.json({ error: 'Database not available' }, { status: 503 });
+    }
+
     const order = await Order.findByIdAndDelete(params.id);
     
     if (!order) {

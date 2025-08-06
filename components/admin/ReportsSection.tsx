@@ -1,40 +1,74 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { 
-  BarChart3, 
   TrendingUp, 
+  BarChart3, 
   Users, 
+  Activity, 
   DollarSign, 
-  Calendar, 
-  Filter,
+  Calendar,
   Download,
   RefreshCw,
-  Activity,
-  Wifi,
-  WifiOff,
-  Clock
+  Filter,
+  Eye,
+  FileText,
+  PieChart,
+  Clock,
+  Target,
+  Zap
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useAnalytics } from '@/contexts/AnalyticsContext';
 
-interface ReportsSectionProps {
-  onGenerateReport: (type: string, filters: any) => void;
-  onExportReport: (type: string, format: string, filters: any) => void;
+interface ReportData {
+  summary?: {
+    totalRevenue: number;
+    totalOrders: number;
+    averageOrderValue: number;
+    uniqueCustomers: number;
+  };
+  dailyRevenue?: Array<{ date: string; revenue: number }>;
+  topSellingItems?: Array<{
+    name: string;
+    count: number;
+    revenue: number;
+    averagePrice: number;
+  }>;
+  hourlyDistribution?: Array<{ hour: number; orders: number; revenue: number }>;
+  categoryBreakdown?: Array<{
+    category: string;
+    revenue: number;
+    percentage: number;
+  }>;
+  customerAnalysis?: Array<{
+    customerId: string;
+    orderCount: number;
+    totalSpent: number;
+    averageOrderValue: number;
+    customerType: string;
+  }>;
+  statusDistribution?: Array<{
+    status: string;
+    count: number;
+    percentage: number;
+  }>;
+  busiestTables?: Array<{ table: string; orders: number }>;
+  monthlyRevenue?: Array<{ month: string; revenue: number }>;
 }
 
-export default function ReportsSection({ onGenerateReport, onExportReport }: ReportsSectionProps) {
-  const { analytics, isRealTimeConnected, lastRealTimeUpdate } = useAnalytics();
-  const [selectedReport, setSelectedReport] = useState<string>('sales');
+export default function ReportsSection() {
+  const [activeReport, setActiveReport] = useState('sales');
+  const [reportData, setReportData] = useState<ReportData>({});
+  const [isLoading, setIsLoading] = useState(false);
   const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
     category: 'all',
     status: 'all'
   });
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   const reportTypes = [
     { id: 'sales', name: 'Sales Report', icon: TrendingUp, description: 'Revenue and order analytics' },
@@ -45,74 +79,99 @@ export default function ReportsSection({ onGenerateReport, onExportReport }: Rep
     { id: 'operational', name: 'Operational Report', icon: Calendar, description: 'Daily operations and efficiency' }
   ];
 
-  const handleGenerateReport = async () => {
-    setIsGenerating(true);
+  const generateReport = useCallback(async () => {
+    setIsLoading(true);
     try {
-      await onGenerateReport(selectedReport, filters);
+      const params = new URLSearchParams({
+        type: activeReport,
+        ...(filters.startDate && { startDate: filters.startDate }),
+        ...(filters.endDate && { endDate: filters.endDate }),
+        ...(filters.category !== 'all' && { category: filters.category }),
+        ...(filters.status !== 'all' && { status: filters.status })
+      });
+
+      const response = await fetch(`/api/admin/reports?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        setReportData(data.report);
+        setLastUpdate(new Date());
+      }
+    } catch (error) {
+      console.error('Error generating report:', error);
     } finally {
-      setIsGenerating(false);
+      setIsLoading(false);
     }
-  };
+  }, [activeReport, filters]);
 
-  const handleExportReport = (format: string) => {
-    onExportReport(selectedReport, format, filters);
-  };
+  const exportReport = useCallback(async (format: 'csv' | 'pdf') => {
+    try {
+      const params = new URLSearchParams({
+        type: activeReport,
+        format,
+        ...(filters.startDate && { startDate: filters.startDate }),
+        ...(filters.endDate && { endDate: filters.endDate }),
+        ...(filters.category !== 'all' && { category: filters.category }),
+        ...(filters.status !== 'all' && { status: filters.status })
+      });
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+      const response = await fetch(`/api/admin/reports/export?${params}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${activeReport}-report-${new Date().toISOString().split('T')[0]}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+    } catch (error) {
+      console.error('Error exporting report:', error);
+    }
+  }, [activeReport, filters]);
 
-  const formatTime = (date: Date | null) => {
-    if (!date) return 'Never';
-    return date.toLocaleTimeString('en-IN', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      second: '2-digit'
-    });
+  useEffect(() => {
+    generateReport();
+  }, [activeReport, filters, generateReport]);
+
+  const renderReportContent = () => {
+    switch (activeReport) {
+      case 'sales':
+        return <SalesReportContent data={reportData} />;
+      case 'inventory':
+        return <InventoryReportContent data={reportData} />;
+      case 'customer':
+        return <CustomerReportContent data={reportData} />;
+      case 'performance':
+        return <PerformanceReportContent data={reportData} />;
+      case 'financial':
+        return <FinancialReportContent data={reportData} />;
+      case 'operational':
+        return <OperationalReportContent data={reportData} />;
+      default:
+        return <SalesReportContent data={reportData} />;
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header with Real-time Status */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Reports & Analytics</h2>
-          <p className="text-gray-600">Generate comprehensive reports and export data</p>
+          <p className="text-sm text-gray-600">Generate comprehensive reports and export data</p>
         </div>
-        
-        <div className="flex items-center gap-3">
-          {/* Real-time Status Indicator */}
-          <div className="flex items-center gap-2">
-            {isRealTimeConnected ? (
-              <div className="flex items-center gap-1 text-green-600">
-                <Wifi className="w-4 h-4" />
-                <span className="text-sm font-medium">Live</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 text-red-600">
-                <WifiOff className="w-4 h-4" />
-                <span className="text-sm font-medium">Offline</span>
-              </div>
-            )}
-            {lastRealTimeUpdate && (
-              <div className="flex items-center gap-1 text-gray-500">
-                <Clock className="w-3 h-3" />
-                <span className="text-xs">{formatTime(lastRealTimeUpdate)}</span>
-              </div>
-            )}
-          </div>
-          
-          <Button variant="outline" size="sm" onClick={handleGenerateReport} disabled={isGenerating}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${isGenerating ? 'animate-spin' : ''}`} />
+        <div className="flex items-center space-x-3">
+          <Badge variant="outline" className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            Live
+          </Badge>
+          <Button onClick={generateReport} disabled={isLoading} variant="outline" size="sm">
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          
-          <Button variant="outline" size="sm" onClick={() => handleExportReport('csv')}>
+          <Button onClick={() => exportReport('csv')} variant="outline" size="sm">
             <Download className="w-4 h-4 mr-2" />
             Export CSV
           </Button>
@@ -126,24 +185,28 @@ export default function ReportsSection({ onGenerateReport, onExportReport }: Rep
           return (
             <Card 
               key={report.id}
-              className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
-                selectedReport === report.id 
-                  ? 'ring-2 ring-orange-500 bg-orange-50' 
-                  : 'hover:bg-gray-50'
+              className={`cursor-pointer transition-all hover:shadow-md ${
+                activeReport === report.id 
+                  ? 'ring-2 ring-orange-500 border-orange-200' 
+                  : 'hover:border-gray-300'
               }`}
-              onClick={() => setSelectedReport(report.id)}
+              onClick={() => setActiveReport(report.id)}
             >
-              <CardContent className="p-4 text-center">
-                <Icon className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-                <h3 className="font-semibold text-sm text-gray-900 mb-1">{report.name}</h3>
-                <p className="text-xs text-gray-500">{report.description}</p>
+              <CardContent className="p-4">
+                <div className="flex flex-col items-center text-center space-y-2">
+                  <Icon className="w-6 h-6 text-gray-600" />
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900">{report.name}</h3>
+                    <p className="text-xs text-gray-500">{report.description}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           );
         })}
       </div>
 
-      {/* Report Filters */}
+      {/* Filters */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -159,7 +222,7 @@ export default function ReportsSection({ onGenerateReport, onExportReport }: Rep
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -168,7 +231,7 @@ export default function ReportsSection({ onGenerateReport, onExportReport }: Rep
                 type="date"
                 value={filters.endDate}
                 onChange={(e) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
@@ -176,14 +239,15 @@ export default function ReportsSection({ onGenerateReport, onExportReport }: Rep
               <select
                 value={filters.category}
                 onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               >
                 <option value="all">All Categories</option>
                 <option value="biryani">Biryani</option>
-                <option value="curry">Curry</option>
-                <option value="rice">Rice</option>
-                <option value="bread">Bread</option>
-                <option value="drinks">Drinks</option>
+                <option value="curries">Curries</option>
+                <option value="fried_rice">Fried Rice</option>
+                <option value="noodles">Noodles</option>
+                <option value="starters">Starters</option>
+                <option value="breads">Breads</option>
               </select>
             </div>
             <div>
@@ -191,7 +255,7 @@ export default function ReportsSection({ onGenerateReport, onExportReport }: Rep
               <select
                 value={filters.status}
                 onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -199,7 +263,6 @@ export default function ReportsSection({ onGenerateReport, onExportReport }: Rep
                 <option value="preparing">Preparing</option>
                 <option value="ready">Ready</option>
                 <option value="delivered">Delivered</option>
-                <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
@@ -207,92 +270,105 @@ export default function ReportsSection({ onGenerateReport, onExportReport }: Rep
         </CardContent>
       </Card>
 
-      {/* Sales Report Summary */}
-      {selectedReport === 'sales' && (
+      {/* Report Content */}
+      <div className="space-y-6">
+        {isLoading ? (
+          <Card>
+            <CardContent className="p-8">
+              <div className="flex items-center justify-center">
+                <RefreshCw className="w-8 h-8 animate-spin text-orange-500" />
+                <span className="ml-2 text-gray-600">Generating report...</span>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          renderReportContent()
+        )}
+      </div>
+
+      {/* Last Update */}
+      {lastUpdate && (
+        <div className="text-sm text-gray-500 text-center">
+          Last updated: {lastUpdate.toLocaleString()}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Sales Report Content
+function SalesReportContent({ data }: { data: ReportData }) {
+  return (
+    <>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Sales Report Summary</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <DollarSign className="w-6 h-6 text-green-600" />
-                </div>
-                <div className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(analytics.totalRevenue || 0)}
-                </div>
-                <div className="text-sm text-gray-600">Total Revenue</div>
-              </div>
-              
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <BarChart3 className="w-6 h-6 text-blue-600" />
-                </div>
-                <div className="text-2xl font-bold text-gray-900">
-                  {analytics.totalOrders || 0}
-                </div>
-                <div className="text-sm text-gray-600">Total Orders</div>
-              </div>
-              
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <Users className="w-6 h-6 text-purple-600" />
-                </div>
-                <div className="text-2xl font-bold text-gray-900">
-                  {analytics.orderStatusDistribution?.filter(s => s.status === 'completed').length || 0}
-                </div>
-                <div className="text-sm text-gray-600">Unique Customers</div>
-              </div>
-              
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <TrendingUp className="w-6 h-6 text-orange-600" />
-                </div>
-                <div className="text-2xl font-bold text-gray-900">
-                  {formatCurrency(analytics.averageOrderValue || 0)}
-                </div>
-                <div className="text-sm text-gray-600">Avg Order Value</div>
-              </div>
-            </div>
-            
-            <div className="flex justify-end gap-2 mt-6">
-              <Button variant="outline" size="sm" onClick={() => handleExportReport('csv')}>
-                <Download className="w-4 h-4 mr-2" />
-                CSV
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => handleExportReport('pdf')}>
-                <Download className="w-4 h-4 mr-2" />
-                PDF
-              </Button>
-            </div>
+            <div className="text-2xl font-bold">₹{data.summary?.totalRevenue?.toLocaleString() || 0}</div>
+            <p className="text-xs text-muted-foreground">All time revenue</p>
           </CardContent>
         </Card>
-      )}
 
-      {/* Detailed Analysis - Top Selling Items */}
-      {selectedReport === 'sales' && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.summary?.totalOrders || 0}</div>
+            <p className="text-xs text-muted-foreground">All time orders</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Unique Customers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.summary?.uniqueCustomers || 0}</div>
+            <p className="text-xs text-muted-foreground">Total customers</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Order Value</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₹{data.summary?.averageOrderValue?.toFixed(0) || 0}</div>
+            <p className="text-xs text-muted-foreground">Per order average</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top Selling Items */}
+      {data.topSellingItems && data.topSellingItems.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Detailed Analysis</CardTitle>
-            <p className="text-sm text-gray-600">Top Selling Items</p>
+            <CardTitle>Top Selling Items</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {analytics.popularItems?.slice(0, 10).map((item, index) => (
-                <div key={item.name} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <Badge variant="secondary" className="w-6 h-6 flex items-center justify-center">
-                      {index + 1}
-                    </Badge>
-                    <span className="font-medium text-gray-900">{item.name}</span>
-                    <span className="text-sm text-gray-500">({item.count} orders)</span>
+              {data.topSellingItems.map((item, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                      <span className="text-sm font-bold text-orange-600">{index + 1}</span>
+                    </div>
+                    <div>
+                      <h4 className="font-medium">{item.name}</h4>
+                      <p className="text-sm text-gray-500">{item.count} orders</p>
+                    </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-semibold text-gray-900">
-                      {formatCurrency(item.revenue || 0)}
-                    </div>
-                    <div className="text-xs text-gray-500">Revenue</div>
+                    <p className="font-bold">₹{item.revenue.toLocaleString()}</p>
+                    <p className="text-sm text-gray-500">₹{item.averagePrice.toFixed(0)} avg</p>
                   </div>
                 </div>
               ))}
@@ -301,17 +377,100 @@ export default function ReportsSection({ onGenerateReport, onExportReport }: Rep
         </Card>
       )}
 
-      {/* Real-time Updates Notification */}
-      {analytics.newOrdersCount && analytics.newOrdersCount > 0 && (
-        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg animate-pulse">
-          <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4" />
-            <span className="text-sm font-medium">
-              {analytics.newOrdersCount} new order{analytics.newOrdersCount > 1 ? 's' : ''} received!
-            </span>
-          </div>
-        </div>
+      {/* Category Breakdown */}
+      {data.categoryBreakdown && data.categoryBreakdown.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Revenue by Category</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {data.categoryBreakdown.map((category, index) => (
+                <div key={index} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-4 h-4 bg-orange-500 rounded"></div>
+                    <span className="font-medium">{category.category}</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold">₹{category.revenue.toLocaleString()}</p>
+                    <p className="text-sm text-gray-500">{category.percentage.toFixed(1)}%</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
-    </div>
+    </>
+  );
+}
+
+// Inventory Report Content
+function InventoryReportContent({ data }: { data: ReportData }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Item Performance Analysis</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-gray-600">Inventory performance data will be displayed here based on actual order data.</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Customer Report Content
+function CustomerReportContent({ data }: { data: ReportData }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Customer Analysis</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-gray-600">Customer behavior and preferences data will be displayed here based on actual order data.</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Performance Report Content
+function PerformanceReportContent({ data }: { data: ReportData }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Business Performance Metrics</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-gray-600">Performance metrics and KPIs will be displayed here based on actual order data.</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Financial Report Content
+function FinancialReportContent({ data }: { data: ReportData }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Financial Analysis</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-gray-600">Financial trends and analysis will be displayed here based on actual order data.</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Operational Report Content
+function OperationalReportContent({ data }: { data: ReportData }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Operational Efficiency</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-gray-600">Daily operations and efficiency metrics will be displayed here based on actual order data.</p>
+      </CardContent>
+    </Card>
   );
 } 
