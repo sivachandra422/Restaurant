@@ -59,10 +59,6 @@ const orderSchema = new mongoose.Schema({
     default: Date.now,
     index: true
   },
-  lastUpdated: { 
-    type: Date, 
-    default: Date.now 
-  },
   estimatedTime: { type: Number }, // in minutes
   notes: { type: String },
   rating: { type: Number, min: 1, max: 5 },

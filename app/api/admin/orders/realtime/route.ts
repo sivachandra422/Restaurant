@@ -72,7 +72,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const updateData: any = { lastUpdated: new Date() };
+    const updateData: any = {};
     if (status) updateData.status = status;
     if (paymentStatus) updateData.paymentStatus = paymentStatus;
 

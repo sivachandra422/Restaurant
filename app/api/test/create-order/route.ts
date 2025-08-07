@@ -37,10 +37,12 @@ export async function POST(request: NextRequest) {
         price: item.price,
         quantity: quantity,
         isVeg: item.isVeg,
+        category: item.category,
+        subtotal: item.price * quantity,
       };
     });
 
-    const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0);
     const statuses = ['pending', 'preparing', 'ready', 'served', 'cancelled'];
     const paymentStatuses = ['pending', 'paid', 'refunded'];
 
@@ -51,14 +53,13 @@ export async function POST(request: NextRequest) {
       totalAmount: totalAmount,
       status: statuses[Math.floor(Math.random() * statuses.length)],
       paymentStatus: paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)],
-      paymentMethod: 'Cash', // Default
+      paymentMethod: 'cash', // Fixed: use lowercase 'cash' instead of 'Cash'
       customerName: `Guest ${randomTable}`,
       customerPhone: `+91${Math.floor(1000000000 + Math.random() * 9000000000)}`,
       specialInstructions: Math.random() > 0.7 ? 'Make it spicy' : '',
       estimatedTime: Math.floor(Math.random() * 30) + 10, // 10-40 minutes
       notes: '',
       createdAt: new Date(),
-      lastUpdated: new Date(),
     };
 
     const newOrder = new Order(newOrderData);

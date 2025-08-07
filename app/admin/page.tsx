@@ -625,19 +625,31 @@ function OrdersSection({
   const updateOrderStatus = async (orderId: string, status: string) => {
     setUpdatingOrder(orderId);
     try {
+      console.log('Updating order status:', { orderId, status });
+      
+      // Get admin token from cookies
+      const adminToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('admin-token='))
+        ?.split('=')[1] || '';
+      
+      console.log('Admin token found:', !!adminToken);
+      
       const response = await fetch(`/api/orders/${orderId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${document.cookie
-            .split('; ')
-            .find(row => row.startsWith('admin-token='))
-            ?.split('=')[1] || ''}`
+          'Authorization': `Bearer ${adminToken}`
         },
         body: JSON.stringify({ status })
       });
 
+      console.log('Response status:', response.status);
+      
       if (response.ok) {
+        const result = await response.json();
+        console.log('Order updated successfully:', result);
+        
         // Show success notification
         const notification = document.createElement('div');
         notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-green-500';
@@ -653,7 +665,9 @@ function OrdersSection({
         // Refresh orders list
         onRefresh();
       } else {
-        throw new Error('Failed to update order status');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Failed to update order:', errorData);
+        throw new Error(errorData.error || 'Failed to update order status');
       }
     } catch (error) {
       console.error('Error updating order status:', error);
@@ -661,7 +675,7 @@ function OrdersSection({
       // Show error notification
       const notification = document.createElement('div');
       notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-red-500';
-      notification.textContent = 'Failed to update order status';
+      notification.textContent = `Failed to update order status: ${error instanceof Error ? error.message : 'Unknown error'}`;
       document.body.appendChild(notification);
       
       setTimeout(() => {
@@ -1384,19 +1398,31 @@ function OrderDetailsModal({ order, onClose }: { order: any, onClose: () => void
   const updateOrderStatus = async (status: string) => {
     setUpdatingStatus(true);
     try {
-      const response = await fetch(`/api/orders/${order._id}`, {
+      console.log('Updating order status:', { orderId, status });
+      
+      // Get admin token from cookies
+      const adminToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('admin-token='))
+        ?.split('=')[1] || '';
+      
+      console.log('Admin token found:', !!adminToken);
+      
+      const response = await fetch(`/api/orders/${orderId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${document.cookie
-            .split('; ')
-            .find(row => row.startsWith('admin-token='))
-            ?.split('=')[1] || ''}`
+          'Authorization': `Bearer ${adminToken}`
         },
         body: JSON.stringify({ status })
       });
 
+      console.log('Response status:', response.status);
+      
       if (response.ok) {
+        const result = await response.json();
+        console.log('Order updated successfully:', result);
+        
         // Show success notification
         const notification = document.createElement('div');
         notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-green-500';
@@ -1413,7 +1439,9 @@ function OrderDetailsModal({ order, onClose }: { order: any, onClose: () => void
         onClose();
         window.location.reload(); // Simple refresh for now
       } else {
-        throw new Error('Failed to update order status');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Failed to update order:', errorData);
+        throw new Error(errorData.error || 'Failed to update order status');
       }
     } catch (error) {
       console.error('Error updating order status:', error);
@@ -1421,7 +1449,7 @@ function OrderDetailsModal({ order, onClose }: { order: any, onClose: () => void
       // Show error notification
       const notification = document.createElement('div');
       notification.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white text-sm bg-red-500';
-      notification.textContent = 'Failed to update order status';
+      notification.textContent = `Failed to update order status: ${error instanceof Error ? error.message : 'Unknown error'}`;
       document.body.appendChild(notification);
       
       setTimeout(() => {
