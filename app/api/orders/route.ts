@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { Order } from '@/lib/models/Order';
 import sseEventEmitter from '@/lib/sse-events';
+import { emailService } from '@/lib/email';
 
 // POST - Create new order
 export async function POST(request: NextRequest) {
@@ -37,6 +38,9 @@ export async function POST(request: NextRequest) {
             type: 'new-order',
             order: savedOrder.toObject()
           });
+          
+          // Send email notifications
+          await sendOrderNotifications(orderData);
           
           return NextResponse.json({ 
             success: true, 
@@ -136,43 +140,70 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Helper function to send email notifications
+async function sendOrderNotifications(orderData: any) {
+  try {
+    // Get notification settings from environment or use defaults
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@srikanya.com';
+    const kitchenEmail = process.env.KITCHEN_EMAIL || 'kitchen@srikanya.com';
+    
+    // Prepare email data
+    const emailData = {
+      orderId: orderData.orderId,
+      customerName: orderData.customerName || 'Guest',
+      customerPhone: orderData.customerPhone || '',
+      tableNumber: orderData.tableNumber || '',
+      items: orderData.items || [],
+      totalAmount: orderData.totalAmount || 0,
+      specialInstructions: orderData.specialInstructions || '',
+      estimatedTime: orderData.estimatedTime || '20-25 minutes',
+      timestamp: new Date(orderData.timestamp || Date.now())
+    };
+
+    // Send order confirmation to customer (if email provided)
+    if (orderData.customerEmail) {
+      await emailService.sendOrderConfirmation(emailData, orderData.customerEmail);
+    }
+
+    // Send kitchen notification
+    await emailService.sendKitchenNotification(emailData, kitchenEmail);
+
+    // Send admin notification
+    await emailService.sendSystemNotification({
+      type: 'new-order',
+      title: 'New Order Received',
+      message: `New order #${orderData.orderId} received from ${emailData.customerName} at table ${emailData.tableNumber}`,
+      data: emailData
+    }, adminEmail);
+
+    console.log('Email notifications sent successfully');
+  } catch (error) {
+    console.error('Failed to send email notifications:', error);
+    // Don't fail the order if email notifications fail
+  }
+}
+
+// Helper function to format webhook payload (existing)
 function formatWebhookPayload(orderData: any) {
   return {
-    restaurantName: "Sri Kanya Family Restaurant",
     orderId: orderData.orderId,
-    timestamp: new Date().toISOString(),
+    sessionId: orderData.sessionId,
+    timestamp: orderData.timestamp,
     tableNumber: orderData.tableNumber,
-    customerName: orderData.customerName || "",
-    customerPhone: orderData.customerPhone || "",
-    items: orderData.items.map((item: any) => ({
+    customerName: orderData.customerName,
+    customerPhone: orderData.customerPhone,
+    items: orderData.items?.map((item: any) => ({
       name: item.name,
       quantity: item.quantity,
-      price: item.price,
+      unitPrice: item.price,
       subtotal: item.subtotal || (item.price * item.quantity),
       category: item.category,
       isVeg: item.isVeg,
-      specialNotes: ""
+      isSignature: item.isSignature || false
     })),
-    specialInstructions: orderData.specialInstructions,
     totalAmount: orderData.totalAmount,
-    estimatedTime: orderData.estimatedTime,
-    kitchen: {
-      orderId: orderData.orderId,
-      timestamp: new Date().toISOString(),
-      tableNumber: orderData.tableNumber,
-      customerName: orderData.customerName || "",
-      items: orderData.items.map((item: any) => ({
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-        subtotal: item.subtotal || (item.price * item.quantity),
-        category: item.category,
-        isVeg: item.isVeg,
-        specialNotes: ""
-      })),
-      specialInstructions: orderData.specialInstructions,
-      totalAmount: orderData.totalAmount,
-      estimatedTime: orderData.estimatedTime
-    }
+    estimatedTime: orderData.estimatedTime || '20-25 minutes',
+    priority: orderData.priority || 'NORMAL',
+    specialInstructions: orderData.specialInstructions
   };
 }

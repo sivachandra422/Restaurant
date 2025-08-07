@@ -10,10 +10,12 @@ interface AnalyticsData {
     name: string;
     count: number;
     revenue: number;
+    avgRating?: number;
   }>;
   orderStatusDistribution: Array<{
     status: string;
     count: number;
+    percentage?: number;
   }>;
   todayOrders: number;
   todayRevenue: number;
@@ -21,6 +23,31 @@ interface AnalyticsData {
   newOrdersCount: number;
   customerSatisfaction: number;
   totalRatings: number;
+  // New analytics fields
+  revenueByDay: Array<{ date: string; revenue: number }>;
+  revenueByMonth: Array<{ date: string; revenue: number }>;
+  peakHours: Array<{ hour: string; orders: number; revenue: number }>;
+  customerReviewsCount: number;
+  repeatCustomers: number;
+  topCustomers: Array<{
+    customerId: string;
+    orders: number;
+    totalSpent: number;
+    avgOrderValue: number;
+  }>;
+  categoryPerformance: Array<{
+    category: string;
+    orders: number;
+    revenue: number;
+    items: number;
+  }>;
+  itemPerformance: Array<{
+    name: string;
+    orders: number;
+    revenue: number;
+    avgRating: number;
+  }>;
+  revenueTrends: Array<{ date: string; revenue: number }>;
 }
 
 interface AnalyticsContextType {
@@ -30,6 +57,7 @@ interface AnalyticsContextType {
   connectRealTime: () => void;
   disconnectRealTime: () => void;
   refreshAnalytics: () => Promise<void>;
+  isLoading: boolean;
 }
 
 const AnalyticsContext = createContext<AnalyticsContextType | undefined>(undefined);
@@ -46,11 +74,21 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     lastUpdate: null,
     newOrdersCount: 0,
     customerSatisfaction: 0,
-    totalRatings: 0
+    totalRatings: 0,
+    revenueByDay: [],
+    revenueByMonth: [],
+    peakHours: [],
+    customerReviewsCount: 0,
+    repeatCustomers: 0,
+    topCustomers: [],
+    categoryPerformance: [],
+    itemPerformance: [],
+    revenueTrends: []
   });
   const [isRealTimeConnected, setIsRealTimeConnected] = useState(false);
   const [lastRealTimeUpdate, setLastRealTimeUpdate] = useState<Date | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Calculate analytics from real order data with debouncing
@@ -58,100 +96,60 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (isCalculating) return;
     
     setIsCalculating(true);
+    setIsLoading(true);
     try {
-      const response = await fetch('/api/admin/orders/realtime');
+      const response = await fetch('/api/admin/analytics');
       if (response.ok) {
-        const data = await response.json();
-        const orders = data.orders || [];
+        const result = await response.json();
+        const data = result.data || {};
 
-        // Calculate total revenue and orders
-        const totalRevenue = orders.reduce((sum: number, order: any) => sum + order.totalAmount, 0);
-        const totalOrders = orders.length;
-        const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-
-        // Calculate today's orders and revenue
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayOrders = orders.filter((order: any) => {
-          const orderDate = new Date(order.createdAt);
-          return orderDate >= today;
-        });
-        const todayRevenue = todayOrders.reduce((sum: number, order: any) => sum + order.totalAmount, 0);
-
-        // Calculate popular items
-        const itemCounts: { [key: string]: { count: number; revenue: number } } = {};
-        orders.forEach((order: any) => {
-          order.items?.forEach((item: any) => {
-            const itemName = item.name;
-            if (!itemCounts[itemName]) {
-              itemCounts[itemName] = { count: 0, revenue: 0 };
-            }
-            itemCounts[itemName].count += item.quantity;
-            itemCounts[itemName].revenue += item.price * item.quantity;
-          });
-        });
-
-        const popularItems = Object.entries(itemCounts)
-          .map(([name, data]) => ({
-            name,
-            count: data.count,
-            revenue: data.revenue
-          }))
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 5);
-
-        // Calculate order status distribution
-        const statusCounts: { [key: string]: number } = {};
-        orders.forEach((order: any) => {
-          const status = order.status;
-          statusCounts[status] = (statusCounts[status] || 0) + 1;
-        });
-
-        const orderStatusDistribution = Object.entries(statusCounts).map(([status, count]) => ({
-          status,
-          count
-        }));
-
-        // Calculate customer satisfaction from ratings
-        const ordersWithRatings = orders.filter((order: any) => order.rating && order.rating > 0);
-        const totalRatings = ordersWithRatings.length;
-        const customerSatisfaction = totalRatings > 0 
-          ? ordersWithRatings.reduce((sum: number, order: any) => sum + order.rating, 0) / totalRatings
-          : 0;
+        // Transform the data to match our interface
+        const newAnalytics: AnalyticsData = {
+          totalRevenue: data.totalRevenue || 0,
+          totalOrders: data.totalOrders || 0,
+          averageOrderValue: data.averageOrderValue || 0,
+          popularItems: data.popularItems || [],
+          orderStatusDistribution: data.orderStatusDistribution || [],
+          todayOrders: data.todayOrders || 0,
+          todayRevenue: data.todayRevenue || 0,
+          lastUpdate: new Date(),
+          newOrdersCount: 0,
+          customerSatisfaction: data.customerSatisfaction || 0,
+          totalRatings: data.customerReviewsCount || 0,
+          revenueByDay: data.revenueByDay || [],
+          revenueByMonth: data.revenueByMonth || [],
+          peakHours: data.peakHours || [],
+          customerReviewsCount: data.customerReviewsCount || 0,
+          repeatCustomers: data.repeatCustomers || 0,
+          topCustomers: data.topCustomers || [],
+          categoryPerformance: data.categoryPerformance || [],
+          itemPerformance: data.itemPerformance || [],
+          revenueTrends: data.revenueTrends || []
+        };
 
         setAnalytics(prev => {
           // Only update if there are actual changes to prevent unnecessary re-renders
-          const newAnalytics = {
-            totalRevenue,
-            totalOrders,
-            averageOrderValue,
-            popularItems,
-            orderStatusDistribution,
-            todayOrders: todayOrders.length,
-            todayRevenue,
-            lastUpdate: new Date(),
-            newOrdersCount: 0,
-            customerSatisfaction,
-            totalRatings
-          };
-
-          // Check if data has actually changed
           const hasChanged = 
-            prev.totalRevenue !== totalRevenue ||
-            prev.totalOrders !== totalOrders ||
-            prev.averageOrderValue !== averageOrderValue ||
-            prev.todayOrders !== todayOrders.length ||
-            prev.todayRevenue !== todayRevenue ||
-            prev.customerSatisfaction !== customerSatisfaction ||
-            prev.totalRatings !== totalRatings;
+            prev.totalRevenue !== newAnalytics.totalRevenue ||
+            prev.totalOrders !== newAnalytics.totalOrders ||
+            prev.averageOrderValue !== newAnalytics.averageOrderValue ||
+            prev.todayOrders !== newAnalytics.todayOrders ||
+            prev.todayRevenue !== newAnalytics.todayRevenue ||
+            prev.customerSatisfaction !== newAnalytics.customerSatisfaction ||
+            prev.totalRatings !== newAnalytics.totalRatings ||
+            prev.customerReviewsCount !== newAnalytics.customerReviewsCount ||
+            prev.repeatCustomers !== newAnalytics.repeatCustomers;
 
           return hasChanged ? newAnalytics : prev;
         });
+      } else {
+        console.error('Failed to fetch analytics:', response.status);
       }
     } catch (error) {
       console.error('Error calculating analytics:', error);
     } finally {
       setIsCalculating(false);
+      setIsLoading(false);
     }
   }, [isCalculating]);
 
@@ -215,7 +213,8 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     lastRealTimeUpdate,
     connectRealTime,
     disconnectRealTime,
-    refreshAnalytics
+    refreshAnalytics,
+    isLoading
   };
 
   return (

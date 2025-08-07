@@ -52,6 +52,7 @@ import SettingsSection from '@/components/admin/SettingsSection';
 import BackupSection from '@/components/admin/BackupSection';
 import RealTimeTest from '@/components/admin/RealTimeTest';
 import RealTimeOrderManager from '@/components/admin/RealTimeOrderManager';
+import { ImageUpload } from '@/components/ui/ImageUpload';
 
 interface EditModalState {
   isOpen: boolean;
@@ -1245,7 +1246,7 @@ function EditItemModal({ item, onClose, onSave, onUpdate }: {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-bold text-gray-900">{item.id ? 'Edit Menu Item' : 'Add New Menu Item'}</h2>
           <Button onClick={onClose} variant="ghost" size="sm">
@@ -1254,6 +1255,17 @@ function EditItemModal({ item, onClose, onSave, onUpdate }: {
         </div>
 
         <div className="p-6 space-y-6">
+          {/* Image Upload Section */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Item Image</label>
+            <ImageUpload
+              currentImage={item.image}
+              onImageUpload={(imageUrl: string) => onUpdate('image', imageUrl)}
+              onImageRemove={() => onUpdate('image', '')}
+              className="max-w-md"
+            />
+          </div>
+
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
