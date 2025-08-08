@@ -549,6 +549,7 @@ export default function MenuPage() {
               View Cart
             </Button>
           </div>
+          <p className="mt-1 text-[10px] text-center text-gray-600">Cash payment only. No taxes or service charges.</p>
         </div>
       )}
 

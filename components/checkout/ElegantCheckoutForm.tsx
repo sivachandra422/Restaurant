@@ -12,7 +12,7 @@ interface CheckoutFormData {
   customerName: string;
   customerPhone: string;
   specialInstructions: string;
-  paymentMethod: 'cash' | 'phonepe';
+  paymentMethod: 'cash';
 }
 
 export function ElegantCheckoutForm() {
@@ -108,7 +108,7 @@ export function ElegantCheckoutForm() {
       totalAmount: state.totalAmount,
       estimatedTime: 25, // Convert to number (minutes) to match schema
       status: 'pending',
-      paymentMethod: formData.paymentMethod,
+      paymentMethod: 'cash',
       paymentStatus: 'pending'
     };
 
@@ -356,35 +356,10 @@ export function ElegantCheckoutForm() {
             </div>
           </div>
 
-          {/* Payment Method Selection */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-800">Payment Method</h3>
-            <div className="flex items-center space-x-4">
-              <label htmlFor="cashPayment" className="flex items-center cursor-pointer">
-                <input
-                  type="radio"
-                  id="cashPayment"
-                  name="paymentMethod"
-                  value="cash"
-                  checked={formData.paymentMethod === 'cash'}
-                  onChange={handleInputChange}
-                  className="form-radio text-orange-500 focus:ring-orange-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">Cash on Delivery</span>
-              </label>
-              <label htmlFor="phonepePayment" className="flex items-center cursor-pointer">
-                <input
-                  type="radio"
-                  id="phonepePayment"
-                  name="paymentMethod"
-                  value="phonepe"
-                  checked={formData.paymentMethod === 'phonepe'}
-                  onChange={handleInputChange}
-                  className="form-radio text-orange-500 focus:ring-orange-500"
-                />
-                <span className="ml-2 text-sm text-gray-700">PhonePe</span>
-              </label>
-            </div>
+          {/* Payment Info (Cash only, no taxes) */}
+          <div className="space-y-2 bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <h3 className="font-semibold text-amber-800">Payment</h3>
+            <p className="text-sm text-amber-800">Cash at counter only. No taxes or service charges applied.</p>
           </div>
 
           {/* Session Information */}
