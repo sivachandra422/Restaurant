@@ -1084,6 +1084,17 @@ function FeedbackSection({ analytics }: { analytics: any }) {
 
   useEffect(() => {
     fetchFeedback();
+    // Dedicated feedback SSE stream (supplements window events)
+    let sse: EventSource | null = null;
+    try {
+      sse = new EventSource('/api/admin/feedback/stream');
+      sse.addEventListener('feedback-submitted', () => fetchFeedback());
+    } catch (e) {
+      console.warn('Feedback SSE unavailable, using window events only');
+    }
+    return () => {
+      if (sse) sse.close();
+    };
   }, [fetchFeedback]);
 
   // Listen for order updates to refresh feedback
