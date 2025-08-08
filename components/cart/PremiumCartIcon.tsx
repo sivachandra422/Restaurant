@@ -10,6 +10,7 @@ export function PremiumCartIcon() {
 
   return (
     <button
+      id="cart-button"
       onClick={() => setCartOpen(true)}
       className={cn(
         'relative p-1.5 sm:p-3 rounded-lg sm:rounded-xl transition-all duration-200',

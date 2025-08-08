@@ -258,6 +258,7 @@ export default function MenuPage() {
                   placeholder={t('search_placeholder', language)}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  ref={searchInputRef}
                   className="pl-10 h-10 sm:h-11 text-sm border-gray-200 focus:border-orange-500 focus:ring-orange-500 transition-all duration-200"
                 />
                 {searchQuery && (

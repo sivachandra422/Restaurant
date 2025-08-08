@@ -122,6 +122,77 @@ export function PremiumMenuCard({
     }
   };
 
+  // Long-press acceleration for +/-
+  const pressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const speedRef = useRef<number>(250);
+
+  const startPress = (type: 'inc' | 'dec') => {
+    const step = () => {
+      if (type === 'inc' && !isAtMaxQuantity) onUpdateQuantity(quantity => Math.min(quantity + 1, maxQuantity));
+      if (type === 'dec') onUpdateQuantity(quantity => Math.max(quantity - 1, 0));
+      speedRef.current = Math.max(60, speedRef.current * 0.85);
+      pressTimerRef.current = setTimeout(step, speedRef.current);
+    };
+    pressTimerRef.current = setTimeout(step, speedRef.current);
+  };
+
+  const endPress = () => {
+    if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
+    pressTimerRef.current = null;
+    speedRef.current = 250;
+  };
+
+  // Fly-to-cart animation
+  const flyToCart = () => {
+    try {
+      const card = imageRef.current;
+      const cartBtn = document.getElementById('cart-button');
+      if (!card || !cartBtn) return;
+      const img = card.querySelector('img');
+      if (!img) return;
+
+      const clone = (img as HTMLImageElement).cloneNode(true) as HTMLImageElement;
+      const imgRect = (img as HTMLElement).getBoundingClientRect();
+      const cartRect = cartBtn.getBoundingClientRect();
+      Object.assign(clone.style, {
+        position: 'fixed',
+        left: `${imgRect.left}px`,
+        top: `${imgRect.top}px`,
+        width: `${imgRect.width}px`,
+        height: `${imgRect.height}px`,
+        borderRadius: '12px',
+        zIndex: '9999',
+        transition: 'all 700ms cubic-bezier(0.22, 1, 0.36, 1)',
+        boxShadow: '0 10px 20px rgba(0,0,0,0.15)',
+      } as CSSStyleDeclaration);
+      document.body.appendChild(clone);
+      requestAnimationFrame(() => {
+        Object.assign(clone.style, {
+          left: `${cartRect.left + cartRect.width / 2 - imgRect.width * 0.15}px`,
+          top: `${cartRect.top + cartRect.height / 2 - imgRect.height * 0.15}px`,
+          width: `${imgRect.width * 0.3}px`,
+          height: `${imgRect.height * 0.3}px`,
+          opacity: '0.6',
+          transform: 'rotate(10deg)',
+          borderRadius: '50%',
+        } as CSSStyleDeclaration);
+      });
+      setTimeout(() => {
+        clone.remove();
+        try {
+          cartBtn.animate(
+            [
+              { transform: 'scale(1)' },
+              { transform: 'scale(1.15)' },
+              { transform: 'scale(1)' },
+            ],
+            { duration: 300, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
+          );
+        } catch {}
+      }, 720);
+    } catch {}
+  };
+
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -283,7 +354,7 @@ export function PremiumMenuCard({
           <div className="flex items-center justify-between">
             {quantity === 0 ? (
               <Button
-                onClick={handleAddClick}
+                onClick={(e) => { handleAddClick(e); flyToCart(); }}
                 className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium ripple focus-ring transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
               >
                 <Plus className="w-4 h-4 mr-1" />
@@ -293,6 +364,11 @@ export function PremiumMenuCard({
               <div className="flex items-center space-x-2 w-full">
                 <Button
                   onClick={handleDecreaseClick}
+                  onMouseDown={() => startPress('dec')}
+                  onMouseUp={endPress}
+                  onMouseLeave={endPress}
+                  onTouchStart={() => startPress('dec')}
+                  onTouchEnd={endPress}
                   variant="outline"
                   size="sm"
                   className="w-8 h-8 p-0 rounded-full ripple focus-ring transition-all duration-200 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
@@ -306,6 +382,11 @@ export function PremiumMenuCard({
                 
                 <Button
                   onClick={handleIncreaseClick}
+                  onMouseDown={() => startPress('inc')}
+                  onMouseUp={endPress}
+                  onMouseLeave={endPress}
+                  onTouchStart={() => startPress('inc')}
+                  onTouchEnd={endPress}
                   variant="outline"
                   size="sm"
                   className={`w-8 h-8 p-0 rounded-full ripple focus-ring transition-all duration-200 hover:bg-green-50 hover:border-green-300 hover:text-green-600 ${
