@@ -196,18 +196,21 @@ export default function MenuPage() {
               
               <LanguageSwitcher />
               
-              {/* Enhanced Order History Button */}
+              {/* Enhanced Order History Button (hide on mobile; bottom bar has Orders) */}
               <Button
                 onClick={() => setShowOrderHistory(true)}
                 variant="ghost"
                 size="sm"
-                className="h-8 w-8 sm:h-10 sm:w-auto p-0 sm:px-3 ripple focus-ring hover:bg-orange-50 transition-all duration-200 group"
+                className="hidden sm:inline-flex h-8 w-8 sm:h-10 sm:w-auto p-0 sm:px-3 ripple focus-ring hover:bg-orange-50 transition-all duration-200 group"
               >
                 <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform duration-200" />
                 <span className="hidden sm:inline text-xs ml-2">{t('orders', language)}</span>
               </Button>
               
-              <PremiumCartIcon />
+              {/* Hide cart icon on mobile; bottom bar has Cart */}
+              <div className="hidden sm:block">
+                <PremiumCartIcon />
+              </div>
             </div>
           </div>
         </div>
