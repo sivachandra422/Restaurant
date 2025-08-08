@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, ChefHat, Sparkles, Crown, Search, Filter, SortAsc, Clock, RefreshCw, X } from 'lucide-react';
+import { ArrowLeft, ChefHat, Sparkles, Crown, Search, Filter, SortAsc, Clock, RefreshCw, X, ShoppingBag, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -41,6 +41,34 @@ export default function MenuPage() {
   const [showOrderHistory, setShowOrderHistory] = useState(false);
   const [lastMenuUpdate, setLastMenuUpdate] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
+
+  // Refs for UI interactions
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const categoriesRef = useRef<HTMLDivElement | null>(null);
+
+  // Persist user preferences for search, sort and category
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('menuPreferences');
+      if (saved) {
+        const { search, sort, category } = JSON.parse(saved);
+        if (typeof search === 'string') setSearchQuery(search);
+        if (typeof sort === 'string') setSortBy(sort);
+        if (typeof category === 'string') setSelectedCategory(category);
+      }
+    } catch {}
+  // run only once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        'menuPreferences',
+        JSON.stringify({ search: searchQuery, sort: sortBy, category: selectedCategory })
+      );
+    } catch {}
+  }, [searchQuery, sortBy, selectedCategory]);
 
   // Extract table number from URL and set it in cart context
   useEffect(() => {
@@ -186,7 +214,7 @@ export default function MenuPage() {
       </div>
 
       {/* Enhanced Hero Section */}
-      <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 text-white py-6 sm:py-8 lg:py-10 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 text-white py-4 sm:py-8 lg:py-10 relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -338,8 +366,8 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {/* Categories */}
-      <div className="bg-white border-b">
+      {/* Categories (sticky under header) */}
+      <div ref={categoriesRef} className="bg-white border-b sticky top-[56px] sm:top-[72px] z-40 backdrop-blur bg-white/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <ElegantCategoryTabs
             categories={menuCategories}
@@ -468,8 +496,8 @@ export default function MenuPage() {
       {/* AI Chatbot */}
       <AIChatbot />
 
-      {/* Floating Action Button */}
-      <div className="fixed bottom-6 right-6 z-40">
+      {/* Floating Action Button (desktop/tablet only) */}
+      <div className="hidden sm:block fixed bottom-6 right-6 z-40">
         <div className="flex flex-col space-y-3">
           {/* Quick Cart Button */}
           {state.totalItems > 0 && (
@@ -499,6 +527,61 @@ export default function MenuPage() {
               <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile Bottom Action Bar */}
+      <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+        <div className="flex items-center justify-around h-14 px-2 pb-[calc(env(safe-area-inset-bottom,0px))]">
+          {/* Search */}
+          <button
+            className="flex flex-col items-center justify-center text-gray-600 hover:text-orange-600"
+            onClick={() => {
+              searchInputRef.current?.focus();
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            <Search className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Search</span>
+          </button>
+
+          {/* Categories */}
+          <button
+            className="flex flex-col items-center justify-center text-gray-600 hover:text-orange-600"
+            onClick={() => {
+              const el = categoriesRef.current;
+              if (el) {
+                const y = el.getBoundingClientRect().top + window.scrollY - 60;
+                window.scrollTo({ top: y, behavior: 'smooth' });
+              }
+            }}
+          >
+            <List className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Categories</span>
+          </button>
+
+          {/* Orders */}
+          <button
+            className="flex flex-col items-center justify-center text-gray-600 hover:text-orange-600"
+            onClick={() => setShowOrderHistory(true)}
+          >
+            <Clock className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Orders</span>
+          </button>
+
+          {/* Cart */}
+          <button
+            className="relative flex flex-col items-center justify-center text-gray-600 hover:text-orange-600"
+            onClick={() => setCartOpen(true)}
+          >
+            <ShoppingBag className="w-5 h-5" />
+            <span className="text-[10px] mt-0.5">Cart</span>
+            {state.totalItems > 0 && (
+              <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5">
+                {state.totalItems > 99 ? '99+' : state.totalItems}
+              </span>
+            )}
+          </button>
         </div>
       </div>
     </div>
