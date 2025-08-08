@@ -40,6 +40,7 @@ export function PremiumMenuCard({
   const [fallbackAttempt, setFallbackAttempt] = useState(0);
   const [isInView, setIsInView] = useState(false);
   const imageRef = useRef<HTMLDivElement>(null);
+  const currentQuantityRef = useRef<number>(quantity);
   
   // Get localized text for the current language
   const localizedName = getLocalizedText(item, 'name', language);
@@ -92,6 +93,11 @@ export function PremiumMenuCard({
     // Test image accessibility for debugging
   }, [item.id, primaryImageUrl]);
 
+  // Keep a live ref of quantity for long-press acceleration
+  useEffect(() => {
+    currentQuantityRef.current = quantity;
+  }, [quantity]);
+
   const handleAddClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -128,8 +134,24 @@ export function PremiumMenuCard({
 
   const startPress = (type: 'inc' | 'dec') => {
     const step = () => {
-      if (type === 'inc' && !isAtMaxQuantity) onUpdateQuantity(quantity => Math.min(quantity + 1, maxQuantity));
-      if (type === 'dec') onUpdateQuantity(quantity => Math.max(quantity - 1, 0));
+      let current = currentQuantityRef.current;
+      if (type === 'inc') {
+        const next = Math.min(current + 1, maxQuantity);
+        if (next !== current) {
+          onUpdateQuantity(next);
+          currentQuantityRef.current = next;
+        }
+      } else {
+        const next = Math.max(current - 1, 0);
+        if (next !== current) {
+          if (next === 0) {
+            onRemove();
+          } else {
+            onUpdateQuantity(next);
+          }
+          currentQuantityRef.current = next;
+        }
+      }
       speedRef.current = Math.max(60, speedRef.current * 0.85);
       pressTimerRef.current = setTimeout(step, speedRef.current);
     };
