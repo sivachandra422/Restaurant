@@ -15,7 +15,7 @@ export interface Order {
     subtotal: number;
   }>;
   totalAmount: number;
-  status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
   paymentStatus: 'pending' | 'paid' | 'failed';
   paymentMethod: 'cash' | 'card' | 'upi' | 'online';
   estimatedTime?: number;

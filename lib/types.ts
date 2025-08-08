@@ -61,7 +61,7 @@ export interface Order {
   specialInstructions: string;
   orderType: 'dine-in' | 'takeaway' | 'delivery';
   estimatedTime: string;
-  status: 'received' | 'preparing' | 'ready' | 'served' | 'completed';
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
 }
 
 export interface CartState {
