@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRealTimeOrders } from '@/contexts/RealTimeOrderContext';
 import { 
   RefreshCw, 
@@ -37,6 +38,9 @@ export default function RealTimeOrderManager() {
   const [creatingTestOrder, setCreatingTestOrder] = useState(false);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const { toast } = useToast();
+  const [mobileTab, setMobileTab] = useState<'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered'>(
+    'pending'
+  );
 
   // Filter orders by status (include 'confirmed' as a column in kitchen board)
   const pendingOrders = orders.filter(order => order.status === 'pending');
@@ -169,8 +173,8 @@ export default function RealTimeOrderManager() {
       {/* Header with Connection Status */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Real-Time Order Management</h2>
-          <p className="text-sm text-gray-600">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Real-Time Order Management</h2>
+          <p className="text-xs sm:text-sm text-gray-600">
             Live order tracking and management
             {lastUpdate && (
               <span className="ml-2">
@@ -227,8 +231,16 @@ export default function RealTimeOrderManager() {
         </Card>
       )}
 
-      {/* Analytics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Compact mobile summary */}
+      <div className="sm:hidden flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        <Badge className="bg-stone-100 text-stone-800">Total: {totalOrders}</Badge>
+        <Badge className="bg-stone-100 text-stone-800">Active: {activeOrders}</Badge>
+        <Badge className="bg-stone-100 text-stone-800">Revenue: ₹{totalRevenue.toFixed(0)}</Badge>
+        <Badge className="bg-stone-100 text-stone-800">AOV: ₹{averageOrderValue.toFixed(0)}</Badge>
+      </div>
+
+      {/* Analytics Cards (hide on mobile) */}
+      <div className="hidden sm:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
@@ -274,8 +286,126 @@ export default function RealTimeOrderManager() {
         </Card>
       </div>
 
-      {/* Order Sections / Kitchen Board */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Mobile: segmented tabs for statuses */}
+      <div className="lg:hidden">
+        <Tabs value={mobileTab} onValueChange={(v) => setMobileTab(v as any)}>
+          <TabsList className="w-full grid grid-cols-5">
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="confirmed">Conf</TabsTrigger>
+            <TabsTrigger value="preparing">Prep</TabsTrigger>
+            <TabsTrigger value="ready">Ready</TabsTrigger>
+            <TabsTrigger value="delivered">Done</TabsTrigger>
+          </TabsList>
+          <TabsContent value="pending">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Clock className="w-5 h-5 text-yellow-500" />
+                  <span>Pending ({pendingOrders.length})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className={`${dragOverColumn === 'pending' ? 'ring-2 ring-yellow-400 rounded-md' : ''}`} {...getDropHandlers('pending')}>
+                {pendingOrders.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">No pending orders</p>
+                ) : (
+                  <div className="space-y-3">
+                    {pendingOrders.map((order) => (
+                      <OrderCard key={order._id} order={order} onStatusUpdate={handleStatusUpdate} onPaymentUpdate={handlePaymentUpdate} updatingOrder={updatingOrder} getStatusBadge={getStatusBadge} getPaymentStatusBadge={getPaymentStatusBadge} />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="confirmed">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-blue-500" />
+                  <span>Confirmed ({confirmedOrders.length})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className={`${dragOverColumn === 'confirmed' ? 'ring-2 ring-blue-400 rounded-md' : ''}`} {...getDropHandlers('confirmed')}>
+                {confirmedOrders.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">No confirmed orders</p>
+                ) : (
+                  <div className="space-y-3">
+                    {confirmedOrders.map((order) => (
+                      <OrderCard key={order._id} order={order} onStatusUpdate={handleStatusUpdate} onPaymentUpdate={handlePaymentUpdate} updatingOrder={updatingOrder} getStatusBadge={getStatusBadge} getPaymentStatusBadge={getPaymentStatusBadge} />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="preparing">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Clock className="w-5 h-5 text-orange-500" />
+                  <span>Preparing ({preparingOrders.length})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className={`${dragOverColumn === 'preparing' ? 'ring-2 ring-orange-400 rounded-md' : ''}`} {...getDropHandlers('preparing')}>
+                {preparingOrders.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">No orders being prepared</p>
+                ) : (
+                  <div className="space-y-3">
+                    {preparingOrders.map((order) => (
+                      <OrderCard key={order._id} order={order} onStatusUpdate={handleStatusUpdate} onPaymentUpdate={handlePaymentUpdate} updatingOrder={updatingOrder} getStatusBadge={getStatusBadge} getPaymentStatusBadge={getPaymentStatusBadge} />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="ready">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                  <span>Ready ({readyOrders.length})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className={`${dragOverColumn === 'ready' ? 'ring-2 ring-green-400 rounded-md' : ''}`} {...getDropHandlers('ready')}>
+                {readyOrders.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">No orders ready</p>
+                ) : (
+                  <div className="space-y-3">
+                    {readyOrders.map((order) => (
+                      <OrderCard key={order._id} order={order} onStatusUpdate={handleStatusUpdate} onPaymentUpdate={handlePaymentStatus} updatingOrder={updatingOrder} getStatusBadge={getStatusBadge} getPaymentStatusBadge={getPaymentStatusBadge} />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="delivered">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <CheckCircle className="w-5 h-5 text-gray-500" />
+                  <span>Delivered ({deliveredOrders.slice(0, 5).length})</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className={`${dragOverColumn === 'delivered' ? 'ring-2 ring-gray-400 rounded-md' : ''}`} {...getDropHandlers('delivered')}>
+                {deliveredOrders.length === 0 ? (
+                  <p className="text-gray-500 text-center py-4">No delivered orders</p>
+                ) : (
+                  <div className="space-y-3">
+                    {deliveredOrders.slice(0, 5).map((order) => (
+                      <OrderCard key={order._id} order={order} onStatusUpdate={handleStatusUpdate} onPaymentUpdate={handlePaymentUpdate} updatingOrder={updatingOrder} getStatusBadge={getStatusBadge} getPaymentStatusBadge={getPaymentStatusBadge} showActions={false} />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Desktop/Tablet Kitchen Board */}
+      <div className="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending Orders */}
         <Card>
           <CardHeader>
@@ -463,7 +593,7 @@ function OrderCard({
 
   return (
     <div
-      className="border rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors"
+      className="border rounded-lg p-3 sm:p-4 bg-white hover:bg-gray-50 transition-colors"
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData('orderId', order._id);
