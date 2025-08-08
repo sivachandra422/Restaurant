@@ -1012,7 +1012,7 @@ function MenuManagementSection({
 
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {filtered.map((item) => (
-          <Card key={item.id} className={`${item.isDisabled ? 'opacity-60 border-red-200 bg-red-50' : ''}`}>
+          <Card key={item.id} className={`overflow-hidden ${item.isDisabled ? 'opacity-60 border-red-200 bg-red-50' : ''}`}>
             <CardHeader className="pb-2">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
@@ -1028,9 +1028,9 @@ function MenuManagementSection({
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div className="flex items-center gap-1">
-                  <Button size="sm" variant="outline" className="h-8 px-2" disabled={updatingPriceId === item.id}
+                  <Button size="sm" variant="outline" className="h-8 w-8 p-0" disabled={updatingPriceId === item.id}
                     onClick={async () => {
                       const newPrice = Math.max(0, (item.price || 0) - 10);
                       try {
@@ -1042,8 +1042,8 @@ function MenuManagementSection({
                     }}>
                     <Minus className="w-3.5 h-3.5" />
                   </Button>
-                  <p className="font-semibold text-base min-w-[56px] text-center">₹{item.price}</p>
-                  <Button size="sm" variant="outline" className="h-8 px-2" disabled={updatingPriceId === item.id}
+                  <p className="font-semibold text-base min-w-[48px] text-center">₹{item.price}</p>
+                  <Button size="sm" variant="outline" className="h-8 w-8 p-0" disabled={updatingPriceId === item.id}
                     onClick={async () => {
                       const newPrice = Math.max(0, (item.price || 0) + 10);
                       try {
@@ -1056,14 +1056,14 @@ function MenuManagementSection({
                     <Plus className="w-3.5 h-3.5" />
                   </Button>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Button size="sm" variant="outline" className="h-8 px-2" onClick={() => onEditItem(item)}>
+                <div className="flex items-center gap-1 sm:shrink-0">
+                  <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={() => onEditItem(item)}>
                     <Edit className="w-3.5 h-3.5" />
                   </Button>
-                  <Button size="sm" variant={item.isDisabled ? 'destructive' : 'outline'} className="h-8 px-2" onClick={() => onToggleVisibility(item.id)}>
+                  <Button size="sm" variant={item.isDisabled ? 'destructive' : 'outline'} className="h-8 w-8 p-0" onClick={() => onToggleVisibility(item.id)}>
                     {item.isDisabled ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </Button>
-                  <Button size="sm" variant="destructive" className="h-8 px-2" onClick={() => handleDeleteItem(item.id, item.name)}>
+                  <Button size="sm" variant="destructive" className="h-8 w-8 p-0" onClick={() => handleDeleteItem(item.id, item.name)}>
                     <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
