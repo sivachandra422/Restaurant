@@ -373,7 +373,7 @@ export default function RealTimeOrderManager() {
                 ) : (
                   <div className="space-y-3">
                     {readyOrders.map((order) => (
-                      <OrderCard key={order._id} order={order} onStatusUpdate={handleStatusUpdate} onPaymentUpdate={handlePaymentStatus} updatingOrder={updatingOrder} getStatusBadge={getStatusBadge} getPaymentStatusBadge={getPaymentStatusBadge} />
+                      <OrderCard key={order._id} order={order} onStatusUpdate={handleStatusUpdate} onPaymentUpdate={handlePaymentUpdate} updatingOrder={updatingOrder} getStatusBadge={getStatusBadge} getPaymentStatusBadge={getPaymentStatusBadge} />
                     ))}
                   </div>
                 )}
