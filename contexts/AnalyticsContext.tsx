@@ -98,7 +98,14 @@ export const AnalyticsProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setIsCalculating(true);
     setIsLoading(true);
     try {
-      const response = await fetch('/api/admin/analytics');
+      const response = await fetch('/api/admin/analytics', {
+        headers: {
+          // Try to pass admin auth if present; server will ignore if not needed
+          'Authorization': typeof document !== 'undefined'
+            ? `Bearer ${document.cookie.split('; ').find(r => r.startsWith('admin-token='))?.split('=')[1] || ''}`
+            : ''
+        }
+      });
       if (response.ok) {
         const result = await response.json();
         const data = result.data || {};

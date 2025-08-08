@@ -51,7 +51,7 @@ export default function RealTimeOrderManager() {
 
   // Calculate analytics
   const totalOrders = orders.length;
-  const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+  const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
   const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
   const activeOrders = orders.filter(order => ['pending', 'preparing', 'ready'].includes(order.status)).length;
 
@@ -183,7 +183,7 @@ export default function RealTimeOrderManager() {
             )}
           </p>
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           {/* Connection Status */}
           <div className="flex items-center space-x-2">
             {isConnected ? (
@@ -405,7 +405,7 @@ export default function RealTimeOrderManager() {
       </div>
 
       {/* Desktop/Tablet Kitchen Board */}
-      <div className="hidden lg:grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Pending Orders */}
         <Card>
           <CardHeader>

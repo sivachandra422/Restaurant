@@ -53,6 +53,7 @@ import BackupSection from '@/components/admin/BackupSection';
 import RealTimeTest from '@/components/admin/RealTimeTest';
 import RealTimeOrderManager from '@/components/admin/RealTimeOrderManager';
 import { ImageUpload } from '@/components/ui/ImageUpload';
+import SmallBizAnalytics from '@/components/admin/SmallBizAnalytics';
 
 interface EditModalState {
   isOpen: boolean;
@@ -150,7 +151,30 @@ export default function AdminPage() {
       });
       if (response.ok) {
         const data = await response.json();
-        setAnalyticsData(data);
+        // Normalize to a flat shape used by components
+        const normalized = data.data || data;
+        setAnalyticsData({
+          totalRevenue: normalized.totalRevenue || 0,
+          totalOrders: normalized.totalOrders || 0,
+          averageOrderValue: normalized.averageOrderValue || 0,
+          popularItems: normalized.popularItems || [],
+          orderStatusDistribution: normalized.orderStatusDistribution || [],
+          todayOrders: normalized.todayOrders || 0,
+          todayRevenue: normalized.todayRevenue || 0,
+          lastUpdate: new Date(),
+          newOrdersCount: 0,
+          customerSatisfaction: normalized.customerSatisfaction || 0,
+          totalRatings: normalized.customerReviewsCount || 0,
+          revenueByDay: normalized.revenueByDay || [],
+          revenueByMonth: normalized.revenueByMonth || [],
+          peakHours: normalized.peakHours || [],
+          customerReviewsCount: normalized.customerReviewsCount || 0,
+          repeatCustomers: normalized.repeatCustomers || 0,
+          topCustomers: normalized.topCustomers || [],
+          categoryPerformance: normalized.categoryPerformance || [],
+          itemPerformance: normalized.itemPerformance || [],
+          revenueTrends: normalized.revenueTrends || []
+        });
       }
     } catch (error) {
       console.error('Error fetching analytics:', error);
@@ -358,7 +382,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white shadow-sm border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
@@ -388,9 +412,9 @@ export default function AdminPage() {
       </div>
 
       {/* Navigation */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white shadow-sm border-b sticky top-16 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8 overflow-x-auto">
+          <nav className="flex space-x-4 sm:space-x-8 overflow-x-auto no-scrollbar">
             {[
               { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
               { id: 'orders', label: 'Orders', icon: Users },
@@ -402,7 +426,7 @@ export default function AdminPage() {
               <button
                 key={id}
                 onClick={() => setSection(id as any)}
-                className={`flex items-center space-x-2 py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
+                className={`flex items-center space-x-2 py-3 sm:py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap ${
                   adminState.currentSection === id
                     ? 'border-orange-500 text-orange-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -419,7 +443,9 @@ export default function AdminPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {adminState.currentSection === 'dashboard' && (
-          <RealTimeOrderManager />
+          <div className="md:pt-2">
+            <RealTimeOrderManager />
+          </div>
         )}
         {adminState.currentSection === 'orders' && (
           <OrdersSection 
@@ -439,9 +465,10 @@ export default function AdminPage() {
           />
         )}
         {adminState.currentSection === 'analytics' && (
-          <div>
+          <div className="space-y-6">
+            <SmallBizAnalytics analytics={analyticsData} orders={realOrders} onRefresh={() => { fetchRealOrders(); fetchAnalytics(); }} />
             <RealTimeTest />
-                        <ReportsSection />
+            <ReportsSection />
           </div>
         )}
         {adminState.currentSection === 'backup' && (
@@ -450,7 +477,7 @@ export default function AdminPage() {
           />
         )}
         {adminState.currentSection === 'feedback' && (
-          <FeedbackSection analytics={analytics} />
+          <FeedbackSection analytics={analyticsData || analytics} getAuthHeaders={getAuthHeaders} />
         )}
         {adminState.currentSection === 'settings' && (
           <SettingsSection 
@@ -1045,7 +1072,7 @@ function AnalyticsSection({ analytics }: { analytics: any }) {
 }
 
 // Feedback Section
-function FeedbackSection({ analytics }: { analytics: any }) {
+function FeedbackSection({ analytics, getAuthHeaders }: { analytics: any, getAuthHeaders?: () => HeadersInit }) {
   const [feedbackData, setFeedbackData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -1053,7 +1080,9 @@ function FeedbackSection({ analytics }: { analytics: any }) {
   const fetchFeedback = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/orders');
+      const response = await fetch('/api/orders', {
+        headers: typeof getAuthHeaders === 'function' ? getAuthHeaders() : undefined
+      });
       if (response.ok) {
         const data = await response.json();
         const orders = data.orders || data || [];
