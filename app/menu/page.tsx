@@ -19,7 +19,6 @@ import { PremiumCartIcon } from '@/components/cart/PremiumCartIcon';
 import { ElegantCartDrawer } from '@/components/cart/ElegantCartDrawer';
 import { ElegantCategoryTabs } from '@/components/menu/ElegantCategoryTabs';
 import { PremiumMenuCard } from '@/components/menu/PremiumMenuCard';
-import { VirtualMenuGrid } from '@/components/menu/VirtualMenuGrid';
 import { OfflineIndicator } from '@/components/ui/OfflineIndicator';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { OrderHistory } from '@/components/ui/OrderHistory';
@@ -439,11 +438,8 @@ export default function MenuPage() {
                 </div>
               </div>
 
-              {/* Virtualized Grid on large lists */}
-              {filteredItems.length > 60 ? (
-                <VirtualMenuGrid items={filteredItems.map(i => ({...i, image: getFoodImage(i.id)})) as any} itemsPerRow={2} itemHeight={340} containerHeight={720} />
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
+              {/* Standard Grid (stable across devices) */}
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
                   {filteredItems.map((item, index) => {
                     const cartItem = state.items.find(cartItem => cartItem.id === item.id);
                     const quantity = cartItem?.quantity || 0;
@@ -474,8 +470,7 @@ export default function MenuPage() {
                       </div>
                     );
                   })}
-                </div>
-              )}
+              </div>
 
               {/* Load more indicator for large menus */}
               {filteredItems.length > 20 && (
