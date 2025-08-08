@@ -386,10 +386,13 @@ export default function AdminPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
             <div className="flex items-center space-x-3">
-              <ChefHat className="w-7 h-7 sm:w-8 sm:h-8 text-orange-500" />
-              <div>
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900">Sri Kanya Family Restaurant Admin</h1>
-                <p className="text-xs sm:text-sm text-gray-500">Welcome back, {adminState.user?.username}</p>
+              <ChefHat className="w-6 h-6 sm:w-8 sm:h-8 text-orange-500" />
+              <div className="leading-tight">
+                <h1 className="font-bold text-gray-900">
+                  <span className="text-sm sm:hidden">Sri Kanya Admin</span>
+                  <span className="hidden sm:inline text-xl">Sri Kanya Family Restaurant Admin</span>
+                </h1>
+                <p className="text-[11px] sm:text-sm text-gray-500">Welcome back, {adminState.user?.username}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
@@ -994,7 +997,7 @@ function MenuManagementSection({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {filtered.map((item) => (
           <Card key={item.id} className={`${item.isDisabled ? 'opacity-60 border-red-200 bg-red-50' : ''}`}>
             <CardHeader className="pb-2">
