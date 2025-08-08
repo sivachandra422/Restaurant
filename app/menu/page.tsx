@@ -147,8 +147,10 @@ export default function MenuPage() {
     return items;
   }, [allMenuItems, selectedCategory, searchQuery, sortBy, getItemsByCategory]);
 
+  const hasItems = state.totalItems > 0;
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-28 sm:pb-0">
       {/* Enhanced Header */}
       <div className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50 backdrop-blur-sm bg-white/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -533,6 +535,22 @@ export default function MenuPage() {
           </div>
         </div>
       </div>
+
+      {/* Sticky View Cart mini-banner (mobile) */}
+      {hasItems && (
+        <div className="sm:hidden fixed bottom-14 inset-x-3 z-40">
+          <div className="flex items-center justify-between bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl shadow-lg px-4 py-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold">{state.totalItems} items</span>
+              <span className="opacity-80">•</span>
+              <span className="text-sm font-semibold">{t('currency', language)}{state.totalAmount}</span>
+            </div>
+            <Button onClick={() => setCartOpen(true)} className="bg-white text-orange-600 hover:bg-orange-50 h-8 px-3 rounded-lg">
+              View Cart
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Bottom Action Bar */}
       <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
