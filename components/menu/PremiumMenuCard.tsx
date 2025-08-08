@@ -288,7 +288,7 @@ export function PremiumMenuCard({
               src={currentImageUrl}
               alt={localizedName}
               fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              sizes="(max-width: 480px) 50vw, (max-width: 768px) 33vw, (max-width: 1280px) 25vw, 25vw"
               className={`object-cover transition-all duration-700 ${
                 imageLoading ? 'opacity-0' : 'opacity-100 group-hover:scale-110'
               }`}
@@ -298,7 +298,7 @@ export function PremiumMenuCard({
               loading={shouldPreload ? "eager" : "lazy"}
               placeholder="blur"
               blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-              unoptimized={currentImageUrl.startsWith('https://res.cloudinary.com/')} // Prevent server-side optimization for Cloudinary
+              unoptimized={currentImageUrl.startsWith('https://res.cloudinary.com/')} // Keep Cloudinary handling
             />
           )}
           
