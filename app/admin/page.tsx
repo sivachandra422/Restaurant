@@ -384,15 +384,15 @@ export default function AdminPage() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14 sm:h-16">
             <div className="flex items-center space-x-3">
-              <ChefHat className="w-8 h-8 text-orange-500" />
+              <ChefHat className="w-7 h-7 sm:w-8 sm:h-8 text-orange-500" />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Sri Kanya Family Restaurant Admin</h1>
-                <p className="text-sm text-gray-500">Welcome back, {adminState.user?.username}</p>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900">Sri Kanya Family Restaurant Admin</h1>
+                <p className="text-xs sm:text-sm text-gray-500">Welcome back, {adminState.user?.username}</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <Button 
                 onClick={fetchRealOrders} 
                 variant="outline" 
@@ -921,6 +921,9 @@ function MenuManagementSection({
   onCreateItem: () => void,
   onDeleteItem: (id: string) => Promise<void>
 }) {
+  const [query, setQuery] = React.useState('');
+  const [category, setCategory] = React.useState<string>('all');
+
   const handleDeleteItem = async (id: string, itemName: string) => {
     if (confirm(`Are you sure you want to delete "${itemName}"? This action cannot be undone.`)) {
       try {
@@ -952,64 +955,80 @@ function MenuManagementSection({
       }
     }
   };
+  const filtered = menuItems
+    .filter((item) => (category === 'all' ? true : item.category === category))
+    .filter((item) => item.name.toLowerCase().includes(query.toLowerCase()));
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Menu Management</h2>
-        <Button 
-          onClick={onCreateItem}
-          className="bg-gradient-to-r from-orange-500 to-red-500"
-        >
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Menu Management</h2>
+        <Button onClick={onCreateItem} className="bg-gradient-to-r from-orange-500 to-red-500 h-9 px-3 sm:px-4">
           <Plus className="w-4 h-4 mr-2" />
-          Add New Item
+          <span className="hidden sm:inline">Add New Item</span>
+          <span className="sm:hidden">Add</span>
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {menuItems.map((item) => (
+      {/* Filters */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search items..."
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+        />
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+        >
+          <option value="all">All categories</option>
+          {menuCategories.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+        <div className="flex gap-2">
+          <Button variant="outline" className="flex-1" onClick={() => { setQuery(''); setCategory('all'); }}>Reset</Button>
+          <Button className="flex-1 bg-orange-500 hover:bg-orange-600" onClick={onCreateItem}>New</Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filtered.map((item) => (
           <Card key={item.id} className={`${item.isDisabled ? 'opacity-60 border-red-200 bg-red-50' : ''}`}>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm">{item.name}</CardTitle>
-                <div className="flex items-center space-x-2">
-                  {item.isVeg && <Badge className="bg-green-100 text-green-800 text-xs">Veg</Badge>}
-                  {item.isSignature && <Badge className="bg-yellow-100 text-yellow-800 text-xs">Signature</Badge>}
-                  {item.isSpecial && <Badge className="bg-purple-100 text-purple-800 text-xs">Special</Badge>}
-                  {item.isDisabled && <Badge className="bg-red-100 text-red-800 text-xs">Disabled</Badge>}
+            <CardHeader className="pb-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <CardTitle className="text-sm truncate">{item.name}</CardTitle>
+                  <p className="text-xs text-gray-500 truncate">{item.category}</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  {item.isVeg && <Badge className="bg-green-100 text-green-800 text-[10px]">Veg</Badge>}
+                  {item.isSignature && <Badge className="bg-yellow-100 text-yellow-800 text-[10px]">Signature</Badge>}
+                  {item.isSpecial && <Badge className="bg-purple-100 text-purple-800 text-[10px]">Special</Badge>}
+                  {item.isDisabled && <Badge className="bg-red-100 text-red-800 text-[10px]">Hidden</Badge>}
                 </div>
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <p className="text-sm text-gray-600 mb-3">{item.description}</p>
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-lg">₹{item.price}</p>
-                  <p className="text-xs text-gray-500">{item.category}</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => onEditItem(item)}
-                  >
-                    <Edit className="w-3 h-3" />
+                <p className="font-semibold text-base">₹{item.price}</p>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant="outline" className="h-8 px-2" onClick={() => onEditItem(item)}>
+                    <Edit className="w-3.5 h-3.5" />
                   </Button>
-                  <Button 
-                    size="sm" 
-                    variant={item.isDisabled ? "destructive" : "outline"}
-                    onClick={() => onToggleVisibility(item.id)}
-                  >
-                    {item.isDisabled ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                  <Button size="sm" variant={item.isDisabled ? 'destructive' : 'outline'} className="h-8 px-2" onClick={() => onToggleVisibility(item.id)}>
+                    {item.isDisabled ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </Button>
-                  <Button 
-                    size="sm" 
-                    variant="destructive"
-                    onClick={() => handleDeleteItem(item.id, item.name)}
-                  >
-                    <Trash2 className="w-3 h-3" />
+                  <Button size="sm" variant="destructive" className="h-8 px-2" onClick={() => handleDeleteItem(item.id, item.name)}>
+                    <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               </div>
+              {item.description && (
+                <p className="text-xs text-gray-600 mt-2 line-clamp-2">{item.description}</p>
+              )}
             </CardContent>
           </Card>
         ))}
