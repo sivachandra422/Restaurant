@@ -637,15 +637,16 @@ function OrderCard({
       {showActions && (
         <div className="flex items-center justify-between">
           <div className="flex space-x-2">
+            {/* Simplified single primary action for small restaurants */}
             {order.status === 'pending' && (
               <>
                 <Button
                   size="sm"
-                  onClick={() => onStatusUpdate(order._id, 'confirmed')}
+                  onClick={() => onStatusUpdate(order._id, 'preparing')}
                   disabled={isUpdating}
-                  className="bg-green-500 hover:bg-green-600"
+                  className="bg-blue-500 hover:bg-blue-600"
                 >
-                  {isUpdating ? 'Updating...' : 'Confirm'}
+                  {isUpdating ? 'Updating...' : 'Start'}
                 </Button>
                 <Button
                   size="sm"
@@ -656,16 +657,6 @@ function OrderCard({
                   Cancel
                 </Button>
               </>
-            )}
-            {order.status === 'confirmed' && (
-              <Button
-                size="sm"
-                onClick={() => onStatusUpdate(order._id, 'preparing')}
-                disabled={isUpdating}
-                className="bg-blue-500 hover:bg-blue-600"
-              >
-                {isUpdating ? 'Updating...' : 'Start Preparing'}
-              </Button>
             )}
             {order.status === 'confirmed' && (
               <Button
