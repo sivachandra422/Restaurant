@@ -42,7 +42,8 @@ export async function GET(request: NextRequest) {
             return false;
           }
           try {
-            const message = `data: ${JSON.stringify(data)}\n\n`;
+            const eventName = data?.type ? `event: ${data.type}\n` : '';
+            const message = `${eventName}data: ${JSON.stringify(data)}\n\n`;
             controller.enqueue(new TextEncoder().encode(message));
             return true;
           } catch (error) {

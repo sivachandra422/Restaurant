@@ -111,6 +111,16 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
         }, 35000); // expect heartbeat within 35s
       };
 
+      sse.addEventListener('heartbeat', () => {
+        if (heartbeatTimeoutRef.current) clearTimeout(heartbeatTimeoutRef.current);
+        heartbeatTimeoutRef.current = setTimeout(() => {
+          console.warn('SSE heartbeat timeout. Reconnecting...');
+          try { sse.close(); } catch {}
+          eventSourceRef.current = null;
+          initializeSSE();
+        }, 35000);
+      });
+
       sse.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
@@ -181,7 +191,7 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
               break;
             
             case 'heartbeat':
-              // Keep connection alive
+              // handled by explicit event listener above
               break;
             
             default:
