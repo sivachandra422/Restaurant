@@ -19,6 +19,7 @@ import {
   Wifi,
   WifiOff
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function RealTimeOrderManager() {
   const { 
@@ -34,9 +35,12 @@ export default function RealTimeOrderManager() {
 
   const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
   const [creatingTestOrder, setCreatingTestOrder] = useState(false);
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  // Filter orders by status
+  // Filter orders by status (include 'confirmed' as a column in kitchen board)
   const pendingOrders = orders.filter(order => order.status === 'pending');
+  const confirmedOrders = orders.filter(order => order.status === 'confirmed');
   const preparingOrders = orders.filter(order => order.status === 'preparing');
   const readyOrders = orders.filter(order => order.status === 'ready');
   const deliveredOrders = orders.filter(order => order.status === 'delivered');
@@ -69,10 +73,12 @@ export default function RealTimeOrderManager() {
       window.dispatchEvent(new CustomEvent('order-updated', { 
         detail: { order: result.order || result } 
       }));
+      toast({ title: 'Order updated', description: `Status changed to ${status}` });
       
       return result;
     } catch (error) {
       console.error('Error updating order status:', error);
+      toast({ title: 'Failed to update order', variant: 'destructive' });
       throw error;
     } finally {
       setUpdatingOrder(null);
@@ -101,12 +107,30 @@ export default function RealTimeOrderManager() {
     setCreatingTestOrder(true);
     try {
       await createTestOrder();
+      toast({ title: 'Test order created' });
     } catch (error) {
       console.error('Error creating test order:', error);
+      toast({ title: 'Failed to create test order', variant: 'destructive' });
     } finally {
       setCreatingTestOrder(false);
     }
   };
+
+  // Drag-and-drop helpers
+  const getDropHandlers = (targetStatus: string) => ({
+    onDragOver: (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOverColumn(targetStatus);
+    },
+    onDragLeave: () => setDragOverColumn(prev => (prev === targetStatus ? null : prev)),
+    onDrop: async (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOverColumn(null);
+      const orderId = e.dataTransfer.getData('orderId');
+      if (!orderId) return;
+      await handleStatusUpdate(orderId, targetStatus);
+    }
+  });
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
@@ -250,7 +274,7 @@ export default function RealTimeOrderManager() {
         </Card>
       </div>
 
-      {/* Order Sections */}
+      {/* Order Sections / Kitchen Board */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pending Orders */}
         <Card>
@@ -260,12 +284,47 @@ export default function RealTimeOrderManager() {
               <span>Pending Orders ({pendingOrders.length})</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent
+            className={`${dragOverColumn === 'pending' ? 'ring-2 ring-yellow-400 rounded-md' : ''}`}
+            {...getDropHandlers('pending')}
+          >
             {pendingOrders.length === 0 ? (
               <p className="text-gray-500 text-center py-4">No pending orders</p>
             ) : (
               <div className="space-y-3">
                 {pendingOrders.map((order) => (
+                  <OrderCard
+                    key={order._id}
+                    order={order}
+                    onStatusUpdate={handleStatusUpdate}
+                    onPaymentUpdate={handlePaymentUpdate}
+                    updatingOrder={updatingOrder}
+                    getStatusBadge={getStatusBadge}
+                    getPaymentStatusBadge={getPaymentStatusBadge}
+                  />
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Confirmed Orders */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <CheckCircle className="w-5 h-5 text-blue-500" />
+              <span>Confirmed Orders ({confirmedOrders.length})</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent
+            className={`${dragOverColumn === 'confirmed' ? 'ring-2 ring-blue-400 rounded-md' : ''}`}
+            {...getDropHandlers('confirmed')}
+          >
+            {confirmedOrders.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No confirmed orders</p>
+            ) : (
+              <div className="space-y-3">
+                {confirmedOrders.map((order) => (
                   <OrderCard
                     key={order._id}
                     order={order}
@@ -289,7 +348,10 @@ export default function RealTimeOrderManager() {
               <span>Preparing Orders ({preparingOrders.length})</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent
+            className={`${dragOverColumn === 'preparing' ? 'ring-2 ring-orange-400 rounded-md' : ''}`}
+            {...getDropHandlers('preparing')}
+          >
             {preparingOrders.length === 0 ? (
               <p className="text-gray-500 text-center py-4">No orders being prepared</p>
             ) : (
@@ -318,7 +380,10 @@ export default function RealTimeOrderManager() {
               <span>Ready Orders ({readyOrders.length})</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent
+            className={`${dragOverColumn === 'ready' ? 'ring-2 ring-green-400 rounded-md' : ''}`}
+            {...getDropHandlers('ready')}
+          >
             {readyOrders.length === 0 ? (
               <p className="text-gray-500 text-center py-4">No orders ready</p>
             ) : (
@@ -347,7 +412,10 @@ export default function RealTimeOrderManager() {
               <span>Recent Delivered ({deliveredOrders.slice(0, 5).length})</span>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent
+            className={`${dragOverColumn === 'delivered' ? 'ring-2 ring-gray-400 rounded-md' : ''}`}
+            {...getDropHandlers('delivered')}
+          >
             {deliveredOrders.length === 0 ? (
               <p className="text-gray-500 text-center py-4">No delivered orders</p>
             ) : (
@@ -394,7 +462,14 @@ function OrderCard({
   const isUpdating = updatingOrder === order._id;
 
   return (
-    <div className="border rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors">
+    <div
+      className="border rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors"
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('orderId', order._id);
+        e.dataTransfer.effectAllowed = 'move';
+      }}
+    >
       <div className="flex items-center justify-between mb-3">
         <div>
           <h4 className="font-medium">Order #{order.orderId?.slice(-6) || 'N/A'}</h4>
@@ -451,6 +526,16 @@ function OrderCard({
                   Cancel
                 </Button>
               </>
+            )}
+            {order.status === 'confirmed' && (
+              <Button
+                size="sm"
+                onClick={() => onStatusUpdate(order._id, 'preparing')}
+                disabled={isUpdating}
+                className="bg-blue-500 hover:bg-blue-600"
+              >
+                {isUpdating ? 'Updating...' : 'Start Preparing'}
+              </Button>
             )}
             {order.status === 'confirmed' && (
               <Button
