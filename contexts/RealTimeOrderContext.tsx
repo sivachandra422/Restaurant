@@ -47,6 +47,8 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef<number>(0);
+  const heartbeatTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch orders from API
   const fetchOrders = useCallback(async () => {
@@ -85,6 +87,10 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
       clearTimeout(reconnectTimeoutRef.current);
       reconnectTimeoutRef.current = null;
     }
+    if (heartbeatTimeoutRef.current) {
+      clearTimeout(heartbeatTimeoutRef.current);
+      heartbeatTimeoutRef.current = null;
+    }
 
     try {
       const sse = new EventSource('/api/admin/orders/realtime/stream');
@@ -94,12 +100,30 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
         console.log('SSE connection established');
         setIsConnected(true);
         setError(null);
+        reconnectAttemptsRef.current = 0; // reset backoff on success
+        // Start heartbeat watchdog
+        if (heartbeatTimeoutRef.current) clearTimeout(heartbeatTimeoutRef.current);
+        heartbeatTimeoutRef.current = setTimeout(() => {
+          console.warn('SSE heartbeat timeout. Reconnecting...');
+          try { sse.close(); } catch {}
+          eventSourceRef.current = null;
+          initializeSSE();
+        }, 35000); // expect heartbeat within 35s
       };
 
       sse.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
           console.log('SSE message received:', data);
+
+          // Reset heartbeat watchdog on any message
+          if (heartbeatTimeoutRef.current) clearTimeout(heartbeatTimeoutRef.current);
+          heartbeatTimeoutRef.current = setTimeout(() => {
+            console.warn('SSE heartbeat timeout. Reconnecting...');
+            try { sse.close(); } catch {}
+            eventSourceRef.current = null;
+            initializeSSE();
+          }, 35000);
 
           switch (data.type) {
             case 'connected':
@@ -176,12 +200,26 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
         // Close the connection
         sse.close();
         eventSourceRef.current = null;
+        if (heartbeatTimeoutRef.current) {
+          clearTimeout(heartbeatTimeoutRef.current);
+          heartbeatTimeoutRef.current = null;
+        }
         
-        // Attempt to reconnect after 5 seconds
+        // Exponential backoff with jitter
+        const attempt = Math.min(reconnectAttemptsRef.current + 1, 8);
+        reconnectAttemptsRef.current = attempt;
+        const base = Math.pow(2, attempt) * 500; // 1s, 2s, 4s... up to ~128s
+        const jitter = Math.floor(Math.random() * 300);
+        const delay = Math.min(30000, base + jitter); // cap at 30s
+        
         reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('Attempting to reconnect SSE...');
-          initializeSSE();
-        }, 5000);
+          if (navigator.onLine) {
+            console.log(`Reconnecting SSE (attempt ${attempt})...`);
+            initializeSSE();
+          } else {
+            console.log('Offline. Waiting for network to reconnect.');
+          }
+        }, delay);
       };
 
     } catch (error) {
@@ -305,6 +343,14 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
     
     setupConnection();
     
+    const handleOnline = () => {
+      if (!eventSourceRef.current) {
+        console.log('Network online. Restoring SSE connection.');
+        initializeSSE();
+      }
+    };
+    window.addEventListener('online', handleOnline);
+    
     // Cleanup on unmount
     return () => {
       isActive = false;
@@ -316,6 +362,11 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
+      if (heartbeatTimeoutRef.current) {
+        clearTimeout(heartbeatTimeoutRef.current);
+        heartbeatTimeoutRef.current = null;
+      }
+      window.removeEventListener('online', handleOnline);
     };
   }, [initializeSSE]);
 
