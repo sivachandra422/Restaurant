@@ -22,6 +22,7 @@ import {
   CheckCircle,
   XCircle,
   RefreshCw,
+  Minus,
   Lock,
   X,
   FileText,
@@ -465,6 +466,15 @@ export default function AdminPage() {
             onEditItem={openEditModal}
             onCreateItem={handleCreateNewItem}
             onDeleteItem={deleteMenuItem}
+            onUpdateItem={async (id: string, update: any) => {
+              await updateMenuItem(id, update);
+              // show tiny toast
+              const notification = document.createElement('div');
+              notification.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-3 py-2 rounded-lg shadow text-white text-xs bg-green-600';
+              notification.textContent = 'Item updated';
+              document.body.appendChild(notification);
+              setTimeout(() => document.body.contains(notification) && document.body.removeChild(notification), 1200);
+            }}
           />
         )}
         {adminState.currentSection === 'analytics' && (
@@ -916,16 +926,19 @@ function MenuManagementSection({
   onToggleVisibility, 
   onEditItem, 
   onCreateItem, 
-  onDeleteItem 
+  onDeleteItem,
+  onUpdateItem 
 }: { 
   menuItems: any[], 
   onToggleVisibility: (id: string) => void,
   onEditItem: (item: any) => void,
   onCreateItem: () => void,
-  onDeleteItem: (id: string) => Promise<void>
+  onDeleteItem: (id: string) => Promise<void>,
+  onUpdateItem: (id: string, update: any) => Promise<void>
 }) {
   const [query, setQuery] = React.useState('');
   const [category, setCategory] = React.useState<string>('all');
+  const [updatingPriceId, setUpdatingPriceId] = React.useState<string | null>(null);
 
   const handleDeleteItem = async (id: string, itemName: string) => {
     if (confirm(`Are you sure you want to delete "${itemName}"? This action cannot be undone.`)) {
@@ -974,7 +987,7 @@ function MenuManagementSection({
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sticky top-28 z-20 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70 border-b border-gray-100 p-2 rounded-md">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -1016,7 +1029,33 @@ function MenuManagementSection({
             </CardHeader>
             <CardContent className="pt-0">
               <div className="flex items-center justify-between">
-                <p className="font-semibold text-base">₹{item.price}</p>
+                <div className="flex items-center gap-1">
+                  <Button size="sm" variant="outline" className="h-8 px-2" disabled={updatingPriceId === item.id}
+                    onClick={async () => {
+                      const newPrice = Math.max(0, (item.price || 0) - 10);
+                      try {
+                        setUpdatingPriceId(item.id);
+                        await onUpdateItem(item.id, { price: newPrice });
+                      } finally {
+                        setUpdatingPriceId(null);
+                      }
+                    }}>
+                    <Minus className="w-3.5 h-3.5" />
+                  </Button>
+                  <p className="font-semibold text-base min-w-[56px] text-center">₹{item.price}</p>
+                  <Button size="sm" variant="outline" className="h-8 px-2" disabled={updatingPriceId === item.id}
+                    onClick={async () => {
+                      const newPrice = Math.max(0, (item.price || 0) + 10);
+                      try {
+                        setUpdatingPriceId(item.id);
+                        await onUpdateItem(item.id, { price: newPrice });
+                      } finally {
+                        setUpdatingPriceId(null);
+                      }
+                    }}>
+                    <Plus className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
                 <div className="flex items-center gap-1">
                   <Button size="sm" variant="outline" className="h-8 px-2" onClick={() => onEditItem(item)}>
                     <Edit className="w-3.5 h-3.5" />
@@ -1035,6 +1074,13 @@ function MenuManagementSection({
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Floating Add Button (mobile) */}
+      <div className="sm:hidden fixed bottom-20 right-4 z-40">
+        <Button className="rounded-full h-12 w-12 p-0 bg-gradient-to-r from-orange-500 to-red-500 shadow-lg" onClick={onCreateItem}>
+          <Plus className="w-6 h-6" />
+        </Button>
       </div>
     </div>
   );
