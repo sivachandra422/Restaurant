@@ -365,9 +365,6 @@ export function PremiumMenuCard({
               <span className="font-bold text-lg sm:text-xl text-gray-900 group-hover:text-orange-600 transition-colors duration-200">
                 {t('currency', language)}{item.price}
               </span>
-              {item.isSignature && (
-                <span className="text-xs text-orange-600 font-medium">⭐ {t('premium', language)}</span>
-              )}
             </div>
             <WaitTimeIndicator item={item} />
           </div>
@@ -384,6 +381,15 @@ export function PremiumMenuCard({
               </Button>
             ) : (
               <div className="flex items-center space-x-2 w-full">
+                {/* Labels / Badges left-aligned for consistent height */}
+                <div className="hidden sm:flex items-center gap-1">
+                  {item.isVeg && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">{t('veg', language)}</span>
+                  )}
+                  {item.isSignature && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">{t('premium', language)}</span>
+                  )}
+                </div>
                 <Button
                   onClick={handleDecreaseClick}
                   onMouseDown={() => startPress('dec')}
