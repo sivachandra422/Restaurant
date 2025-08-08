@@ -115,18 +115,18 @@ export default function AIChatbot() {
       {/* Chat Toggle Button */}
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-4 right-4 z-50 rounded-full w-14 h-14 shadow-lg bg-orange-600 hover:bg-orange-700"
+        className="fixed bottom-4 left-4 z-50 rounded-full w-12 h-12 sm:w-14 sm:h-14 shadow-lg bg-orange-600 hover:bg-orange-700"
       >
         {isOpen ? (
-          <X className="w-6 h-6" />
+          <X className="w-5 h-5 sm:w-6 sm:h-6" />
         ) : (
-          <MessageCircle className="w-6 h-6" />
+          <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
         )}
       </Button>
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-20 right-4 z-40 w-96 h-[500px] shadow-xl border-0">
+        <Card className="fixed bottom-20 left-4 z-40 w-80 sm:w-96 h-[400px] sm:h-[500px] shadow-xl border-0">
           <CardHeader className="bg-gradient-to-r from-orange-500 to-orange-600 text-white pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Bot className="w-5 h-5" />

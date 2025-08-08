@@ -12,7 +12,7 @@ export function PremiumCartIcon() {
     <button
       onClick={() => setCartOpen(true)}
       className={cn(
-        'relative p-2 sm:p-3 rounded-lg sm:rounded-xl transition-all duration-200',
+        'relative p-1.5 sm:p-3 rounded-lg sm:rounded-xl transition-all duration-200',
         'bg-white shadow-md sm:shadow-lg hover:shadow-lg sm:hover:shadow-xl border border-stone-200',
         'hover:scale-105 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2',
         state.totalItems > 0 && 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200'
@@ -20,7 +20,7 @@ export function PremiumCartIcon() {
     >
       <ShoppingBag 
         className={cn(
-          'w-5 h-5 sm:w-6 sm:h-6',
+          'w-4 h-4 sm:w-6 sm:h-6',
           state.totalItems > 0 ? 'text-amber-700' : 'text-stone-600'
         )} 
       />

@@ -1,0 +1,407 @@
+{
+  "testSuite": "Restaurant Menu Application - End-to-End Testing",
+  "version": "1.0.0",
+  "browser": "Comet Browser",
+  "baseUrl": "http://localhost:3001",
+  "description": "Complete end-to-end testing suite for restaurant menu application with customer experience, admin dashboard, image upload, and PWA features",
+  
+  "testScenarios": [
+    {
+      "id": "customer-journey",
+      "name": "Complete Customer Journey",
+      "priority": "high",
+      "description": "Test the complete customer experience from menu browsing to order placement",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Navigate to homepage",
+          "url": "http://localhost:3001",
+          "expectedResult": "Page loads within 3 seconds, menu items are visible",
+          "validation": [
+            "Check page load time < 3 seconds",
+            "Verify menu categories are displayed",
+            "Confirm menu items are visible with images",
+            "Check language switcher is present"
+          ]
+        },
+        {
+          "step": 2,
+          "action": "Test language switching",
+          "description": "Switch between English, Hindi, and Telugu",
+          "expectedResult": "Menu items and descriptions translate correctly",
+          "validation": [
+            "Click language switcher buttons",
+            "Verify item names change language",
+            "Check descriptions are translated",
+            "Confirm categories are translated"
+          ]
+        },
+        {
+          "step": 3,
+          "action": "Browse menu categories",
+          "description": "Click through different menu categories",
+          "expectedResult": "Items filter correctly by category",
+          "validation": [
+            "Click on 'Biryani' category",
+            "Verify only biryani items show",
+            "Click on 'Curries' category",
+            "Verify only curry items show",
+            "Click on 'All' to show all items"
+          ]
+        },
+        {
+          "step": 4,
+          "action": "Add items to cart",
+          "description": "Add 3-4 different items to cart",
+          "expectedResult": "Items are added to cart, cart icon updates",
+          "validation": [
+            "Click 'Add to Cart' on 3-4 items",
+            "Verify cart icon shows item count",
+            "Check cart drawer opens when clicked",
+            "Confirm items are listed in cart"
+          ]
+        },
+        {
+          "step": 5,
+          "action": "Test cart functionality",
+          "description": "Modify quantities and remove items",
+          "expectedResult": "Cart updates correctly, totals calculate properly",
+          "validation": [
+            "Increase quantity of one item",
+            "Decrease quantity of another item",
+            "Remove one item completely",
+            "Verify total price updates correctly"
+          ]
+        },
+        {
+          "step": 6,
+          "action": "Proceed to checkout",
+          "description": "Fill out checkout form and place order",
+          "expectedResult": "Order is placed successfully",
+          "validation": [
+            "Click 'Proceed to Checkout'",
+            "Fill in customer details (name, phone, table)",
+            "Select payment method",
+            "Add special instructions",
+            "Submit order",
+            "Verify order confirmation appears"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "admin-dashboard",
+      "name": "Admin Dashboard Testing",
+      "priority": "high",
+      "description": "Test admin dashboard functionality including menu management and order handling",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Access admin login",
+          "url": "http://localhost:3001/admin/login",
+          "expectedResult": "Login page loads with form",
+          "validation": [
+            "Verify login form is displayed",
+            "Check email and password fields are present",
+            "Confirm login button is visible"
+          ]
+        },
+        {
+          "step": 2,
+          "action": "Login to admin dashboard",
+          "description": "Use admin credentials to login",
+          "expectedResult": "Successfully logged in to admin dashboard",
+          "validation": [
+            "Enter admin email: admin@srikanya.com",
+            "Enter password: admin123",
+            "Click login button",
+            "Verify redirect to admin dashboard"
+          ]
+        },
+        {
+          "step": 3,
+          "action": "Test menu management",
+          "description": "Add, edit, and delete menu items",
+          "expectedResult": "Menu items can be managed successfully",
+          "validation": [
+            "Click 'Add New Item'",
+            "Fill in item details (name, description, price, category)",
+            "Upload an image using drag & drop",
+            "Save the item",
+            "Verify item appears in menu list",
+            "Edit an existing item",
+            "Delete an item",
+            "Confirm item is removed"
+          ]
+        },
+        {
+          "step": 4,
+          "action": "Test image upload",
+          "description": "Upload images for menu items",
+          "expectedResult": "Images upload and display correctly",
+          "validation": [
+            "Drag and drop an image file",
+            "Verify image preview appears",
+            "Check file validation (try invalid file types)",
+            "Test file size limits (>5MB)",
+            "Confirm image is saved with item"
+          ]
+        },
+        {
+          "step": 5,
+          "action": "Test order management",
+          "description": "Handle incoming orders",
+          "expectedResult": "Orders appear in real-time and can be updated",
+          "validation": [
+            "Place a test order from customer side",
+            "Verify order appears in admin dashboard",
+            "Update order status (Pending → Confirmed → Ready)",
+            "Check order details are displayed correctly",
+            "Verify customer information is shown"
+          ]
+        },
+        {
+          "step": 6,
+          "action": "Test analytics dashboard",
+          "description": "View real-time analytics and reports",
+          "expectedResult": "Analytics display real data and update in real-time",
+          "validation": [
+            "Navigate to Analytics tab",
+            "Check revenue calculations",
+            "Verify order statistics",
+            "Test popular items list",
+            "Confirm charts and graphs load"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pwa-features",
+      "name": "PWA Features Testing",
+      "priority": "medium",
+      "description": "Test Progressive Web App features including offline functionality and installation",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Test PWA installation",
+          "description": "Check if app can be installed",
+          "expectedResult": "Install prompt appears or app can be installed",
+          "validation": [
+            "Check if 'Add to Home Screen' prompt appears",
+            "Verify app manifest is loaded",
+            "Test installation process",
+            "Confirm app icon appears on home screen"
+          ]
+        },
+        {
+          "step": 2,
+          "action": "Test offline functionality",
+          "description": "Test app behavior when offline",
+          "expectedResult": "App works offline with cached content",
+          "validation": [
+            "Disconnect internet connection",
+            "Refresh the page",
+            "Verify menu items still load",
+            "Check if cart functionality works",
+            "Test navigation between pages"
+          ]
+        },
+        {
+          "step": 3,
+          "action": "Test service worker",
+          "description": "Verify service worker registration and caching",
+          "expectedResult": "Service worker is registered and caching works",
+          "validation": [
+            "Open DevTools → Application tab",
+            "Check service worker is registered",
+            "Verify cache storage has content",
+            "Test background sync functionality"
+          ]
+        },
+        {
+          "step": 4,
+          "action": "Test app-like experience",
+          "description": "Verify app feels like a native application",
+          "expectedResult": "Smooth navigation and native-like experience",
+          "validation": [
+            "Test smooth page transitions",
+            "Verify touch interactions work",
+            "Check responsive design on mobile",
+            "Test swipe gestures"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "performance-testing",
+      "name": "Performance Testing",
+      "priority": "medium",
+      "description": "Test application performance and loading times",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Test page load performance",
+          "description": "Measure page load times",
+          "expectedResult": "Pages load within acceptable time limits",
+          "validation": [
+            "Measure homepage load time (< 3 seconds)",
+            "Test menu page load time",
+            "Check admin dashboard load time",
+            "Verify image loading performance"
+          ]
+        },
+        {
+          "step": 2,
+          "action": "Test responsive design",
+          "description": "Test app on different screen sizes",
+          "expectedResult": "App works well on all device sizes",
+          "validation": [
+            "Test on mobile viewport (375px)",
+            "Test on tablet viewport (768px)",
+            "Test on desktop viewport (1024px+)",
+            "Verify touch targets are appropriate size"
+          ]
+        },
+        {
+          "step": 3,
+          "action": "Test search functionality",
+          "description": "Test search performance and accuracy",
+          "expectedResult": "Search works quickly and accurately",
+          "validation": [
+            "Search for existing menu items",
+            "Test search response time (< 500ms)",
+            "Verify search results are relevant",
+            "Test search with no results"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "error-handling",
+      "name": "Error Handling Testing",
+      "priority": "medium",
+      "description": "Test application error handling and edge cases",
+      "steps": [
+        {
+          "step": 1,
+          "action": "Test network errors",
+          "description": "Test app behavior when network fails",
+          "expectedResult": "App handles network errors gracefully",
+          "validation": [
+            "Simulate network failure",
+            "Verify error messages are displayed",
+            "Test retry functionality",
+            "Check offline fallback"
+          ]
+        },
+        {
+          "step": 2,
+          "action": "Test form validation",
+          "description": "Test form validation and error messages",
+          "expectedResult": "Forms validate input and show appropriate errors",
+          "validation": [
+            "Submit empty checkout form",
+            "Test invalid email formats",
+            "Test invalid phone numbers",
+            "Verify error messages are clear"
+          ]
+        },
+        {
+          "step": 3,
+          "action": "Test edge cases",
+          "description": "Test application with edge case scenarios",
+          "expectedResult": "App handles edge cases gracefully",
+          "validation": [
+            "Test with very long item names",
+            "Test with special characters",
+            "Test with maximum cart quantities",
+            "Verify app doesn't crash"
+          ]
+        }
+      ]
+    }
+  ],
+  
+  "testData": {
+    "customerInfo": {
+      "name": "Test Customer",
+      "phone": "9876543210",
+      "tableNumber": "5",
+      "email": "test@example.com"
+    },
+    "menuItems": [
+      {
+        "name": "Chicken Biryani",
+        "category": "Biryani",
+        "price": 250,
+        "description": "Aromatic rice dish with tender chicken"
+      },
+      {
+        "name": "Butter Chicken",
+        "category": "Curries",
+        "price": 180,
+        "description": "Creamy tomato-based curry"
+      }
+    ],
+    "adminCredentials": {
+      "email": "admin@srikanya.com",
+      "password": "admin123"
+    }
+  },
+  
+  "performanceBenchmarks": {
+    "pageLoadTime": "< 3 seconds",
+    "imageLoadTime": "< 2 seconds",
+    "cartResponseTime": "< 1 second",
+    "searchResponseTime": "< 500ms",
+    "apiResponseTime": "< 2 seconds"
+  },
+  
+  "browserSettings": {
+    "viewport": {
+      "mobile": "375x667",
+      "tablet": "768x1024",
+      "desktop": "1920x1080"
+    },
+    "network": {
+      "online": "Fast 3G",
+      "offline": "No connection"
+    },
+    "device": {
+      "userAgent": "Comet Browser",
+      "touch": true
+    }
+  },
+  
+  "testExecution": {
+    "preconditions": [
+      "Development server running on localhost:3001",
+      "MongoDB connection established",
+      "Cloudinary credentials configured",
+      "Email service configured"
+    ],
+    "postconditions": [
+      "All test data cleaned up",
+      "Database state restored",
+      "Test orders removed"
+    ],
+    "timeout": "30 minutes",
+    "retryAttempts": 2
+  },
+  
+  "reporting": {
+    "screenshots": true,
+    "videoRecording": false,
+    "consoleLogs": true,
+    "networkLogs": true,
+    "performanceMetrics": true
+  },
+  
+  "successCriteria": {
+    "customerJourney": "100% pass rate",
+    "adminDashboard": "100% pass rate",
+    "pwaFeatures": "90% pass rate",
+    "performance": "All benchmarks met",
+    "errorHandling": "Graceful error handling"
+  }
+}

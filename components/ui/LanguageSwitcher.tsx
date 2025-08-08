@@ -41,11 +41,11 @@ export function LanguageSwitcher() {
         <Button
           variant="ghost"
           size="sm"
-          className="flex items-center gap-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 group"
+          className="flex items-center gap-1 sm:gap-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200 group h-8 w-8 sm:h-auto sm:w-auto p-0 sm:px-3"
         >
-          <Globe className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" />
+          <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:rotate-180 transition-transform duration-300" />
           <span className="hidden sm:inline font-medium">{languageNames[language]}</span>
-          <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`hidden sm:block w-3 h-3 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48 p-2">

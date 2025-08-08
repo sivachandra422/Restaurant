@@ -124,25 +124,25 @@ export default function MenuPage() {
       {/* Enhanced Header */}
       <div className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50 backdrop-blur-sm bg-white/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-18 lg:h-20">
+          <div className="flex items-center justify-between h-14 sm:h-18 lg:h-20">
             {/* Enhanced Logo and Restaurant Name */}
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-soft hover:shadow-glow transition-all duration-300 hover:scale-105 transform hover:rotate-3">
-                <ChefHat className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-white" />
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-soft hover:shadow-glow transition-all duration-300 hover:scale-105 transform hover:rotate-3">
+                <ChefHat className="w-4 h-4 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-white" />
               </div>
               <div className="min-w-0">
-                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate gradient-text">
+                <h1 className="text-sm sm:text-xl lg:text-2xl font-bold text-gray-900 truncate gradient-text leading-tight">
                   Sri Kanya Family Restaurant
                 </h1>
-                <p className="text-xs sm:text-sm text-gray-500 truncate flex items-center">
-                  <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+                <p className="text-xs sm:text-sm text-gray-500 truncate flex items-center leading-tight">
+                  <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full mr-1.5 sm:mr-2 animate-pulse"></span>
                   {t('authentic_indian', language)}
                 </p>
               </div>
             </div>
 
             {/* Enhanced Header Actions */}
-            <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="flex items-center space-x-1 sm:space-x-3">
               {/* Enhanced Table number display */}
               {(state.tableNumber || searchParams.get('table')) && (
                 <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-600 bg-gradient-to-r from-orange-50 to-red-50 px-3 py-2 rounded-lg border border-orange-200 shadow-soft">
@@ -153,7 +153,7 @@ export default function MenuPage() {
               
               {/* Enhanced Mobile table indicator */}
               {(state.tableNumber || searchParams.get('table')) && (
-                <div className="sm:hidden w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-soft hover:shadow-glow transition-all duration-200 hover:scale-110">
+                <div className="sm:hidden w-7 h-7 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-soft hover:shadow-glow transition-all duration-200 hover:scale-110">
                   <span className="text-xs font-bold text-white">{state.tableNumber || searchParams.get('table')}</span>
                 </div>
               )}
@@ -173,9 +173,9 @@ export default function MenuPage() {
                 onClick={() => setShowOrderHistory(true)}
                 variant="ghost"
                 size="sm"
-                className="h-9 w-9 sm:h-10 sm:w-auto p-0 sm:px-3 ripple focus-ring hover:bg-orange-50 transition-all duration-200 group"
+                className="h-8 w-8 sm:h-10 sm:w-auto p-0 sm:px-3 ripple focus-ring hover:bg-orange-50 transition-all duration-200 group"
               >
-                <Clock className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform duration-200" />
                 <span className="hidden sm:inline text-xs ml-2">{t('orders', language)}</span>
               </Button>
               
