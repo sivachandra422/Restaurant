@@ -26,6 +26,7 @@ import { ElegantCheckoutForm } from '@/components/checkout/ElegantCheckoutForm';
 import AIChatbot from '@/components/ui/AIChatbot';
 import Image from 'next/image';
 import { t, tWithParams } from '@/lib/translations';
+import { transliterateFriendly } from '@/lib/friendlyTransliteration';
 
 export default function MenuPage() {
   const searchParams = useSearchParams();
@@ -304,7 +305,7 @@ export default function MenuPage() {
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
+                          <p className="text-sm font-medium text-gray-900 truncate">{language === 'en' ? item.name : transliterateFriendly(item.name, language as any)}</p>
                           <p className="text-xs text-gray-500">{t('currency', language)}{item.price}</p>
                         </div>
                       </div>
@@ -461,7 +462,12 @@ export default function MenuPage() {
                         }}
                       >
                         <PremiumMenuCard
-                          item={itemWithImage}
+                          item={{
+                            ...itemWithImage,
+                            // Replace name/description at render time with friendly transliteration
+                            name: language === 'en' ? itemWithImage.name : transliterateFriendly(itemWithImage.name, language as any),
+                            description: language === 'en' ? itemWithImage.description : itemWithImage.description
+                          }}
                           quantity={quantity}
                           onAdd={() => addToCart(itemWithImage, 1)}
                           onRemove={() => removeFromCart(item.id)}
