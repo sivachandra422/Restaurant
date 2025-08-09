@@ -3,6 +3,8 @@
 import React from 'react';
 import { Clock, TrendingUp } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { t } from '@/lib/translations';
 import { MenuItem } from '@/data/sriKanyaMenu';
 import { useCustomerExperience } from '@/contexts/CustomerExperienceContext';
 
@@ -14,6 +16,7 @@ interface WaitTimeIndicatorProps {
 export function WaitTimeIndicator({ item, showTrending = false }: WaitTimeIndicatorProps) {
   const { getWaitTime } = useCustomerExperience();
   const waitTime = getWaitTime(item);
+  const { language } = useLanguage();
 
   const getWaitTimeColor = (time: number) => {
     if (time <= 15) return 'bg-green-500';
@@ -28,7 +31,7 @@ export function WaitTimeIndicator({ item, showTrending = false }: WaitTimeIndica
         className={`${getWaitTimeColor(waitTime)} text-white border-0 font-medium text-xs px-2 py-1 shadow-md`}
       >
         <Clock className="w-3 h-3 mr-1" />
-        {waitTime} min
+        {waitTime} {t('minutes', language as any)}
       </Badge>
     </div>
   );
