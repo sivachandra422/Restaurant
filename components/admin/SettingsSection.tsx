@@ -205,12 +205,12 @@ export default function SettingsSection({ settings, onSaveSettings }: SettingsSe
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Settings</h2>
-          <p className="text-sm text-gray-600">Manage restaurant configuration and preferences</p>
+          <h2 className="text-lg sm:text-2xl font-bold text-gray-900">Settings</h2>
+          <p className="text-xs sm:text-sm text-gray-600">Manage restaurant configuration and preferences</p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center gap-2 sm:space-x-3">
           {saveStatus === 'success' && (
             <Badge className="bg-green-100 text-green-800">
               <CheckCircle className="w-3 h-3 mr-1" />
@@ -223,22 +223,23 @@ export default function SettingsSection({ settings, onSaveSettings }: SettingsSe
               Error
             </Badge>
           )}
-          <Button onClick={handleSave} disabled={isLoading} className="bg-gradient-to-r from-orange-500 to-red-500">
-            <Save className="w-4 h-4 mr-2" />
-            {isLoading ? 'Saving...' : 'Save Changes'}
+          <Button onClick={handleSave} disabled={isLoading} className="bg-gradient-to-r from-orange-500 to-red-500 h-9 px-3">
+            <Save className="w-4 h-4" />
+            <span className="hidden sm:inline ml-2">{isLoading ? 'Saving...' : 'Save Changes'}</span>
+            <span className="sm:hidden ml-2">{isLoading ? 'Saving' : 'Save'}</span>
           </Button>
         </div>
       </div>
 
       {/* Settings Tabs */}
-      <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+      <div className="flex overflow-x-auto no-scrollbar space-x-1 bg-gray-100 p-1 rounded-lg">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`shrink-0 inline-flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-white text-orange-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
