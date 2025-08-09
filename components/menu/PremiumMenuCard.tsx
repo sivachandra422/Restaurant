@@ -13,6 +13,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useCustomerExperience } from '@/contexts/CustomerExperienceContext';
 import { t, tWithParams } from '@/lib/translations';
 import { getLocalizedText } from '@/data/sriKanyaMenu';
+import { transliterateFriendly } from '@/lib/friendlyTransliteration';
 import { WaitTimeIndicator } from '@/components/ui/WaitTimeIndicator';
 
 interface PremiumMenuCardProps {
@@ -42,9 +43,13 @@ export function PremiumMenuCard({
   const imageRef = useRef<HTMLDivElement>(null);
   const currentQuantityRef = useRef<number>(quantity);
   
-  // Get localized text for the current language
-  const localizedName = getLocalizedText(item, 'name', language);
-  const localizedDescription = getLocalizedText(item, 'description', language);
+  // Modern phonetic rendering: use English source and render in script for hi/te
+  const localizedName = language === 'en' 
+    ? item.name 
+    : transliterateFriendly(item.name, language as any);
+  const localizedDescription = language === 'en'
+    ? item.description
+    : transliterateFriendly(item.description, language as any);
   
   // Get the proper image URL for this item with robust fallback system
   const primaryImageUrl = item.image || getFoodImage(item.id); // Use database image first

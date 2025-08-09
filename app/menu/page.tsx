@@ -462,12 +462,7 @@ export default function MenuPage() {
                         }}
                       >
                         <PremiumMenuCard
-                          item={{
-                            ...itemWithImage,
-                            // Replace name/description at render time with friendly transliteration
-                            name: language === 'en' ? itemWithImage.name : transliterateFriendly(itemWithImage.name, language as any),
-                            description: language === 'en' ? itemWithImage.description : itemWithImage.description
-                          }}
+                          item={itemWithImage}
                           quantity={quantity}
                           onAdd={() => addToCart(itemWithImage, 1)}
                           onRemove={() => removeFromCart(item.id)}
