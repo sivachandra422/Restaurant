@@ -14,6 +14,7 @@ import { useCustomerExperience } from '@/contexts/CustomerExperienceContext';
 import { t, tWithParams } from '@/lib/translations';
 import { getLocalizedText } from '@/data/sriKanyaMenu';
 import { transliterateFriendly } from '@/lib/friendlyTransliteration';
+import { generateFriendlyDescription } from '@/lib/friendlyDescriptions';
 import { WaitTimeIndicator } from '@/components/ui/WaitTimeIndicator';
 
 interface PremiumMenuCardProps {
@@ -49,7 +50,7 @@ export function PremiumMenuCard({
     : transliterateFriendly(item.name, language as any);
   const localizedDescription = language === 'en'
     ? item.description
-    : transliterateFriendly(item.description, language as any);
+    : generateFriendlyDescription(item.description || item.name, language as any);
   
   // Get the proper image URL for this item with robust fallback system
   const primaryImageUrl = item.image || getFoodImage(item.id); // Use database image first
