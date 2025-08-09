@@ -6,13 +6,13 @@ type Lang = 'hi' | 'te';
 const CORE_HI: Record<string, string> = {
   chicken: 'चिकन', mutton: 'मटन', prawn: 'प्रॉन्स', prawns: 'प्रॉन्स', fish: 'फिश', egg: 'एग',
   paneer: 'पनीर', mushroom: 'मशरूम', kaju: 'काजू', palak: 'पालक', methi: 'मेथी',
-  biryani: 'बिरयानी', rice: 'राइस', noodles: 'नूडल्स', gravy: 'ग्रेवी', butter: 'बटर', schezwan: 'स्केज़वान'
+  biryani: 'बिरयानी', rice: 'राइस', noodles: 'नूडल्स', gravy: 'ग्रेवी', butter: 'बटर', schezwan: 'स्केज़वान', dum: 'दम', plain: 'प्लेन', mix: 'मिक्स', balls: 'बॉल्स'
 };
 
 const CORE_TE: Record<string, string> = {
   chicken: 'చికెన్', mutton: 'మటన్', prawn: 'ప్రాన్స్', prawns: 'ప్రాన్స్', fish: 'ఫిష్', egg: 'ఎగ్',
   paneer: 'పనీర్', mushroom: 'మష్రూమ్', kaju: 'కజూ', palak: 'పాలక్', methi: 'మెథీ',
-  biryani: 'బిర్యానీ', rice: 'రైస్', noodles: 'నూడల్స్', gravy: 'గ్రేవీ', butter: 'బటర్', schezwan: 'స్కెజ్వాన్'
+  biryani: 'బిర్యానీ', rice: 'రైస్', noodles: 'నూడల్స్', gravy: 'గ్రేవీ', butter: 'బటర్', schezwan: 'స్కెజ్వాన్', dum: 'డమ్', plain: 'ప్లేన్', mix: 'మిక్స్', balls: 'బాల్స్'
 };
 
 const STYLE_HI: Record<string, string> = {

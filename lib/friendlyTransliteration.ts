@@ -10,7 +10,7 @@ const MAP_HI: Record<string, string> = {
   // veg & staples
   veg: 'वेज', vegetable: 'वेजिटेबल', vegetables: 'वेजिटेबल्स', paneer: 'पनीर', mushroom: 'मशरूम', palak: 'पालक', methi: 'मेथी', kaju: 'काजू', tomato: 'टोमैटो',
   // dishes
-  biryani: 'बिरयानी', fry: 'फ्राय', fried: 'फ्रायड', rice: 'राइस', noodles: 'नूडल्स', curry: 'करी', masala: 'मसाला', manchurian: 'मंचूरियन', chilly: 'चिली', chili: 'चिली', dragon: 'ड्रैगन', lolipop: 'लॉलीपॉप', kadai: 'कड़ाही', hyderabadi: 'हैदराबादी', mughlai: 'मुगलई', schezwan: 'स्केज़वान', mix: 'मिक्स', mixed: 'मिक्स्ड', special: 'स्पेशल', signature: 'सिग्नेचर',
+  biryani: 'बिरयानी', fry: 'फ्राय', fried: 'फ्रायड', rice: 'राइस', noodles: 'नूडल्स', curry: 'करी', masala: 'मसाला', manchurian: 'मंचूरियन', chilly: 'चिली', chili: 'चिली', dragon: 'ड्रैगन', lolipop: 'लॉलीपॉप', lollipop: 'लॉलीपॉप', kadai: 'कड़ाही', hyderabadi: 'हैदराबादी', mughlai: 'मुगलई', schezwan: 'स्केज़वान', mix: 'मिक्स', mixed: 'मिक्स्ड', special: 'स्पेशल', signature: 'सिग्नेचर', dum: 'दम', joint: 'जॉइंट', plain: 'प्लेन', loose: 'लूज', balls: 'बॉल्स', non: 'नॉन', chaman: 'चमन',
   // bread
   pulka: 'फुल्का', roti: 'रोटी', bread: 'ब्रेड',
   // adjectives/time
@@ -27,7 +27,7 @@ const MAP_TE: Record<string, string> = {
   // veg & staples
   veg: 'వెజ్', vegetable: 'వెజిటబుల్', vegetables: 'వెజిటబుల్స్', paneer: 'పనీర్', mushroom: 'మష్రూమ్', palak: 'పాలక్', methi: 'మెథీ', kaju: 'కజూ', tomato: 'టమాటో',
   // dishes
-  biryani: 'బిర్యానీ', fry: 'ఫ్రై', fried: 'ఫ్రైడ్', rice: 'రైస్', noodles: 'నూడల్స్', curry: 'కర్రీ', masala: 'మసాలా', manchurian: 'మంచూరియన్', chilly: 'చిల్లీ', chili: 'చిల్లీ', dragon: 'డ్రాగన్', lolipop: 'లాలిపాప్', kadai: 'కడాయి', hyderabadi: 'హైదరాబాద్', mughlai: 'మొగలాయి', schezwan: 'స్కెజ్వాన్', mix: 'మిక్స్', mixed: 'మిక్స్‌డ్', special: 'స్పెషల్', signature: 'సిగ్నేచర్',
+  biryani: 'బిర్యానీ', fry: 'ఫ్రై', fried: 'ఫ్రైడ్', rice: 'రైస్', noodles: 'నూడల్స్', curry: 'కర్రీ', masala: 'మసాలా', manchurian: 'మంచూరియన్', chilly: 'చిల్లీ', chili: 'చిల్లీ', dragon: 'డ్రాగన్', lolipop: 'లాలిపాప్', lollipop: 'లాలిపాప్', kadai: 'కడాయి', hyderabadi: 'హైదరాబాదీ', mughlai: 'మొగలాయి', schezwan: 'స్కెజ్వాన్', mix: 'మిక్స్', mixed: 'మిక్స్‌డ్', special: 'స్పెషల్', signature: 'సిగ్నేచర్', dum: 'డమ్', joint: 'జాయింట్', plain: 'ప్లేన్', loose: 'లూజ్', balls: 'బాల్స్', non: 'నాన్', chaman: 'చమన',
   // bread
   pulka: 'పుల్కా', roti: 'రోటి', bread: 'బ్రెడ్',
   // adjectives/time
