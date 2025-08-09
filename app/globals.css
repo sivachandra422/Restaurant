@@ -1,3 +1,11 @@
+:root{
+  --bg-app:#ffffff; /* consider #faf7f3 for subtle warm tint */
+  --bg-surface:#ffffff;
+  --border-subtle:#e5e7eb;
+}
+html,body{background:var(--bg-app);} 
+
+.no-scroll{overflow:hidden;}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

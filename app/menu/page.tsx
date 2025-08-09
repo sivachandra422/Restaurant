@@ -154,7 +154,7 @@ export default function MenuPage() {
       {/* Enhanced Header */}
       <div className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50 backdrop-blur-sm bg-white/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-18 lg:h-20">
+          <div className="flex items-center justify-between h-12 sm:h-18 lg:h-20">
             {/* Enhanced Logo and Restaurant Name */}
             <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="w-8 h-8 sm:w-12 sm:h-12 lg:w-14 lg:h-14 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-soft hover:shadow-glow transition-all duration-300 hover:scale-105 transform hover:rotate-3">
@@ -218,8 +218,8 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {/* Enhanced Hero Section */}
-      <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 text-white py-4 sm:py-8 lg:py-10 relative overflow-hidden">
+      {/* Enhanced Hero Section (compact on mobile after first visit) */}
+      <div className={`bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 text-white ${typeof window !== 'undefined' && localStorage.getItem('visitedMenu') ? 'py-2' : 'py-3'} sm:py-8 lg:py-10 relative overflow-hidden`}>
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -230,7 +230,7 @@ export default function MenuPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div className="flex items-center justify-center space-x-3 sm:space-x-4 mb-3 sm:mb-4">
             <Crown className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 animate-bounce" />
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-shadow">{t('our_menu', language)}</h2>
+            <h2 className="text-lg sm:text-2xl lg:text-3xl font-bold text-shadow">{t('our_menu', language)}</h2>
             <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 animate-pulse" />
           </div>
           <p className="text-sm sm:text-base lg:text-lg opacity-95 max-w-3xl mx-auto leading-relaxed text-shadow">
@@ -277,8 +277,8 @@ export default function MenuPage() {
               </div>
               
               {/* Search suggestions */}
-              {searchQuery && filteredItems.length > 0 && (
-                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 mt-1 max-h-48 overflow-y-auto">
+               {searchQuery && filteredItems.length > 0 && (
+                <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-xl z-50 mt-1 max-h-48 overflow-y-auto">
                   <div className="p-2">
                     <p className="text-xs text-gray-500 mb-2">{tWithParams('search_results', language, { count: filteredItems.length })}</p>
                     {filteredItems.slice(0, 3).map((item) => (

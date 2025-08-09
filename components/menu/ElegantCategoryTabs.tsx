@@ -76,7 +76,7 @@ export function ElegantCategoryTabs({
                 </div>
                 
                 {/* Description */}
-                <div className={`text-xs leading-tight line-clamp-2 transition-colors duration-200 ${
+                <div className={`text-[11px] sm:text-xs leading-tight ${isActive ? 'line-clamp-1' : 'line-clamp-1 sm:line-clamp-2'} transition-colors duration-200 ${
                   isActive ? 'text-orange-100' : 'text-gray-500 group-hover:text-gray-700'
                 }`}>
                   {localizedDescription}
