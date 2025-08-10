@@ -7,18 +7,26 @@ import { emailService } from '@/lib/email';
 // AI System Notification Function (SimStudio Webhook)
 async function notifyAISystem(orderData: any) {
   try {
+    console.log('🔔 Starting AI webhook notification...');
+    console.log('📋 Available environment variables:');
+    console.log('- SIMSTUDIO_WEBHOOK_URL:', process.env.SIMSTUDIO_WEBHOOK_URL ? '✅ Set' : '❌ Not set');
+    console.log('- N8N_WEBHOOK_URL:', process.env.N8N_WEBHOOK_URL ? '✅ Set' : '❌ Not set');
+    console.log('- WEBHOOK_URL:', process.env.WEBHOOK_URL ? '✅ Set' : '❌ Not set');
+    
     const webhookUrl =
       process.env.SIMSTUDIO_WEBHOOK_URL ||
       process.env.N8N_WEBHOOK_URL ||
       process.env.WEBHOOK_URL;
     
     if (!webhookUrl) {
-      console.log('No webhook URL configured, skipping AI notification');
+      console.log('❌ No webhook URL configured, skipping AI notification');
       return;
     }
 
+    console.log('🌐 Using webhook URL:', webhookUrl);
+    
     const webhookPayload = formatWebhookPayload(orderData);
-    console.log('Sending AI webhook payload:', webhookPayload);
+    console.log('📦 Webhook payload:', JSON.stringify(webhookPayload, null, 2));
     
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -28,21 +36,37 @@ async function notifyAISystem(orderData: any) {
     // Optional API key support if provided
     if (process.env.ORDER_API_KEY) {
       headers['x-api-key'] = process.env.ORDER_API_KEY;
+      console.log('🔑 API key included in headers');
     }
 
+    console.log('📤 Sending webhook request...');
+    console.log('📋 Headers:', headers);
+    
     const webhookResponse = await fetch(webhookUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify(webhookPayload),
     });
     
+    console.log('📥 Webhook response status:', webhookResponse.status);
+    console.log('📥 Webhook response headers:', Object.fromEntries(webhookResponse.headers.entries()));
+    
     if (webhookResponse.ok) {
-      console.log('AI processing triggered successfully via SimStudio webhook');
+      const responseText = await webhookResponse.text();
+      console.log('✅ AI processing triggered successfully via SimStudio webhook');
+      console.log('📄 Response body:', responseText);
     } else {
-      console.error('AI webhook failed with status:', webhookResponse.status);
+      const errorText = await webhookResponse.text();
+      console.error('❌ AI webhook failed with status:', webhookResponse.status);
+      console.error('📄 Error response body:', errorText);
     }
   } catch (error) {
-    console.error('AI webhook error:', error);
+    console.error('💥 AI webhook error:', error);
+    console.error('🔍 Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
     // Don't fail the order if webhook fails
   }
 }
