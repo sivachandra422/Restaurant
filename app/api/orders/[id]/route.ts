@@ -5,7 +5,11 @@ import { Order } from '@/lib/models/Order';
 import sseEventEmitter from '@/lib/sse-events';
 import mongoose from 'mongoose';
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
+// Ensure JWT_SECRET is always provided in production
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET && process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
+  throw new Error('JWT_SECRET environment variable is required');
+}
 
 // Helper function to verify admin authentication
 async function verifyAdminAuth(request: NextRequest) {
@@ -22,16 +26,11 @@ async function verifyAdminAuth(request: NextRequest) {
     }
 
     try {
-      const { payload } = await jwtVerify(token, JWT_SECRET);
+      const { payload } = await jwtVerify(token, new TextEncoder().encode(JWT_SECRET));
       console.log('verifyAdminAuth - JWT verified successfully');
       return { isAuthenticated: true, user: payload };
     } catch (jwtError) {
       console.error('verifyAdminAuth - JWT verification failed:', jwtError);
-      // For development, allow requests without valid JWT
-      if (process.env.NODE_ENV === 'development') {
-        console.log('verifyAdminAuth - Development mode: allowing request without valid JWT');
-        return { isAuthenticated: true, user: { username: 'dev-user' } };
-      }
       return { isAuthenticated: false, error: 'Invalid token' };
     }
   } catch (error) {

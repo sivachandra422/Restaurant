@@ -1176,7 +1176,7 @@ function FeedbackSection({ analytics, getAuthHeaders }: { analytics: any, getAut
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     fetchFeedback();

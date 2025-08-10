@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
 interface ImageUploadProps {
   currentImage?: string;
@@ -104,9 +105,11 @@ export function ImageUpload({
       {/* Current Image Preview */}
       {previewUrl && (
         <div className="relative group">
-          <img
+          <Image
             src={previewUrl}
             alt="Menu item preview"
+            width={400}
+            height={192}
             className="w-full h-48 object-cover rounded-lg border-2 border-gray-200"
           />
           <button

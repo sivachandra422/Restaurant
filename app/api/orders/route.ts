@@ -4,10 +4,104 @@ import { Order } from '@/lib/models/Order';
 import sseEventEmitter from '@/lib/sse-events';
 import { emailService } from '@/lib/email';
 
+// Simple in-memory rate limiting (consider Redis for production)
+const orderAttempts = new Map<string, { count: number; firstAttemptAt: number }>();
+const MAX_ORDERS_PER_MINUTE = 5;
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+
+// Rate limiting function
+function checkRateLimit(clientId: string): { allowed: boolean; remaining: number } {
+  const now = Date.now();
+  const attempts = orderAttempts.get(clientId);
+  
+  if (!attempts) {
+    orderAttempts.set(clientId, { count: 1, firstAttemptAt: now });
+    return { allowed: true, remaining: MAX_ORDERS_PER_MINUTE - 1 };
+  }
+  
+  // Reset if window has passed
+  if (now - attempts.firstAttemptAt > RATE_LIMIT_WINDOW_MS) {
+    orderAttempts.set(clientId, { count: 1, firstAttemptAt: now });
+    return { allowed: true, remaining: MAX_ORDERS_PER_MINUTE - 1 };
+  }
+  
+  // Check if limit exceeded
+  if (attempts.count >= MAX_ORDERS_PER_MINUTE) {
+    return { allowed: false, remaining: 0 };
+  }
+  
+  // Increment count
+  attempts.count++;
+  return { allowed: true, remaining: MAX_ORDERS_PER_MINUTE - attempts.count };
+}
+
+// Clean up old entries periodically
+setInterval(() => {
+  const now = Date.now();
+  Array.from(orderAttempts.entries()).forEach(([clientId, attempts]) => {
+    if (now - attempts.firstAttemptAt > RATE_LIMIT_WINDOW_MS) {
+      orderAttempts.delete(clientId);
+    }
+  });
+}, RATE_LIMIT_WINDOW_MS);
+
 // POST - Create new order
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting check
+    const clientId = request.ip || request.headers.get('x-forwarded-for') || 'unknown';
+    const rateLimit = checkRateLimit(clientId);
+    
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Too many orders. Please wait before placing another order.' },
+        { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': new Date(Date.now() + RATE_LIMIT_WINDOW_MS).toISOString()
+          }
+        }
+      );
+    }
+
     const orderData = await request.json();
+    
+    // Input validation
+    if (!orderData || typeof orderData !== 'object') {
+      return NextResponse.json({ error: 'Invalid order data' }, { status: 400 });
+    }
+    
+    // Validate required fields
+    if (!orderData.tableNumber || !orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+      return NextResponse.json({ error: 'Missing required fields: tableNumber and items are required' }, { status: 400 });
+    }
+    
+    // Validate items structure
+    for (const item of orderData.items) {
+      if (!item.name || typeof item.price !== 'number' || item.price < 0 || !item.quantity || item.quantity < 1) {
+        return NextResponse.json({ error: 'Invalid item data: name, price, and quantity are required' }, { status: 400 });
+      }
+    }
+    
+    // Validate table number format
+    if (typeof orderData.tableNumber !== 'string' || orderData.tableNumber.trim().length === 0) {
+      return NextResponse.json({ error: 'Invalid table number' }, { status: 400 });
+    }
+    
+    // Sanitize and validate customer data
+    if (orderData.customerName && typeof orderData.customerName !== 'string') {
+      orderData.customerName = orderData.customerName.toString().trim();
+    }
+    if (orderData.customerPhone && typeof orderData.customerPhone !== 'string') {
+      orderData.customerPhone = orderData.customerPhone.toString().trim();
+    }
+    
+    // Validate special instructions length
+    if (orderData.specialInstructions && typeof orderData.specialInstructions === 'string' && orderData.specialInstructions.length > 500) {
+      return NextResponse.json({ error: 'Special instructions too long (max 500 characters)' }, { status: 400 });
+    }
+
     console.log('Received order data:', orderData);
     
     let savedOrder = null;

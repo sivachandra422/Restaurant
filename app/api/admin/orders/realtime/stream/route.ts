@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 // Track active connections
 let activeConnections = 0;
-const MAX_CONNECTIONS = 10;
+const MAX_CONNECTIONS = process.env.NODE_ENV === 'production' ? 100 : 10; // Higher limit for production
 
 // GET - SSE stream endpoint
 export async function GET(request: NextRequest) {

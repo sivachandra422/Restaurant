@@ -10,6 +10,20 @@ import { MenuProvider } from '@/contexts/MenuContext';
 import { AdminProvider } from '@/contexts/AdminContext';
 import { RealTimeOrderProvider } from '@/contexts/RealTimeOrderContext';
 import { Toaster } from '@/components/ui/toaster';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+
+// Validate environment variables on app startup (skip during build time)
+if (typeof window === 'undefined' && process.env.NEXT_PHASE !== 'phase-production-build') {
+  try {
+    require('@/lib/env').validateEnv();
+  } catch (error) {
+    console.error('Environment validation failed:', error);
+    // In production, this should cause the app to fail
+    if (process.env.NODE_ENV === 'production') {
+      throw error;
+    }
+  }
+}
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -54,10 +68,12 @@ export default function RootLayout({
                 <MenuProvider>
                   <AdminProvider>
                     <RealTimeOrderProvider>
-                      <CartProvider>
+                                          <CartProvider>
+                      <ErrorBoundary>
                         {children}
                         <Toaster />
-                      </CartProvider>
+                      </ErrorBoundary>
+                    </CartProvider>
                     </RealTimeOrderProvider>
                   </AdminProvider>
                 </MenuProvider>
