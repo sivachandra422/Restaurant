@@ -4,6 +4,49 @@ import { Order } from '@/lib/models/Order';
 import sseEventEmitter from '@/lib/sse-events';
 import { emailService } from '@/lib/email';
 
+// AI System Notification Function (SimStudio Webhook)
+async function notifyAISystem(orderData: any) {
+  try {
+    const webhookUrl =
+      process.env.SIMSTUDIO_WEBHOOK_URL ||
+      process.env.N8N_WEBHOOK_URL ||
+      process.env.WEBHOOK_URL;
+    
+    if (!webhookUrl) {
+      console.log('No webhook URL configured, skipping AI notification');
+      return;
+    }
+
+    const webhookPayload = formatWebhookPayload(orderData);
+    console.log('Sending AI webhook payload:', webhookPayload);
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'X-Restaurant-Source': 'Sri-Kanya-App'
+    };
+    
+    // Optional API key support if provided
+    if (process.env.ORDER_API_KEY) {
+      headers['x-api-key'] = process.env.ORDER_API_KEY;
+    }
+
+    const webhookResponse = await fetch(webhookUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(webhookPayload),
+    });
+    
+    if (webhookResponse.ok) {
+      console.log('AI processing triggered successfully via SimStudio webhook');
+    } else {
+      console.error('AI webhook failed with status:', webhookResponse.status);
+    }
+  } catch (error) {
+    console.error('AI webhook error:', error);
+    // Don't fail the order if webhook fails
+  }
+}
+
 // Simple in-memory rate limiting (consider Redis for production)
 const orderAttempts = new Map<string, { count: number; firstAttemptAt: number }>();
 const MAX_ORDERS_PER_MINUTE = 5;
@@ -157,39 +200,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Send webhook notification (SimStudio preferred, with fallbacks)
-    const webhookUrl =
-      process.env.SIMSTUDIO_WEBHOOK_URL ||
-      process.env.N8N_WEBHOOK_URL ||
-      process.env.WEBHOOK_URL;
-    if (webhookUrl) {
-      try {
-        const webhookPayload = formatWebhookPayload(orderData);
-        console.log('Sending webhook payload:', webhookPayload);
-        
-        const headers: Record<string, string> = {
-          'Content-Type': 'application/json',
-        };
-        // Optional API key support if provided
-        if (process.env.ORDER_API_KEY) {
-          headers['x-api-key'] = process.env.ORDER_API_KEY;
-        }
-
-        const webhookResponse = await fetch(webhookUrl, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(webhookPayload),
-        });
-        
-        if (webhookResponse.ok) {
-          console.log('Webhook sent successfully');
-        } else {
-          console.error('Webhook failed with status:', webhookResponse.status);
-        }
-      } catch (webhookError) {
-        console.error('Webhook error:', webhookError);
-        // Don't fail the order if webhook fails
-      }
-    }
+    await notifyAISystem(orderData);
     
     return NextResponse.json({ 
       success: true, 
@@ -286,27 +297,32 @@ async function sendOrderNotifications(orderData: any) {
   }
 }
 
-// Helper function to format webhook payload (existing)
+// Helper function to format webhook payload for AI processing
 function formatWebhookPayload(orderData: any) {
   return {
+    success: true,
     orderId: orderData.orderId,
-    sessionId: orderData.sessionId,
-    timestamp: orderData.timestamp,
-    tableNumber: orderData.tableNumber,
-    customerName: orderData.customerName,
-    customerPhone: orderData.customerPhone,
-    items: orderData.items?.map((item: any) => ({
-      name: item.name,
-      quantity: item.quantity,
-      unitPrice: item.price,
-      subtotal: item.subtotal || (item.price * item.quantity),
-      category: item.category,
-      isVeg: item.isVeg,
-      isSignature: item.isSignature || false
-    })),
-    totalAmount: orderData.totalAmount,
-    estimatedTime: orderData.estimatedTime || '20-25 minutes',
-    priority: orderData.priority || 'NORMAL',
-    specialInstructions: orderData.specialInstructions
+    order: {
+      orderId: orderData.orderId,
+      sessionId: orderData.sessionId,
+      timestamp: orderData.timestamp,
+      tableNumber: orderData.tableNumber,
+      customerName: orderData.customerName,
+      customerPhone: orderData.customerPhone,
+      items: orderData.items?.map((item: any) => ({
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price,
+        subtotal: item.subtotal || (item.price * item.quantity),
+        category: item.category,
+        isVeg: item.isVeg,
+        isSignature: item.isSignature || false
+      })),
+      totalAmount: orderData.totalAmount,
+      estimatedTime: orderData.estimatedTime || '20-25 minutes',
+      priority: orderData.priority || 'NORMAL',
+      specialInstructions: orderData.specialInstructions
+    },
+    message: "Order placed successfully and saved to database"
   };
 }
