@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRealTimeOrders } from '@/contexts/RealTimeOrderContext';
 import { 
   RefreshCw, 
-  Plus, 
   Eye, 
   Clock, 
   DollarSign, 
@@ -30,12 +29,11 @@ export default function RealTimeOrderManager() {
     fetchOrders, 
     updateOrderStatus, 
     updatePaymentStatus, 
-    createTestOrder,
     lastUpdate 
   } = useRealTimeOrders();
 
   const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
-  const [creatingTestOrder, setCreatingTestOrder] = useState(false);
+  // removed test order creation UI
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const { toast } = useToast();
   const [mobileTab, setMobileTab] = useState<'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered'>(
@@ -107,18 +105,7 @@ export default function RealTimeOrderManager() {
     }
   };
 
-  const handleCreateTestOrder = async () => {
-    setCreatingTestOrder(true);
-    try {
-      await createTestOrder();
-      toast({ title: 'Test order created' });
-    } catch (error) {
-      console.error('Error creating test order:', error);
-      toast({ title: 'Failed to create test order', variant: 'destructive' });
-    } finally {
-      setCreatingTestOrder(false);
-    }
-  };
+  // removed test order creation handler
 
   // Drag-and-drop helpers
   const getDropHandlers = (targetStatus: string) => ({
@@ -195,17 +182,6 @@ export default function RealTimeOrderManager() {
               {isConnected ? 'Connected' : 'Disconnected'}
             </span>
           </div>
-          
-          {/* Test Order Button */}
-          <Button 
-            onClick={handleCreateTestOrder}
-            disabled={creatingTestOrder}
-            variant="outline"
-            size="sm"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            {creatingTestOrder ? 'Creating...' : 'Test Order'}
-          </Button>
           
           {/* Refresh Button */}
           <Button 

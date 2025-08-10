@@ -51,7 +51,6 @@ import AIDashboard from '@/components/admin/AIDashboard';
 import ReportsSection from '@/components/admin/ReportsSection';
 import SettingsSection from '@/components/admin/SettingsSection';
 import BackupSection from '@/components/admin/BackupSection';
-import RealTimeTest from '@/components/admin/RealTimeTest';
 import RealTimeOrderManager from '@/components/admin/RealTimeOrderManager';
 import { ImageUpload } from '@/components/ui/ImageUpload';
 import SmallBizAnalytics from '@/components/admin/SmallBizAnalytics';
@@ -481,7 +480,6 @@ export default function AdminPage() {
         {adminState.currentSection === 'analytics' && (
           <div className="space-y-6">
             <SmallBizAnalytics analytics={analyticsData} orders={realOrders} onRefresh={() => { fetchRealOrders(); fetchAnalytics(); }} />
-            <RealTimeTest />
             <ReportsSection />
           </div>
         )}
