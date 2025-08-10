@@ -60,12 +60,12 @@ async function notifyAISystem(orderData: any) {
       console.error('❌ AI webhook failed with status:', webhookResponse.status);
       console.error('📄 Error response body:', errorText);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('💥 AI webhook error:', error);
     console.error('🔍 Error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
+      name: error?.name || 'Unknown',
+      message: error?.message || 'No message',
+      stack: error?.stack || 'No stack trace'
     });
     // Don't fail the order if webhook fails
   }

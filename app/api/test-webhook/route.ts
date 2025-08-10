@@ -85,8 +85,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: false,
       error: 'Webhook test error',
-      message: error.message,
-      stack: error.stack
+      message: error?.message || 'Unknown error',
+      stack: error?.stack || 'No stack trace'
     }, { status: 500 });
   }
 }
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: false,
       error: 'Custom webhook test error',
-      message: error.message
+      message: error?.message || 'Unknown error'
     }, { status: 500 });
   }
 }
