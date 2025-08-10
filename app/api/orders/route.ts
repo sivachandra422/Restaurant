@@ -62,18 +62,27 @@ export async function POST(request: NextRequest) {
       console.log('No MongoDB URI provided, skipping database save');
     }
     
-    // Send webhook notification (existing functionality)
-    const webhookUrl = process.env.N8N_WEBHOOK_URL;
+    // Send webhook notification (SimStudio preferred, with fallbacks)
+    const webhookUrl =
+      process.env.SIMSTUDIO_WEBHOOK_URL ||
+      process.env.N8N_WEBHOOK_URL ||
+      process.env.WEBHOOK_URL;
     if (webhookUrl) {
       try {
         const webhookPayload = formatWebhookPayload(orderData);
         console.log('Sending webhook payload:', webhookPayload);
         
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json',
+        };
+        // Optional API key support if provided
+        if (process.env.ORDER_API_KEY) {
+          headers['x-api-key'] = process.env.ORDER_API_KEY;
+        }
+
         const webhookResponse = await fetch(webhookUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
           body: JSON.stringify(webhookPayload),
         });
         

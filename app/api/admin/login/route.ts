@@ -7,7 +7,6 @@ const ADMIN_USERS = [
   {
     id: '1',
     username: 'admin',
-    password: process.env.ADMIN_PASSWORD || 'srikanya2024', // Use environment variable
     role: 'admin' as const,
     permissions: ['read', 'write', 'delete', 'manage_users'],
     lastLogin: new Date()
@@ -15,18 +14,91 @@ const ADMIN_USERS = [
   {
     id: '2',
     username: 'manager',
-    password: process.env.ADMIN_PASSWORD || 'srikanya2024', // Use environment variable
     role: 'manager' as const,
     permissions: ['read', 'write'],
     lastLogin: new Date()
   }
 ];
 
+// Simple in-memory rate limiting for login attempts
+// NOTE: This resets on server restart; use a proper store in production
+const loginAttempts = new Map<string, { count: number; firstAttemptAt: number }>();
+const MAX_ATTEMPTS = 5;
+const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
+function isRateLimited(key: string): boolean {
+  const now = Date.now();
+  const record = loginAttempts.get(key);
+  if (!record) return false;
+  if (now - record.firstAttemptAt > WINDOW_MS) {
+    loginAttempts.delete(key);
+    return false;
+  }
+  return record.count >= MAX_ATTEMPTS;
+}
+
+function recordFailedAttempt(key: string) {
+  const now = Date.now();
+  const record = loginAttempts.get(key);
+  if (!record) {
+    loginAttempts.set(key, { count: 1, firstAttemptAt: now });
+  } else {
+    if (now - record.firstAttemptAt > WINDOW_MS) {
+      loginAttempts.set(key, { count: 1, firstAttemptAt: now });
+    } else {
+      record.count += 1;
+      loginAttempts.set(key, record);
+    }
+  }
+}
+
+function resetAttempts(key: string) {
+  loginAttempts.delete(key);
+}
+
+function getClientKey(request: NextRequest, username: string): string {
+  const xff = request.headers.get('x-forwarded-for') || '';
+  const ip = xff.split(',')[0]?.trim() || 'unknown';
+  return `${ip}:${username}`;
+}
+
+async function verifyPassword(role: 'admin' | 'manager', inputPassword: string): Promise<boolean> {
+  // Prefer hashed password env per role
+  const roleUpper = role.toUpperCase();
+  const hashEnv = process.env[`ADMIN_${roleUpper}_PASSWORD_HASH` as const];
+  if (hashEnv && hashEnv.trim().length > 0) {
+    try {
+      return await bcrypt.compare(inputPassword, hashEnv);
+    } catch {
+      return false;
+    }
+  }
+
+  // Fallback to plaintext per-role env
+  const plainRoleEnv = process.env[`ADMIN_${roleUpper}_PASSWORD` as const];
+  if (plainRoleEnv && plainRoleEnv.length > 0) {
+    return inputPassword === plainRoleEnv;
+  }
+
+  // Fallback to legacy ADMIN_PASSWORD for both roles (development only)
+  const legacy = process.env.ADMIN_PASSWORD || 'srikanya2024';
+  return inputPassword === legacy;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { username, password } = await request.json();
 
-    console.log('Login attempt:', { username, password });
+    // Do not log plaintext passwords
+    console.log('Login attempt:', { username });
+
+    const rlKey = getClientKey(request, username || '');
+    if (isRateLimited(rlKey)) {
+      return NextResponse.json(
+        { message: 'Too many login attempts. Please try again later.' },
+        { status: 429 }
+      );
+    }
 
     // Validate input
     if (!username || !password) {
@@ -39,24 +111,18 @@ export async function POST(request: NextRequest) {
     // Find user
     const user = ADMIN_USERS.find(u => u.username === username);
     if (!user) {
-      console.log('User not found:', username);
-      return NextResponse.json(
-        { message: 'Invalid credentials' },
-        { status: 401 }
-      );
+      recordFailedAttempt(rlKey);
+      return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Verify password (simple comparison for development)
-    const isValidPassword = user.password === password;
+    // Verify password (supports bcrypt hash or plaintext envs)
+    const isValidPassword = await verifyPassword(user.role, password);
     if (!isValidPassword) {
-      console.log('Invalid password for user:', username);
-      return NextResponse.json(
-        { message: 'Invalid credentials' },
-        { status: 401 }
-      );
+      recordFailedAttempt(rlKey);
+      return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
 
-    console.log('Login successful for user:', username);
+    resetAttempts(rlKey);
 
     // Generate JWT token
     const token = jwt.sign(
@@ -82,11 +148,24 @@ export async function POST(request: NextRequest) {
       lastLogin: user.lastLogin
     };
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: userData,
       token
     });
+
+    // Optionally also set a secure, same-site cookie for the token
+    // Note: This is a non-HttpOnly cookie because the client currently reads it.
+    // For stronger security, migrate to HttpOnly cookies and a /api/admin/me session endpoint.
+    response.cookies.set('admin-token', token, {
+      httpOnly: false, // kept false to avoid breaking current client-side session restore
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24, // 1 day
+    });
+
+    return response;
 
   } catch (error) {
     console.error('Admin login error:', error);

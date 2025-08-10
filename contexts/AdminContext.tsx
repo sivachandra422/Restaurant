@@ -53,11 +53,20 @@ interface AdminContextType {
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
-// Helper function to set cookie
+// Helper function to set cookie with safer defaults
 const setCookie = (name: string, value: string, days: number) => {
   const expires = new Date();
-  expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
-  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  const parts = [
+    `${name}=${value}`,
+    `expires=${expires.toUTCString()}`,
+    'path=/',
+    'SameSite=Lax',
+  ];
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    parts.push('Secure');
+  }
+  document.cookie = parts.join(';');
 };
 
 // Helper function to get cookie

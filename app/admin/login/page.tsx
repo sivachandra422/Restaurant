@@ -137,14 +137,16 @@ export default function AdminLoginPage() {
           </Button>
         </form>
 
-        {/* Demo Credentials */}
-        <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-          <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials</h3>
-          <div className="space-y-1 text-xs text-gray-600">
-            <p><strong>Admin:</strong> admin / srikanya2024</p>
-            <p><strong>Manager:</strong> manager / srikanya2024</p>
-          </div>
-        </div>
+          {/* Demo Credentials - hide in production */}
+          {process.env.NODE_ENV !== 'production' && (
+            <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials</h3>
+              <div className="space-y-1 text-xs text-gray-600">
+                <p><strong>Admin:</strong> admin / srikanya2024</p>
+                <p><strong>Manager:</strong> manager / srikanya2024</p>
+              </div>
+            </div>
+          )}
 
         {/* Footer */}
         <div className="mt-8 text-center">

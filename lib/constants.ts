@@ -28,7 +28,11 @@ export const UI_CONFIG = {
 export const API_ENDPOINTS = {
   orders: '/api/orders',
   menu: '/api/menu',
-  webhook: process.env.N8N_WEBHOOK_URL || '',
+  webhook:
+    process.env.SIMSTUDIO_WEBHOOK_URL ||
+    process.env.N8N_WEBHOOK_URL ||
+    process.env.WEBHOOK_URL ||
+    '',
 };
 
 export const CATEGORY_COLORS = {
