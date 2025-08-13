@@ -5,6 +5,9 @@ import ModernAdminLayout from '@/components/admin/ModernAdminLayout';
 import ModernDashboard from '@/components/admin/ModernDashboard';
 import ModernOrderManager from '@/components/admin/ModernOrderManager';
 import ModernMenuManager from '@/components/admin/ModernMenuManager';
+import ModernAnalytics from '@/components/admin/ModernAnalytics';
+import ModernCustomerFeedback from '@/components/admin/ModernCustomerFeedback';
+import ModernSettings from '@/components/admin/ModernSettings';
 
 export default function ModernAdminPage() {
   const [currentSection, setCurrentSection] = useState('dashboard');
@@ -18,26 +21,11 @@ export default function ModernAdminPage() {
       case 'menu':
         return <ModernMenuManager />;
       case 'analytics':
-        return (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">Analytics</h2>
-            <p className="text-slate-600">Modern analytics dashboard coming soon...</p>
-          </div>
-        );
+        return <ModernAnalytics />;
       case 'feedback':
-        return (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">Customer Feedback</h2>
-            <p className="text-slate-600">Modern feedback system coming soon...</p>
-          </div>
-        );
+        return <ModernCustomerFeedback />;
       case 'settings':
-        return (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">Settings</h2>
-            <p className="text-slate-600">Modern settings panel coming soon...</p>
-          </div>
-        );
+        return <ModernSettings />;
       default:
         return <ModernDashboard />;
     }
