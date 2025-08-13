@@ -202,9 +202,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     // Emit SSE event for real-time updates
+    const orderData = order.toObject();
+    // Ensure _id is properly formatted for comparison
+    orderData._id = orderData._id.toString();
+    
     sseEventEmitter.emit('order-event', {
       type: 'order-updated',
-      order: order.toObject()
+      order: orderData
     });
 
     console.log('SSE event emitted');

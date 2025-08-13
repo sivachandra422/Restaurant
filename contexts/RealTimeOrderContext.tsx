@@ -161,9 +161,19 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
             
             case 'order-updated':
               setOrders(prev => 
-                prev.map(order => 
-                  (order._id === data.order._id || order.orderId === data.order.orderId) ? data.order : order
-                )
+                prev.map(order => {
+                  // Compare both _id and orderId, handling both string and ObjectId formats
+                  const orderIdMatch = order._id === data.order._id || 
+                                     order._id?.toString() === data.order._id ||
+                                     order._id === data.order._id?.toString();
+                  const orderNumberMatch = order.orderId === data.order.orderId;
+                  
+                  if (orderIdMatch || orderNumberMatch) {
+                    console.log('Updating order in real-time:', data.order.orderId || data.order._id);
+                    return data.order;
+                  }
+                  return order;
+                })
               );
               setLastUpdate(new Date());
               // Dispatch custom event for other components
@@ -359,11 +369,21 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
         initializeSSE();
       }
     };
+    
+    // Fallback: Refresh orders every 30 seconds if SSE is not connected
+    const fallbackInterval = setInterval(() => {
+      if (!isConnected && isActive) {
+        console.log('SSE not connected, refreshing orders via fallback...');
+        fetchOrders();
+      }
+    }, 30000);
+    
     window.addEventListener('online', handleOnline);
     
     // Cleanup on unmount
     return () => {
       isActive = false;
+      clearInterval(fallbackInterval);
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
@@ -378,7 +398,7 @@ export function RealTimeOrderProvider({ children }: { children: React.ReactNode 
       }
       window.removeEventListener('online', handleOnline);
     };
-  }, [initializeSSE]);
+  }, [initializeSSE, isConnected, fetchOrders]);
 
   // Fetch initial orders
   useEffect(() => {

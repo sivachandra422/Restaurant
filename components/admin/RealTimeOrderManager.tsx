@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,13 +32,34 @@ export default function RealTimeOrderManager() {
     lastUpdate 
   } = useRealTimeOrders();
 
+
+
   const [updatingOrder, setUpdatingOrder] = useState<string | null>(null);
-  // removed test order creation UI
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
   const { toast } = useToast();
   const [mobileTab, setMobileTab] = useState<'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered'>(
     'pending'
   );
+  const [lastRealTimeUpdate, setLastRealTimeUpdate] = useState<Date | null>(null);
+
+  // Listen for real-time order updates
+  useEffect(() => {
+    const handleOrderUpdate = (event: CustomEvent) => {
+      setLastRealTimeUpdate(new Date());
+      // Show a subtle toast notification
+      toast({ 
+        title: 'Order Updated', 
+        description: `Order #${event.detail?.order?.orderId?.slice(-6) || 'N/A'} status changed to ${event.detail?.order?.status}`,
+        duration: 3000
+      });
+    };
+
+    window.addEventListener('order-updated', handleOrderUpdate as EventListener);
+    
+    return () => {
+      window.removeEventListener('order-updated', handleOrderUpdate as EventListener);
+    };
+  }, [toast]);
 
   // Filter orders by status (include 'confirmed' as a column in kitchen board)
   const pendingOrders = orders.filter(order => order.status === 'pending');
@@ -166,6 +187,11 @@ export default function RealTimeOrderManager() {
             {lastUpdate && (
               <span className="ml-2">
                 • Last updated: {lastUpdate.toLocaleTimeString()}
+              </span>
+            )}
+            {lastRealTimeUpdate && (
+              <span className="ml-2 text-green-600">
+                • Real-time: {lastRealTimeUpdate.toLocaleTimeString()}
               </span>
             )}
           </p>

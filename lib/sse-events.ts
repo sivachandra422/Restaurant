@@ -32,7 +32,12 @@ class SSEManager extends EventEmitter {
   public emit(event: string, ...args: any[]): boolean {
     // Add logging for debugging
     if (event === 'order-event') {
-      console.log(`SSE: Emitting ${event} to ${this.listenerCount(event)} listeners`);
+      const data = args[0];
+      console.log(`SSE: Emitting ${event} to ${this.listenerCount(event)} listeners`, {
+        type: data?.type,
+        orderId: data?.order?.orderId || data?.order?._id,
+        status: data?.order?.status
+      });
     }
     return super.emit(event, ...args);
   }
