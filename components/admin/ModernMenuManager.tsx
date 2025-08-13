@@ -27,6 +27,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { sriKanyaMenu } from '@/data/sriKanyaMenu';
 
 // Real MenuItem interface matching your data structure
 interface MenuItem {
@@ -108,29 +109,87 @@ export default function ModernMenuManager() {
         throw new Error('Failed to fetch menu items');
       }
       
-      const data: MenuApiResponse = await response.json();
+      const data = await response.json();
+      console.log('API Response:', data);
       
-      // Flatten all categories into a single array
-      const allItems: MenuItem[] = [];
-      Object.entries(data).forEach(([category, items]) => {
-        items.forEach(item => ({
-          ...item,
-          category: category
-        }));
-        allItems.push(...items);
-      });
+      // Handle different response formats
+      let allItems: MenuItem[] = [];
+      
+      if (Array.isArray(data)) {
+        // If API returns array format
+        allItems = data.flatMap(category => 
+          category.items ? category.items.map((item: any) => ({
+            ...item,
+            category: category.name || category.slug || 'unknown'
+          })) : []
+        );
+      } else if (typeof data === 'object' && data !== null) {
+        // If API returns object format (like sriKanyaMenu)
+        allItems = Object.entries(data).flatMap(([category, items]) => 
+          Array.isArray(items) ? items.map((item: any) => ({
+            ...item,
+            category: category
+          })) : []
+        );
+      }
+      
+      // Ensure all items have required fields
+      allItems = allItems.map(item => ({
+        id: item.id || `item_${Date.now()}_${Math.random()}`,
+        name: item.name || 'Unnamed Item',
+        description: item.description || 'No description available',
+        price: item.price || 0,
+        category: item.category || 'unknown',
+        isVeg: item.isVeg || false,
+        isSignature: item.isSignature || false,
+        isSpecial: item.isSpecial || false,
+        image: item.image || '',
+        maxQuantity: item.maxQuantity || 10,
+        minQuantity: item.minQuantity || 1,
+        preparationTime: item.preparationTime || 15,
+        popularity: item.popularity || 5,
+        trending: item.trending || false,
+        isDisabled: item.isDisabled || false,
+        nameHi: item.nameHi,
+        nameTe: item.nameTe,
+        descriptionHi: item.descriptionHi,
+        descriptionTe: item.descriptionTe
+      }));
       
       setAllMenuItems(allItems);
-      console.log(`Loaded ${allItems.length} menu items`);
+      console.log(`Loaded ${allItems.length} menu items:`, allItems);
       
     } catch (err) {
       console.error('Error loading menu items:', err);
-      setError('Failed to load menu items. Please try again.');
-      toast({
-        title: "Error",
-        description: "Failed to load menu items. Please try again.",
-        variant: "destructive"
-      });
+      
+      // Fallback to static data if API fails
+      console.log('Falling back to static menu data');
+      try {
+        const staticItems: MenuItem[] = Object.entries(sriKanyaMenu).flatMap(([category, items]) => 
+          items.map((item: any) => ({
+            ...item,
+            category: category,
+            id: item.id || `static_${category}_${Math.random()}`
+          }))
+        );
+        
+        setAllMenuItems(staticItems);
+        console.log(`Loaded ${staticItems.length} static menu items as fallback`);
+        
+        toast({
+          title: "Info",
+          description: `Loaded ${staticItems.length} menu items from static data (API unavailable)`,
+        });
+        
+      } catch (fallbackErr) {
+        console.error('Fallback also failed:', fallbackErr);
+        setError('Failed to load menu items. Please try again.');
+        toast({
+          title: "Error",
+          description: "Failed to load menu items. Please try again.",
+          variant: "destructive"
+        });
+      }
     } finally {
       setIsLoading(false);
     }
