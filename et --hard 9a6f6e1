@@ -1,0 +1,17 @@
+[33m9d28ae1[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Fix table URL parameter handling with error boundaries
+[33mb5595fd[m Fix runtime errors on deployed site
+[33m974688d[m Fix Render deployment: Add Suspense boundary for useSearchParams
+[33m6b1d6df[m Fix all TypeScript compilation errors systematically
+[33m23944cf[m Complete major upgrade: Add performance optimization utilities, enhanced error boundaries, and comprehensive upgrade documentation
+[33m5ba357b[m Major code upgrades: Next.js 14, React 18, TypeScript improvements, performance monitoring, service worker, loading skeletons, and image optimization
+[33m9a6f6e1[m Add comprehensive webhook debugging: Test GET vs POST, minimal vs full headers, and detailed error analysis
+[33mfb5067c[m Fix TypeScript errors in webhook debugging: Properly type error parameters and add null safety
+[33m354eb21[m Add comprehensive webhook debugging and test endpoint for SimStudio integration troubleshooting
+[33ma7b6941[m Enhance SimStudio webhook integration: Add restaurant source header, improve payload structure, and better error handling
+[33m2dcf019[m Update project documentation: Current status v3.2, deployment ready, and comprehensive project tracking
+[33m088e480[m Fix build issue: Skip environment validation during build time for Render deployment compatibility
+[33me350002[m chore: remove remaining test routes/pages and admin RealTimeTest; simplify RealTimeOrderManager; drop legacy websocket.js
+[33mefc3e16[m chore: prune non-essential docs and guides; keep README only
+[33m4447484[m chore: remove helper scripts and qr-codes directory as requested
+[33m055e9dd[m chore: remove testing artifacts and n8n docs; clean stray files
+[33m3fe4e91[m feat: prefer SimStudio webhook; add ORDER_API_KEY header; harden admin login (hashed passwords, rate limiting); hide demo creds in prod; safer cookies; update env example
