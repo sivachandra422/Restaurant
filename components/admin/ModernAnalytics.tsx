@@ -92,20 +92,18 @@ export default function ModernAnalytics() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [toast]);
 
   // Load analytics on component mount
   useEffect(() => {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
-  // Auto-refresh every 5 minutes
+  // Auto-refresh analytics every 5 minutes
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchAnalytics(true);
-    }, 5 * 60 * 1000);
-
-    return () => clearInterval(interval);
+    const refreshInterval = setInterval(() => fetchAnalytics(true), 5 * 60 * 1000);
+    
+    return () => clearInterval(refreshInterval);
   }, [fetchAnalytics]);
 
   const formatCurrency = (amount: number) => {

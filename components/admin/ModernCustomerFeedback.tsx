@@ -147,7 +147,7 @@ export default function ModernCustomerFeedback() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, []);
+  }, [toast]);
 
   // Calculate feedback statistics
   const calculateStats = (feedback: FeedbackItem[]) => {
@@ -223,13 +223,11 @@ export default function ModernCustomerFeedback() {
     fetchFeedback();
   }, [fetchFeedback]);
 
-  // Auto-refresh every 2 minutes
+  // Auto-refresh feedback every 2 minutes
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchFeedback(true);
-    }, 2 * 60 * 1000);
-
-    return () => clearInterval(interval);
+    const refreshInterval = setInterval(() => fetchFeedback(true), 2 * 60 * 1000);
+    
+    return () => clearInterval(refreshInterval);
   }, [fetchFeedback]);
 
   // Handle response submission

@@ -200,7 +200,7 @@ export default function ModernSettings() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   // Load mock users (replace with real API call)
   const loadMockUsers = () => {
@@ -385,6 +385,13 @@ export default function ModernSettings() {
   // Load settings on component mount
   useEffect(() => {
     fetchSettings();
+  }, [fetchSettings]);
+
+  // Auto-refresh settings every 5 minutes
+  useEffect(() => {
+    const refreshInterval = setInterval(() => fetchSettings(), 5 * 60 * 1000);
+    
+    return () => clearInterval(refreshInterval);
   }, [fetchSettings]);
 
   if (isLoading) {

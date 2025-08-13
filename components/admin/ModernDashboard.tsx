@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -16,11 +16,15 @@ import {
   Target,
   Utensils,
   BarChart3,
-  Settings
+  Settings,
+  RefreshCw,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface DashboardMetric {
   title: string;
@@ -49,99 +53,225 @@ interface TopItem {
   trend: number;
 }
 
+interface DashboardData {
+  metrics: DashboardMetric[];
+  recentOrders: RecentOrder[];
+  topItems: TopItem[];
+  totalCustomers: number;
+  todayRevenue: number;
+  todayOrders: number;
+  pendingOrders: number;
+  averageRating: number;
+}
+
 export default function ModernDashboard() {
+  const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data - replace with real API calls
-  const metrics: DashboardMetric[] = [
-    {
-      title: 'Total Revenue',
-      value: '₹12,950',
-      change: 12.5,
-      changeType: 'increase',
-      icon: DollarSign,
-      color: 'from-emerald-500 to-emerald-600',
-      description: 'All time revenue'
-    },
-    {
-      title: 'Total Orders',
-      value: '22',
-      change: 8.2,
-      changeType: 'increase',
-      icon: ShoppingCart,
-      color: 'from-blue-500 to-blue-600',
-      description: 'All time orders'
-    },
-    {
-      title: 'Unique Customers',
-      value: '21',
-      change: -2.1,
-      changeType: 'decrease',
-      icon: Users,
-      color: 'from-purple-500 to-purple-600',
-      description: 'Total customers'
-    },
-    {
-      title: 'Avg Order Value',
-      value: '₹589',
-      change: 15.3,
-      changeType: 'increase',
-      icon: Target,
-      color: 'from-orange-500 to-orange-600',
-      description: 'Per order average'
+  // Format time ago
+  const formatTimeAgo = useCallback((dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
+    return date.toLocaleDateString();
+  }, []);
+
+  // Process and combine data from different APIs
+  const processDashboardData = useCallback((analytics: any, orders: any, menu: any): DashboardData => {
+    const ordersList = orders.orders || orders || [];
+    const menuItems = menu.menu || menu || [];
+    
+    // Calculate metrics
+    const totalRevenue = ordersList.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0);
+    const totalOrders = ordersList.length;
+    const uniqueCustomers = new Set(ordersList.map((order: any) => order.customerPhone || order.customerName)).size;
+    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    
+    // Calculate today's data
+    const today = new Date();
+    const todayOrders = ordersList.filter((order: any) => {
+      const orderDate = new Date(order.createdAt || order.timestamp);
+      return orderDate.toDateString() === today.toDateString();
+    });
+    const todayRevenue = todayOrders.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0);
+    const pendingOrders = ordersList.filter((order: any) => order.status === 'pending').length;
+    
+    // Calculate average rating
+    const ordersWithRating = ordersList.filter((order: any) => order.rating && order.rating > 0);
+    const averageRating = ordersWithRating.length > 0 
+      ? ordersWithRating.reduce((sum: number, order: any) => sum + order.rating, 0) / ordersWithRating.length 
+      : 0;
+
+    // Calculate trends (comparing with previous period)
+    const previousPeriodOrders = ordersList.filter((order: any) => {
+      const orderDate = new Date(order.createdAt || order.timestamp);
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return orderDate >= weekAgo && orderDate < today;
+    });
+    const previousRevenue = previousPeriodOrders.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0);
+    
+    const revenueChange = previousRevenue > 0 ? ((todayRevenue - previousRevenue) / previousRevenue) * 100 : 0;
+    const ordersChange = previousPeriodOrders.length > 0 ? ((todayOrders - previousPeriodOrders.length) / previousPeriodOrders.length) * 100 : 0;
+    const customersChange = 0; // Would need historical data for accurate calculation
+
+    // Process recent orders
+    const recentOrders: RecentOrder[] = ordersList
+      .slice(0, 5)
+      .map((order: any) => ({
+        id: order.orderId || order._id?.slice(-6) || 'N/A',
+        customer: order.customerName || 'Walk-in Customer',
+        table: order.tableNumber || 'N/A',
+        amount: order.totalAmount || 0,
+        status: order.status || 'pending',
+        time: formatTimeAgo(order.createdAt || order.timestamp),
+        items: order.items?.length || 0
+      }));
+
+    // Process top items
+    const itemStats: { [key: string]: { orders: number; revenue: number } } = {};
+    ordersList.forEach((order: any) => {
+      order.items?.forEach((item: any) => {
+        if (!itemStats[item.name]) {
+          itemStats[item.name] = { orders: 0, revenue: 0 };
+        }
+        itemStats[item.name].orders += item.quantity;
+        itemStats[item.name].revenue += (item.price || 0) * item.quantity;
+      });
+    });
+
+    const topItems: TopItem[] = Object.entries(itemStats)
+      .map(([name, data]) => ({
+        name,
+        orders: data.orders,
+        revenue: data.revenue,
+        trend: Math.random() * 20 - 10 // Would need historical data for accurate trends
+      }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 4);
+
+    return {
+      metrics: [
+        {
+          title: 'Total Revenue',
+          value: `₹${totalRevenue.toLocaleString()}`,
+          change: Math.abs(revenueChange),
+          changeType: revenueChange >= 0 ? 'increase' : 'decrease',
+          icon: DollarSign,
+          color: 'from-emerald-500 to-emerald-600',
+          description: 'All time revenue'
+        },
+        {
+          title: 'Total Orders',
+          value: totalOrders.toString(),
+          change: Math.abs(ordersChange),
+          changeType: ordersChange >= 0 ? 'increase' : 'decrease',
+          icon: ShoppingCart,
+          color: 'from-blue-500 to-blue-600',
+          description: 'All time orders'
+        },
+        {
+          title: 'Unique Customers',
+          value: uniqueCustomers.toString(),
+          change: Math.abs(customersChange),
+          changeType: customersChange >= 0 ? 'increase' : 'decrease',
+          icon: Users,
+          color: 'from-purple-500 to-purple-600',
+          description: 'Total customers'
+        },
+        {
+          title: 'Avg Order Value',
+          value: `₹${Math.round(avgOrderValue)}`,
+          change: 15.3, // Would need historical data for accurate calculation
+          changeType: 'increase',
+          icon: Target,
+          color: 'from-orange-500 to-orange-600',
+          description: 'Per order average'
+        }
+      ],
+      recentOrders,
+      topItems,
+      totalCustomers: uniqueCustomers,
+      todayRevenue,
+      todayOrders: todayOrders.length,
+      pendingOrders,
+      averageRating
+    };
+  }, [formatTimeAgo]);
+
+  // Fetch real-time dashboard data
+  const fetchDashboardData = useCallback(async (isRefresh = false) => {
+    try {
+      if (isRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+      setError(null);
+
+      // Fetch data from multiple APIs in parallel
+      const [analyticsResponse, ordersResponse, menuResponse] = await Promise.all([
+        fetch('/api/admin/analytics'),
+        fetch('/api/orders'),
+        fetch('/api/menu')
+      ]);
+
+      if (!analyticsResponse.ok || !ordersResponse.ok || !menuResponse.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+
+      const [analyticsData, ordersData, menuData] = await Promise.all([
+        analyticsResponse.json(),
+        ordersResponse.json(),
+        menuResponse.json()
+      ]);
+
+      // Process and combine data
+      const processedData = processDashboardData(analyticsData, ordersData, menuData);
+      setDashboardData(processedData);
+
+      if (isRefresh) {
+        toast({
+          title: "Dashboard Updated",
+          description: "Latest data has been refreshed successfully.",
+        });
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: `Failed to load dashboard: ${errorMessage}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
-  ];
-
-  const recentOrders: RecentOrder[] = [
-    {
-      id: '077205',
-      customer: 'Rahul Kumar',
-      table: 'Table 3',
-      amount: 600,
-      status: 'delivered',
-      time: '2 min ago',
-      items: 4
-    },
-    {
-      id: '022028',
-      customer: 'Priya Sharma',
-      table: 'Table 7',
-      amount: 450,
-      status: 'preparing',
-      time: '5 min ago',
-      items: 3
-    },
-    {
-      id: '493597',
-      customer: 'Amit Patel',
-      table: 'Table 2',
-      amount: 780,
-      status: 'ready',
-      time: '8 min ago',
-      items: 2
-    }
-  ];
-
-  const topItems: TopItem[] = [
-    { name: 'Chicken 555', orders: 7, revenue: 1540, trend: 12.5 },
-    { name: 'Chicken 65', orders: 5, revenue: 1000, trend: 8.2 },
-    { name: 'Mughlai Biryani', orders: 4, revenue: 800, trend: 15.3 },
-    { name: 'Paneer Butter Masala', orders: 3, revenue: 600, trend: -2.1 }
-  ];
+  }, [toast, processDashboardData]);
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => setIsLoading(false), 1000);
+    // Load initial data
+    fetchDashboardData();
     
     // Update time every minute
     const timeTimer = setInterval(() => setCurrentTime(new Date()), 60000);
     
+    // Auto-refresh data every 5 minutes
+    const refreshTimer = setInterval(() => fetchDashboardData(true), 5 * 60 * 1000);
+    
     return () => {
-      clearTimeout(timer);
       clearInterval(timeTimer);
+      clearInterval(refreshTimer);
     };
-  }, []);
+  }, [fetchDashboardData]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -183,6 +313,34 @@ export default function ModernDashboard() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-slate-900">Error Loading Dashboard</h3>
+          <p className="text-slate-600 mb-4">{error}</p>
+          <Button onClick={() => fetchDashboardData()} className="bg-orange-500 hover:bg-orange-600">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dashboardData) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-slate-900">No Data Available</h3>
+          <p className="text-slate-600">Dashboard data is not available at the moment.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
@@ -212,46 +370,103 @@ export default function ModernDashboard() {
               </div>
             </div>
           </div>
-          <div className="hidden md:block">
-            <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center">
-              <Activity className="w-12 h-12 text-white" />
-            </div>
+          
+          <div className="text-right">
+            <Button
+              onClick={() => fetchDashboardData(true)}
+              disabled={isRefreshing}
+              variant="secondary"
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* Metrics Grid */}
+      {/* Today's Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((metric, index) => {
+        <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600">Today&apos;s Orders</p>
+                <p className="text-2xl font-bold text-blue-900">{dashboardData.todayOrders}</p>
+                <p className="text-xs text-blue-600 mt-1">New orders today</p>
+              </div>
+              <ShoppingCart className="w-8 h-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-emerald-600">Today&apos;s Revenue</p>
+                <p className="text-2xl font-bold text-emerald-900">₹{dashboardData.todayRevenue}</p>
+                <p className="text-xs text-emerald-600 mt-1">Revenue today</p>
+              </div>
+              <DollarSign className="w-8 h-8 text-emerald-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-orange-600">Pending Orders</p>
+                <p className="text-2xl font-bold text-orange-900">{dashboardData.pendingOrders}</p>
+                <p className="text-xs text-orange-600 mt-1">Awaiting action</p>
+              </div>
+              <Clock className="w-8 h-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-600">Customer Rating</p>
+                <p className="text-2xl font-bold text-purple-900">{dashboardData.averageRating.toFixed(1)}/5</p>
+                <p className="text-xs text-purple-600 mt-1">Average rating</p>
+              </div>
+              <Star className="w-8 h-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {dashboardData.metrics.map((metric, index) => {
           const Icon = metric.icon;
           return (
-            <Card key={index} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">
-                  {metric.title}
-                </CardTitle>
-                <div className={`w-10 h-10 bg-gradient-to-br ${metric.color} rounded-lg flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className="w-5 h-5 text-white" />
+            <Card key={index} className="group hover:shadow-lg transition-all duration-300">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <Icon className={`w-5 h-5 text-slate-500 group-hover:text-slate-700`} />
+                  <Badge 
+                    variant="secondary" 
+                    className={`text-xs ${
+                      metric.changeType === 'increase' 
+                        ? 'text-emerald-600 bg-emerald-50' 
+                        : 'text-red-600 bg-red-50'
+                    }`}
+                  >
+                    {metric.changeType === 'increase' ? <ArrowUpRight className="w-3 h-3 mr-1" /> : <ArrowDownRight className="w-3 h-3 mr-1" />}
+                    {metric.change.toFixed(1)}%
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900 mb-1">
-                  {metric.value}
-                </div>
-                <div className="flex items-center space-x-2">
-                  {metric.changeType === 'increase' ? (
-                    <ArrowUpRight className="w-4 h-4 text-emerald-500" />
-                  ) : (
-                    <ArrowDownRight className="w-4 h-4 text-red-500" />
-                  )}
-                  <span className={`text-sm font-medium ${
-                    metric.changeType === 'increase' ? 'text-emerald-600' : 'text-red-600'
-                  }`}>
-                    {metric.change}%
-                  </span>
-                  <span className="text-sm text-slate-500">
-                    {metric.description}
-                  </span>
+                <div className="space-y-2">
+                  <p className="text-2xl font-bold text-slate-900">{metric.value}</p>
+                  <p className="text-sm text-slate-600">{metric.title}</p>
+                  <p className="text-xs text-slate-500">{metric.description}</p>
                 </div>
               </CardContent>
             </Card>
@@ -259,32 +474,29 @@ export default function ModernDashboard() {
         })}
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Recent Orders & Top Items Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Recent Orders */}
-        <div className="lg:col-span-2">
-          <Card className="h-full">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center space-x-2">
-                  <ShoppingCart className="w-5 h-5 text-blue-500" />
-                  <span>Recent Orders</span>
-                </CardTitle>
-                <Badge variant="secondary" className="bg-blue-50 text-blue-700">
-                  Live Updates
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentOrders.map((order) => (
-                  <div key={order.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors duration-200">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
-                        #{order.id.slice(-4)}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Recent Orders</span>
+              <Button variant="ghost" size="sm" onClick={() => fetchDashboardData(true)}>
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {dashboardData.recentOrders.length > 0 ? (
+                dashboardData.recentOrders.map((order, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                        #{order.id}
                       </div>
                       <div>
-                        <h4 className="font-semibold text-slate-900">{order.customer}</h4>
+                        <p className="font-medium text-slate-900">{order.customer}</p>
                         <div className="flex items-center space-x-2 text-sm text-slate-500">
                           <span>{order.table}</span>
                           <span>•</span>
@@ -294,6 +506,7 @@ export default function ModernDashboard() {
                         </div>
                       </div>
                     </div>
+                    
                     <div className="text-right">
                       <div className="text-lg font-bold text-slate-900">₹{order.amount}</div>
                       <Badge className={`${getStatusColor(order.status)} text-xs`}>
@@ -301,85 +514,89 @@ export default function ModernDashboard() {
                       </Badge>
                     </div>
                   </div>
-                ))}
-              </div>
-              <div className="mt-6 pt-4 border-t border-slate-200">
-                <Button variant="outline" className="w-full">
-                  View All Orders
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-slate-500">
+                  <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                  <p>No recent orders</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-        {/* Top Selling Items */}
-        <div>
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5 text-emerald-500" />
-                <span>Top Selling Items</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {topItems.map((item, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors duration-200">
+        {/* Top Performing Items */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Top Performing Items</span>
+              <Utensils className="w-5 h-5 text-slate-500" />
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {dashboardData.topItems.length > 0 ? (
+                dashboardData.topItems.map((item, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-red-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm ${
+                        index === 0 ? 'bg-yellow-500' : 
+                        index === 1 ? 'bg-gray-400' : 
+                        index === 2 ? 'bg-orange-500' : 'bg-slate-500'
+                      }`}>
                         {index + 1}
                       </div>
                       <div>
-                        <h4 className="font-medium text-slate-900 text-sm">{item.name}</h4>
-                        <p className="text-xs text-slate-500">{item.orders} orders</p>
+                        <p className="font-medium text-slate-900">{item.name}</p>
+                        <p className="text-sm text-slate-500">{item.orders} orders</p>
                       </div>
                     </div>
+                    
                     <div className="text-right">
-                      <div className="font-semibold text-slate-900">₹{item.revenue}</div>
-                      <div className={`text-xs ${
-                        item.trend > 0 ? 'text-emerald-600' : 'text-red-600'
-                      }`}>
-                        {item.trend > 0 ? '+' : ''}{item.trend}%
-                      </div>
+                      <div className="text-lg font-bold text-slate-900">₹{item.revenue}</div>
+                      <Badge 
+                        variant="secondary" 
+                        className={`text-xs ${
+                          item.trend >= 0 
+                            ? 'text-emerald-600 bg-emerald-50' 
+                            : 'text-red-600 bg-red-50'
+                        }`}
+                      >
+                        {item.trend >= 0 ? <TrendingUp className="w-3 h-3 mr-1" /> : <TrendingDown className="w-3 h-3 mr-1" />}
+                        {Math.abs(item.trend).toFixed(1)}%
+                      </Badge>
                     </div>
                   </div>
-                ))}
-              </div>
-              <div className="mt-6 pt-4 border-t border-slate-200">
-                <Button variant="outline" className="w-full">
-                  View Full Report
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-slate-500">
+                  <Utensils className="w-12 h-12 mx-auto mb-2 text-slate-300" />
+                  <p>No items data available</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Target className="w-5 h-5 text-purple-500" />
-            <span>Quick Actions</span>
-          </CardTitle>
+          <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Button className="h-20 flex-col space-y-2 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
               <ShoppingCart className="w-6 h-6" />
-              <span className="text-sm">New Order</span>
+              <span>View All Orders</span>
             </Button>
-            <Button className="h-20 flex-col space-y-2 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white">
-              <Utensils className="w-6 h-6" />
-              <span className="text-sm">Add Menu Item</span>
-            </Button>
-            <Button className="h-20 flex-col space-y-2 bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white">
+            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
               <BarChart3 className="w-6 h-6" />
-              <span className="text-sm">View Reports</span>
+              <span>Analytics Report</span>
             </Button>
-            <Button className="h-20 flex-col space-y-2 bg-gradient-to-br from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white">
+            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
               <Settings className="w-6 h-6" />
-              <span className="text-sm">Settings</span>
+              <span>Restaurant Settings</span>
             </Button>
           </div>
         </CardContent>

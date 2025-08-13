@@ -90,15 +90,7 @@ export default function ModernMenuManager() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
 
-  // Load all menu items on component mount
-  useEffect(() => {
-    loadMenuItems();
-  }, []);
 
-  // Filter items when search or category changes
-  useEffect(() => {
-    filterItems();
-  }, [searchQuery, selectedCategory, allMenuItems]);
 
   const loadMenuItems = async () => {
     try {
@@ -219,6 +211,21 @@ export default function ModernMenuManager() {
     setFilteredItems(filtered);
     setCurrentPage(1); // Reset to first page when filtering
   };
+
+  // Load menu items on mount and auto-refresh
+  useEffect(() => {
+    loadMenuItems();
+    
+    // Auto-refresh every 2 minutes
+    const refreshInterval = setInterval(loadMenuItems, 2 * 60 * 1000);
+    
+    return () => clearInterval(refreshInterval);
+  }, [loadMenuItems]);
+
+  // Filter items when search or category changes
+  useEffect(() => {
+    filterItems();
+  }, [filterItems]);
 
   const handleAddItem = async (newItem: Omit<MenuItem, 'id'>) => {
     try {
