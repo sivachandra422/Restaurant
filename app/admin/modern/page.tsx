@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import ModernAdminLayout from '@/components/admin/ModernAdminLayout';
 import ModernDashboard from '@/components/admin/ModernDashboard';
 import ModernOrderManager from '@/components/admin/ModernOrderManager';
+import ModernMenuManager from '@/components/admin/ModernMenuManager';
 
 export default function ModernAdminPage() {
   const [currentSection, setCurrentSection] = useState('dashboard');
@@ -15,12 +16,7 @@ export default function ModernAdminPage() {
       case 'orders':
         return <ModernOrderManager />;
       case 'menu':
-        return (
-          <div className="text-center py-12">
-            <h2 className="text-2xl font-bold text-slate-900 mb-4">Menu Management</h2>
-            <p className="text-slate-600">Modern menu management coming soon...</p>
-          </div>
-        );
+        return <ModernMenuManager />;
       case 'analytics':
         return (
           <div className="text-center py-12">
