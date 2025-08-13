@@ -12,9 +12,10 @@ import {
   Clock,
   Utensils,
   CheckCircle,
-  X,
-  Save,
-  Image as ImageIcon
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+  Filter
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,175 +26,351 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 
+// Real MenuItem interface matching your data structure
 interface MenuItem {
-  _id: string;
+  id: string;
   name: string;
+  nameHi?: string;
+  nameTe?: string;
   description: string;
+  descriptionHi?: string;
+  descriptionTe?: string;
   price: number;
   category: string;
+  isVeg: boolean;
+  isSignature?: boolean;
+  isSpecial?: boolean;
   image: string;
-  isVegetarian: boolean;
-  isSpicy: boolean;
-  isPopular: boolean;
-  isAvailable: boolean;
-  preparationTime: number;
-  rating: number;
-  orderCount: number;
+  maxQuantity?: number;
+  minQuantity?: number;
+  preparationTime?: number;
+  popularity?: number;
+  trending?: boolean;
+  isDisabled?: boolean;
 }
 
-const categories = ['Starters', 'Main Course', 'Biryani', 'Rice & Noodles', 'Breads', 'Desserts'];
+// API Response interface
+interface MenuApiResponse {
+  [category: string]: MenuItem[];
+}
 
-// Enhanced mock data with more items
-const mockMenuItems: MenuItem[] = [
-  {
-    _id: '1',
-    name: 'Chicken 555',
-    description: 'Spicy and crispy chicken pieces with aromatic spices',
-    price: 220,
-    category: 'Starters',
-    image: '/menu-images/chicken_555.jpg',
-    isVegetarian: false,
-    isSpicy: true,
-    isPopular: true,
-    isAvailable: true,
-    preparationTime: 15,
-    rating: 4.8,
-    orderCount: 156
-  },
-  {
-    _id: '2',
-    name: 'Paneer Butter Masala',
-    description: 'Creamy and rich cottage cheese in tomato gravy',
-    price: 180,
-    category: 'Main Course',
-    image: '/menu-images/paneer_butter_masala.jpg',
-    isVegetarian: true,
-    isSpicy: false,
-    isPopular: true,
-    isAvailable: true,
-    preparationTime: 20,
-    rating: 4.6,
-    orderCount: 98
-  },
-  {
-    _id: '3',
-    name: 'Mughlai Biryani',
-    description: 'Aromatic basmati rice with tender chicken and spices',
-    price: 280,
-    category: 'Biryani',
-    image: '/menu-images/mughlai_biryani.jpg',
-    isVegetarian: false,
-    isSpicy: true,
-    isPopular: true,
-    isAvailable: true,
-    preparationTime: 25,
-    rating: 4.9,
-    orderCount: 203
-  },
-  {
-    _id: '4',
-    name: 'Veg Fried Rice',
-    description: 'Stir-fried rice with fresh vegetables and soy sauce',
-    price: 160,
-    category: 'Rice & Noodles',
-    image: '/menu-images/veg_fried_rice.jpg',
-    isVegetarian: true,
-    isSpicy: false,
-    isPopular: false,
-    isAvailable: true,
-    preparationTime: 12,
-    rating: 4.3,
-    orderCount: 67
-  },
-  {
-    _id: '5',
-    name: 'Chicken 65',
-    description: 'Spicy deep-fried chicken with curry leaves',
-    price: 200,
-    category: 'Starters',
-    image: '/menu-images/chicken_65.jpg',
-    isVegetarian: false,
-    isSpicy: true,
-    isPopular: true,
-    isAvailable: true,
-    preparationTime: 18,
-    rating: 4.7,
-    orderCount: 134
-  },
-  {
-    _id: '6',
-    name: 'Butter Chicken',
-    description: 'Tender chicken in rich tomato and butter gravy',
-    price: 250,
-    category: 'Main Course',
-    image: '/menu-images/butter_chicken.jpg',
-    isVegetarian: false,
-    isSpicy: false,
-    isPopular: true,
-    isAvailable: true,
-    preparationTime: 22,
-    rating: 4.8,
-    orderCount: 189
-  }
+const categories = [
+  'biryanis', 'starters', 'main_course', 'rice_noodles', 
+  'breads', 'desserts', 'beverages', 'combos'
 ];
 
+const categoryDisplayNames: Record<string, string> = {
+  'biryanis': 'Biryani',
+  'starters': 'Starters',
+  'main_course': 'Main Course',
+  'rice_noodles': 'Rice & Noodles',
+  'breads': 'Breads',
+  'desserts': 'Desserts',
+  'beverages': 'Beverages',
+  'combos': 'Combos'
+};
+
 export default function ModernMenuManager() {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>(mockMenuItems);
+  const { toast } = useToast();
+  const [allMenuItems, setAllMenuItems] = useState<MenuItem[]>([]);
+  const [filteredItems, setFilteredItems] = useState<MenuItem[]>([]);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(20);
 
-  const filteredItems = menuItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // Load all menu items on component mount
+  useEffect(() => {
+    loadMenuItems();
+  }, []);
 
-  const handleAddItem = (newItem: Omit<MenuItem, '_id' | 'rating' | 'orderCount'>) => {
-    const item: MenuItem = {
-      ...newItem,
-      _id: Date.now().toString(),
-      rating: 0,
-      orderCount: 0
-    };
-    setMenuItems(prev => [...prev, item]);
-    setShowAddDialog(false);
+  // Filter items when search or category changes
+  useEffect(() => {
+    filterItems();
+  }, [searchQuery, selectedCategory, allMenuItems]);
+
+  const loadMenuItems = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await fetch('/api/menu');
+      if (!response.ok) {
+        throw new Error('Failed to fetch menu items');
+      }
+      
+      const data: MenuApiResponse = await response.json();
+      
+      // Flatten all categories into a single array
+      const allItems: MenuItem[] = [];
+      Object.entries(data).forEach(([category, items]) => {
+        items.forEach(item => ({
+          ...item,
+          category: category
+        }));
+        allItems.push(...items);
+      });
+      
+      setAllMenuItems(allItems);
+      console.log(`Loaded ${allItems.length} menu items`);
+      
+    } catch (err) {
+      console.error('Error loading menu items:', err);
+      setError('Failed to load menu items. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to load menu items. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleEditItem = (updatedItem: MenuItem) => {
-    setMenuItems(prev => prev.map(item => 
-      item._id === updatedItem._id ? updatedItem : item
-    ));
-    setEditingItem(null);
+  const filterItems = () => {
+    let filtered = allMenuItems;
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(item => 
+        item.name.toLowerCase().includes(query) ||
+        item.description.toLowerCase().includes(query) ||
+        (item.nameHi && item.nameHi.toLowerCase().includes(query)) ||
+        (item.nameTe && item.nameTe.toLowerCase().includes(query))
+      );
+    }
+
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(item => item.category === selectedCategory);
+    }
+
+    setFilteredItems(filtered);
+    setCurrentPage(1); // Reset to first page when filtering
   };
 
-  const handleDeleteItem = (itemId: string) => {
-    setMenuItems(prev => prev.filter(item => item._id !== itemId));
-    setDeleteConfirm(null);
+  const handleAddItem = async (newItem: Omit<MenuItem, 'id'>) => {
+    try {
+      setIsSaving(true);
+      
+      const response = await fetch('/api/menu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newItem)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create menu item');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+                 // Add to local state
+         const itemWithId: MenuItem = {
+           ...newItem,
+           id: result.item?.id || Date.now().toString()
+         };
+        
+        setAllMenuItems(prev => [...prev, itemWithId]);
+        setShowAddDialog(false);
+        
+        toast({
+          title: "Success",
+          description: "Menu item created successfully!",
+        });
+      } else {
+        throw new Error(result.message || 'Failed to create menu item');
+      }
+      
+    } catch (err) {
+      console.error('Error creating menu item:', err);
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : 'Failed to create menu item',
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const toggleItemStatus = (itemId: string, field: keyof MenuItem) => {
-    setMenuItems(prev => prev.map(item => 
-      item._id === itemId ? { ...item, [field]: !item[field] } : item
-    ));
+  const handleEditItem = async (updatedItem: MenuItem) => {
+    try {
+      setIsSaving(true);
+      
+      const response = await fetch(`/api/menu/${updatedItem.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedItem)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update menu item');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+                 // Update local state
+         setAllMenuItems(prev => prev.map(item => 
+           item.id === updatedItem.id ? updatedItem : item
+         ));
+        setEditingItem(null);
+        
+        toast({
+          title: "Success",
+          description: "Menu item updated successfully!",
+        });
+      } else {
+        throw new Error(result.message || 'Failed to update menu item');
+      }
+      
+    } catch (err) {
+      console.error('Error updating menu item:', err);
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : 'Failed to update menu item',
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteItem = async (itemId: string) => {
+    try {
+      setIsSaving(true);
+      
+      const response = await fetch(`/api/menu/${itemId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete menu item');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Remove from local state
+        setAllMenuItems(prev => prev.filter(item => item.id !== itemId));
+        setDeleteConfirm(null);
+        
+        toast({
+          title: "Success",
+          description: "Menu item deleted successfully!",
+        });
+      } else {
+        throw new Error(result.message || 'Failed to delete menu item');
+      }
+      
+    } catch (err) {
+      console.error('Error deleting menu item:', err);
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : 'Failed to delete menu item',
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const toggleItemStatus = async (itemId: string, field: keyof MenuItem) => {
+    try {
+      const item = allMenuItems.find(item => item.id === itemId);
+      if (!item) return;
+
+      const updatedItem = { ...item, [field]: !item[field] };
+      
+      // Optimistically update UI
+      setAllMenuItems(prev => prev.map(item => 
+        item.id === itemId ? updatedItem : item
+      ));
+
+      // Send update to server
+      const response = await fetch(`/api/menu/${itemId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedItem)
+      });
+
+      if (!response.ok) {
+        // Revert on failure
+        setAllMenuItems(prev => prev.map(item => 
+          item.id === itemId ? item : item
+        ));
+        throw new Error('Failed to update item status');
+      }
+
+    } catch (err) {
+      console.error('Error updating item status:', err);
+      toast({
+        title: "Error",
+        description: "Failed to update item status. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      'Starters': 'bg-blue-100 text-blue-800',
-      'Main Course': 'bg-green-100 text-green-800',
-      'Biryani': 'bg-purple-100 text-purple-800',
-      'Rice & Noodles': 'bg-orange-100 text-orange-800',
-      'Breads': 'bg-yellow-100 text-yellow-800',
-      'Desserts': 'bg-pink-100 text-pink-800'
+      'biryanis': 'bg-purple-100 text-purple-800',
+      'starters': 'bg-blue-100 text-blue-800',
+      'main_course': 'bg-green-100 text-green-800',
+      'rice_noodles': 'bg-orange-100 text-orange-800',
+      'breads': 'bg-yellow-100 text-yellow-800',
+      'desserts': 'bg-pink-100 text-pink-800',
+      'beverages': 'bg-cyan-100 text-cyan-800',
+      'combos': 'bg-indigo-100 text-indigo-800'
     };
     return colors[category] || 'bg-gray-100 text-gray-800';
   };
+
+  // Pagination
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentItems = filteredItems.slice(startIndex, endIndex);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-orange-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-slate-900">Loading Menu Items...</h3>
+          <p className="text-slate-600">Please wait while we fetch your menu data</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-slate-900">Error Loading Menu</h3>
+          <p className="text-slate-600 mb-4">{error}</p>
+          <Button onClick={loadMenuItems} className="bg-orange-500 hover:bg-orange-600">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -201,7 +378,9 @@ export default function ModernMenuManager() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Menu Management</h1>
-          <p className="text-slate-600 mt-1">Create, edit, and organize your restaurant menu items</p>
+          <p className="text-slate-600 mt-1">
+            Manage your {allMenuItems.length} menu items across {categories.length} categories
+          </p>
         </div>
         
         <div className="flex items-center space-x-3">
@@ -212,6 +391,16 @@ export default function ModernMenuManager() {
           >
             {viewMode === 'grid' ? <List className="w-4 h-4 mr-2" /> : <Grid3X3 className="w-4 h-4 mr-2" />}
             {viewMode === 'grid' ? 'List View' : 'Grid View'}
+          </Button>
+          
+          <Button
+            variant="outline"
+            onClick={loadMenuItems}
+            disabled={isLoading}
+            className="hidden md:flex"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
           </Button>
           
           <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
@@ -228,6 +417,7 @@ export default function ModernMenuManager() {
               <AddEditMenuItemForm 
                 onSubmit={handleAddItem}
                 onCancel={() => setShowAddDialog(false)}
+                isSaving={isSaving}
               />
             </DialogContent>
           </Dialog>
@@ -241,7 +431,7 @@ export default function ModernMenuManager() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-blue-600">Total Items</p>
-                <p className="text-2xl font-bold text-blue-900">{menuItems.length}</p>
+                <p className="text-2xl font-bold text-blue-900">{allMenuItems.length}</p>
               </div>
               <Utensils className="w-8 h-8 text-blue-600" />
             </div>
@@ -254,7 +444,7 @@ export default function ModernMenuManager() {
               <div>
                 <p className="text-sm font-medium text-emerald-600">Available Items</p>
                 <p className="text-2xl font-bold text-emerald-900">
-                  {menuItems.filter(item => item.isAvailable).length}
+                  {allMenuItems.filter(item => !item.isDisabled).length}
                 </p>
               </div>
               <CheckCircle className="w-8 h-8 text-emerald-600" />
@@ -266,9 +456,9 @@ export default function ModernMenuManager() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-orange-600">Popular Items</p>
+                <p className="text-sm font-medium text-orange-600">Signature Items</p>
                 <p className="text-2xl font-bold text-orange-900">
-                  {menuItems.filter(item => item.isPopular).length}
+                  {allMenuItems.filter(item => item.isSignature).length}
                 </p>
               </div>
               <Star className="w-8 h-8 text-orange-600" />
@@ -283,7 +473,7 @@ export default function ModernMenuManager() {
                 <p className="text-sm font-medium text-purple-600">Categories</p>
                 <p className="text-2xl font-bold text-purple-900">{categories.length}</p>
               </div>
-              <Utensils className="w-8 h-8 text-purple-600" />
+              <Filter className="w-8 h-8 text-purple-600" />
             </div>
           </CardContent>
         </Card>
@@ -297,7 +487,7 @@ export default function ModernMenuManager() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
-                  placeholder="Search menu items..."
+                  placeholder="Search menu items by name, description, or language..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -312,7 +502,9 @@ export default function ModernMenuManager() {
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map(category => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                  <SelectItem key={category} value={category}>
+                    {categoryDisplayNames[category] || category}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -327,11 +519,43 @@ export default function ModernMenuManager() {
         </CardContent>
       </Card>
 
+      {/* Results Summary */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-slate-600">
+          Showing {startIndex + 1}-{Math.min(endIndex, filteredItems.length)} of {filteredItems.length} items
+          {searchQuery || selectedCategory !== 'all' && ` (filtered)`}
+        </p>
+        
+        {filteredItems.length > 0 && (
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-slate-600">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </div>
+
       {/* Menu Items Grid */}
       {viewMode === 'grid' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredItems.map((item) => (
-            <Card key={item._id} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+          {currentItems.map((item) => (
+            <Card key={item.id} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
               <CardHeader className="pb-3">
                 <div className="relative">
                   <div className="w-full h-48 bg-gradient-to-br from-slate-200 to-slate-300 rounded-lg flex items-center justify-center overflow-hidden">
@@ -342,27 +566,30 @@ export default function ModernMenuManager() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <ImageIcon className="w-16 h-16 text-slate-400" />
+                      <Utensils className="w-16 h-16 text-slate-400" />
                     )}
                   </div>
                   
                   <div className="absolute top-2 left-2 space-y-1">
-                    {item.isVegetarian && (
+                    {item.isVeg && (
                       <Badge className="bg-green-100 text-green-800 text-xs">🥬 Veg</Badge>
                     )}
-                    {item.isSpicy && (
-                      <Badge className="bg-red-100 text-red-800 text-xs">🌶️ Spicy</Badge>
+                    {item.isSignature && (
+                      <Badge className="bg-yellow-100 text-yellow-800 text-xs">⭐ Signature</Badge>
                     )}
-                    {item.isPopular && (
-                      <Badge className="bg-yellow-100 text-yellow-800 text-xs">⭐ Popular</Badge>
+                    {item.isSpecial && (
+                      <Badge className="bg-purple-100 text-purple-800 text-xs">🎯 Special</Badge>
+                    )}
+                    {item.trending && (
+                      <Badge className="bg-red-100 text-red-800 text-xs">🔥 Trending</Badge>
                     )}
                   </div>
 
                   {/* Availability Toggle */}
                   <div className="absolute top-2 right-2">
                     <Switch
-                      checked={item.isAvailable}
-                      onCheckedChange={() => toggleItemStatus(item._id, 'isAvailable')}
+                      checked={!item.isDisabled}
+                      onCheckedChange={() => toggleItemStatus(item.id, 'isDisabled')}
                       className="data-[state=checked]:bg-green-500"
                     />
                   </div>
@@ -373,26 +600,40 @@ export default function ModernMenuManager() {
                 <div>
                   <h3 className="font-semibold text-slate-900 text-lg mb-1">{item.name}</h3>
                   <p className="text-sm text-slate-600 line-clamp-2">{item.description}</p>
+                  {item.nameHi && (
+                    <p className="text-xs text-slate-500 mt-1">🇮🇳 {item.nameHi}</p>
+                  )}
+                  {item.nameTe && (
+                    <p className="text-xs text-slate-500">🇮🇳 {item.nameTe}</p>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between">
                   <Badge className={getCategoryColor(item.category)}>
-                    {item.category}
+                    {categoryDisplayNames[item.category] || item.category}
                   </Badge>
                   <div className="text-right">
                     <p className="text-lg font-bold text-slate-900">₹{item.price}</p>
-                    <div className="flex items-center space-x-1 text-xs text-slate-500">
-                      <Clock className="w-3 h-3" />
-                      <span>{item.preparationTime}min</span>
-                    </div>
+                    {item.preparationTime && (
+                      <div className="flex items-center space-x-1 text-xs text-slate-500">
+                        <Clock className="w-3 h-3" />
+                        <span>{item.preparationTime}min</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center space-x-1">
-                    <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                    <span className="font-medium">{item.rating}</span>
-                    <span className="text-slate-500">({item.orderCount} orders)</span>
+                    {item.popularity && (
+                      <>
+                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                        <span className="font-medium">{item.popularity}/10</span>
+                      </>
+                    )}
+                    {item.maxQuantity && (
+                      <span className="text-slate-500">Max: {item.maxQuantity}</span>
+                    )}
                   </div>
                 </div>
 
@@ -410,7 +651,7 @@ export default function ModernMenuManager() {
                     variant="outline" 
                     size="sm" 
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    onClick={() => setDeleteConfirm(item._id)}
+                    onClick={() => setDeleteConfirm(item.id)}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -459,11 +700,12 @@ export default function ModernMenuManager() {
             <DialogHeader>
               <DialogTitle>Edit Menu Item</DialogTitle>
             </DialogHeader>
-            <AddEditMenuItemForm 
-              item={editingItem}
-              onSubmit={(updatedItem) => handleEditItem(updatedItem as MenuItem)}
-              onCancel={() => setEditingItem(null)}
-            />
+                         <AddEditMenuItemForm 
+               item={editingItem}
+               onSubmit={(updatedItem) => handleEditItem(updatedItem as MenuItem)}
+               onCancel={() => setEditingItem(null)}
+               isSaving={isSaving}
+             />
           </DialogContent>
         </Dialog>
       )}
@@ -487,7 +729,9 @@ export default function ModernMenuManager() {
               <Button 
                 variant="destructive" 
                 onClick={() => handleDeleteItem(deleteConfirm)}
+                disabled={isSaving}
               >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 Delete
               </Button>
             </div>
@@ -498,49 +742,49 @@ export default function ModernMenuManager() {
   );
 }
 
-// Add/Edit Form Component
+// Enhanced Add/Edit Form Component
 function AddEditMenuItemForm({ 
   item, 
   onSubmit, 
-  onCancel 
+  onCancel,
+  isSaving
 }: { 
   item?: MenuItem; 
-  onSubmit: (item: Omit<MenuItem, '_id' | 'rating' | 'orderCount'> | MenuItem) => void; 
-  onCancel: () => void; 
+  onSubmit: (item: Omit<MenuItem, 'id'>) => void; 
+  onCancel: () => void;
+  isSaving: boolean;
 }) {
   const [formData, setFormData] = useState({
     name: item?.name || '',
+    nameHi: item?.nameHi || '',
+    nameTe: item?.nameTe || '',
     description: item?.description || '',
+    descriptionHi: item?.descriptionHi || '',
+    descriptionTe: item?.descriptionTe || '',
     price: item?.price || 0,
-    category: item?.category || 'Starters',
+    category: item?.category || 'starters',
+    isVeg: item?.isVeg || false,
+    isSignature: item?.isSignature || false,
+    isSpecial: item?.isSpecial || false,
     image: item?.image || '',
-    isVegetarian: item?.isVegetarian || false,
-    isSpicy: item?.isSpicy || false,
-    isPopular: item?.isPopular || false,
-    isAvailable: item?.isAvailable ?? true,
-    preparationTime: item?.preparationTime || 15
+    maxQuantity: item?.maxQuantity || 10,
+    minQuantity: item?.minQuantity || 1,
+    preparationTime: item?.preparationTime || 15,
+    popularity: item?.popularity || 5,
+    trending: item?.trending || false,
+    isDisabled: item?.isDisabled || false
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (item) {
-      // Edit existing item - preserve _id, rating, and orderCount
-      const updatedItem: MenuItem = {
-        ...item,
-        ...formData
-      };
-      onSubmit(updatedItem);
-    } else {
-      // Add new item
-      onSubmit(formData);
-    }
+    onSubmit(formData);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="name">Item Name</Label>
+          <Label htmlFor="name">Item Name (English)</Label>
           <Input
             id="name"
             value={formData.name}
@@ -563,8 +807,30 @@ function AddEditMenuItemForm({
         </div>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="nameHi">Item Name (Hindi)</Label>
+          <Input
+            id="nameHi"
+            value={formData.nameHi}
+            onChange={(e) => setFormData(prev => ({ ...prev, nameHi: e.target.value }))}
+            placeholder="e.g., चिकन 555"
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="nameTe">Item Name (Telugu)</Label>
+          <Input
+            id="nameTe"
+            value={formData.nameTe}
+            onChange={(e) => setFormData(prev => ({ ...prev, nameTe: e.target.value }))}
+            placeholder="e.g., చికెన్ 555"
+          />
+        </div>
+      </div>
+
       <div>
-        <Label htmlFor="description">Description</Label>
+        <Label htmlFor="description">Description (English)</Label>
         <Textarea
           id="description"
           value={formData.description}
@@ -577,6 +843,30 @@ function AddEditMenuItemForm({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
+          <Label htmlFor="descriptionHi">Description (Hindi)</Label>
+          <Textarea
+            id="descriptionHi"
+            value={formData.descriptionHi}
+            onChange={(e) => setFormData(prev => ({ ...prev, descriptionHi: e.target.value }))}
+            placeholder="Hindi description..."
+            rows={2}
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="descriptionTe">Description (Telugu)</Label>
+          <Textarea
+            id="descriptionTe"
+            value={formData.descriptionTe}
+            onChange={(e) => setFormData(prev => ({ ...prev, descriptionTe: e.target.value }))}
+            placeholder="Telugu description..."
+            rows={2}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
           <Label htmlFor="category">Category</Label>
           <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
             <SelectTrigger>
@@ -584,7 +874,9 @@ function AddEditMenuItemForm({
             </SelectTrigger>
             <SelectContent>
               {categories.map(category => (
-                <SelectItem key={category} value={category}>{category}</SelectItem>
+                <SelectItem key={category} value={category}>
+                  {categoryDisplayNames[category] || category}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -599,6 +891,43 @@ function AddEditMenuItemForm({
             onChange={(e) => setFormData(prev => ({ ...prev, preparationTime: Number(e.target.value) }))}
             placeholder="15"
             required
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="popularity">Popularity Score (1-10)</Label>
+          <Input
+            id="popularity"
+            type="number"
+            min="1"
+            max="10"
+            value={formData.popularity}
+            onChange={(e) => setFormData(prev => ({ ...prev, popularity: Number(e.target.value) }))}
+            placeholder="5"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="maxQuantity">Maximum Quantity</Label>
+          <Input
+            id="maxQuantity"
+            type="number"
+            value={formData.maxQuantity}
+            onChange={(e) => setFormData(prev => ({ ...prev, maxQuantity: Number(e.target.value) }))}
+            placeholder="10"
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="minQuantity">Minimum Quantity</Label>
+          <Input
+            id="minQuantity"
+            type="number"
+            value={formData.minQuantity}
+            onChange={(e) => setFormData(prev => ({ ...prev, minQuantity: Number(e.target.value) }))}
+            placeholder="1"
           />
         </div>
       </div>
@@ -616,46 +945,51 @@ function AddEditMenuItemForm({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="flex items-center space-x-2">
           <Switch
-            id="isVegetarian"
-            checked={formData.isVegetarian}
-            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isVegetarian: checked }))}
+            id="isVeg"
+            checked={formData.isVeg}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isVeg: checked }))}
           />
-          <Label htmlFor="isVegetarian">Vegetarian</Label>
+          <Label htmlFor="isVeg">Vegetarian</Label>
         </div>
         
         <div className="flex items-center space-x-2">
           <Switch
-            id="isSpicy"
-            checked={formData.isSpicy}
-            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isSpicy: checked }))}
+            id="isSignature"
+            checked={formData.isSignature}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isSignature: checked }))}
           />
-          <Label htmlFor="isSpicy">Spicy</Label>
+          <Label htmlFor="isSignature">Signature</Label>
         </div>
         
         <div className="flex items-center space-x-2">
           <Switch
-            id="isPopular"
-            checked={formData.isPopular}
-            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isPopular: checked }))}
+            id="isSpecial"
+            checked={formData.isSpecial}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isSpecial: checked }))}
           />
-          <Label htmlFor="isPopular">Popular</Label>
+          <Label htmlFor="isSpecial">Special</Label>
         </div>
         
         <div className="flex items-center space-x-2">
           <Switch
-            id="isAvailable"
-            checked={formData.isAvailable}
-            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isAvailable: checked }))}
+            id="trending"
+            checked={formData.trending}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, trending: checked }))}
           />
-          <Label htmlFor="isAvailable">Available</Label>
+          <Label htmlFor="trending">Trending</Label>
         </div>
       </div>
 
       <div className="flex justify-end space-x-3 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isSaving}>
           Cancel
         </Button>
-        <Button type="submit" className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white">
+        <Button 
+          type="submit" 
+          className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white"
+          disabled={isSaving}
+        >
+          {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
           {item ? 'Update Item' : 'Add Item'}
         </Button>
       </div>
