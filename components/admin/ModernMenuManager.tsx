@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
   Search, 
@@ -11,13 +11,20 @@ import {
   Star,
   Clock,
   Utensils,
-  CheckCircle
+  CheckCircle,
+  X,
+  Save,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 interface MenuItem {
   _id: string;
@@ -37,6 +44,7 @@ interface MenuItem {
 
 const categories = ['Starters', 'Main Course', 'Biryani', 'Rice & Noodles', 'Breads', 'Desserts'];
 
+// Enhanced mock data with more items
 const mockMenuItems: MenuItem[] = [
   {
     _id: '1',
@@ -67,6 +75,66 @@ const mockMenuItems: MenuItem[] = [
     preparationTime: 20,
     rating: 4.6,
     orderCount: 98
+  },
+  {
+    _id: '3',
+    name: 'Mughlai Biryani',
+    description: 'Aromatic basmati rice with tender chicken and spices',
+    price: 280,
+    category: 'Biryani',
+    image: '/menu-images/mughlai_biryani.jpg',
+    isVegetarian: false,
+    isSpicy: true,
+    isPopular: true,
+    isAvailable: true,
+    preparationTime: 25,
+    rating: 4.9,
+    orderCount: 203
+  },
+  {
+    _id: '4',
+    name: 'Veg Fried Rice',
+    description: 'Stir-fried rice with fresh vegetables and soy sauce',
+    price: 160,
+    category: 'Rice & Noodles',
+    image: '/menu-images/veg_fried_rice.jpg',
+    isVegetarian: true,
+    isSpicy: false,
+    isPopular: false,
+    isAvailable: true,
+    preparationTime: 12,
+    rating: 4.3,
+    orderCount: 67
+  },
+  {
+    _id: '5',
+    name: 'Chicken 65',
+    description: 'Spicy deep-fried chicken with curry leaves',
+    price: 200,
+    category: 'Starters',
+    image: '/menu-images/chicken_65.jpg',
+    isVegetarian: false,
+    isSpicy: true,
+    isPopular: true,
+    isAvailable: true,
+    preparationTime: 18,
+    rating: 4.7,
+    orderCount: 134
+  },
+  {
+    _id: '6',
+    name: 'Butter Chicken',
+    description: 'Tender chicken in rich tomato and butter gravy',
+    price: 250,
+    category: 'Main Course',
+    image: '/menu-images/butter_chicken.jpg',
+    isVegetarian: false,
+    isSpicy: false,
+    isPopular: true,
+    isAvailable: true,
+    preparationTime: 22,
+    rating: 4.8,
+    orderCount: 189
   }
 ];
 
@@ -75,12 +143,45 @@ export default function ModernMenuManager() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const filteredItems = menuItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         item.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const handleAddItem = (newItem: Omit<MenuItem, '_id' | 'rating' | 'orderCount'>) => {
+    const item: MenuItem = {
+      ...newItem,
+      _id: Date.now().toString(),
+      rating: 0,
+      orderCount: 0
+    };
+    setMenuItems(prev => [...prev, item]);
+    setShowAddDialog(false);
+  };
+
+  const handleEditItem = (updatedItem: MenuItem) => {
+    setMenuItems(prev => prev.map(item => 
+      item._id === updatedItem._id ? updatedItem : item
+    ));
+    setEditingItem(null);
+  };
+
+  const handleDeleteItem = (itemId: string) => {
+    setMenuItems(prev => prev.filter(item => item._id !== itemId));
+    setDeleteConfirm(null);
+  };
+
+  const toggleItemStatus = (itemId: string, field: keyof MenuItem) => {
+    setMenuItems(prev => prev.map(item => 
+      item._id === itemId ? { ...item, [field]: !item[field] } : item
+    ));
+  };
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -113,10 +214,23 @@ export default function ModernMenuManager() {
             {viewMode === 'grid' ? 'List View' : 'Grid View'}
           </Button>
           
-          <Button className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Menu Item
-          </Button>
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Menu Item
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Add New Menu Item</DialogTitle>
+              </DialogHeader>
+              <AddEditMenuItemForm 
+                onSubmit={handleAddItem}
+                onCancel={() => setShowAddDialog(false)}
+              />
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -221,11 +335,15 @@ export default function ModernMenuManager() {
               <CardHeader className="pb-3">
                 <div className="relative">
                   <div className="w-full h-48 bg-gradient-to-br from-slate-200 to-slate-300 rounded-lg flex items-center justify-center overflow-hidden">
-                    <img 
-                      src={item.image} 
-                      alt={item.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    {item.image ? (
+                      <img 
+                        src={item.image} 
+                        alt={item.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <ImageIcon className="w-16 h-16 text-slate-400" />
+                    )}
                   </div>
                   
                   <div className="absolute top-2 left-2 space-y-1">
@@ -238,6 +356,15 @@ export default function ModernMenuManager() {
                     {item.isPopular && (
                       <Badge className="bg-yellow-100 text-yellow-800 text-xs">⭐ Popular</Badge>
                     )}
+                  </div>
+
+                  {/* Availability Toggle */}
+                  <div className="absolute top-2 right-2">
+                    <Switch
+                      checked={item.isAvailable}
+                      onCheckedChange={() => toggleItemStatus(item._id, 'isAvailable')}
+                      className="data-[state=checked]:bg-green-500"
+                    />
                   </div>
                 </div>
               </CardHeader>
@@ -270,11 +397,21 @@ export default function ModernMenuManager() {
                 </div>
 
                 <div className="flex space-x-2 pt-3 border-t border-slate-100">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => setEditingItem(item)}
+                  >
                     <Edit className="w-4 h-4 mr-2" />
                     Edit
                   </Button>
-                  <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => setDeleteConfirm(item._id)}
+                  >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -306,7 +443,7 @@ export default function ModernMenuManager() {
                 Clear All Filters
               </Button>
             ) : (
-              <Button>
+              <Button onClick={() => setShowAddDialog(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add First Item
               </Button>
@@ -314,6 +451,214 @@ export default function ModernMenuManager() {
           </CardContent>
         </Card>
       )}
+
+      {/* Edit Dialog */}
+      {editingItem && (
+        <Dialog open={!!editingItem} onOpenChange={() => setEditingItem(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Menu Item</DialogTitle>
+            </DialogHeader>
+            <AddEditMenuItemForm 
+              item={editingItem}
+              onSubmit={(updatedItem) => handleEditItem(updatedItem as MenuItem)}
+              onCancel={() => setEditingItem(null)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirm && (
+        <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Delete Menu Item</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-slate-600">
+                Are you sure you want to delete this menu item? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={() => handleDeleteItem(deleteConfirm)}
+              >
+                Delete
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
+  );
+}
+
+// Add/Edit Form Component
+function AddEditMenuItemForm({ 
+  item, 
+  onSubmit, 
+  onCancel 
+}: { 
+  item?: MenuItem; 
+  onSubmit: (item: Omit<MenuItem, '_id' | 'rating' | 'orderCount'> | MenuItem) => void; 
+  onCancel: () => void; 
+}) {
+  const [formData, setFormData] = useState({
+    name: item?.name || '',
+    description: item?.description || '',
+    price: item?.price || 0,
+    category: item?.category || 'Starters',
+    image: item?.image || '',
+    isVegetarian: item?.isVegetarian || false,
+    isSpicy: item?.isSpicy || false,
+    isPopular: item?.isPopular || false,
+    isAvailable: item?.isAvailable ?? true,
+    preparationTime: item?.preparationTime || 15
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (item) {
+      // Edit existing item - preserve _id, rating, and orderCount
+      const updatedItem: MenuItem = {
+        ...item,
+        ...formData
+      };
+      onSubmit(updatedItem);
+    } else {
+      // Add new item
+      onSubmit(formData);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="name">Item Name</Label>
+          <Input
+            id="name"
+            value={formData.name}
+            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            placeholder="e.g., Chicken 555"
+            required
+          />
+        </div>
+        
+        <div>
+          <Label htmlFor="price">Price (₹)</Label>
+          <Input
+            id="price"
+            type="number"
+            value={formData.price}
+            onChange={(e) => setFormData(prev => ({ ...prev, price: Number(e.target.value) }))}
+            placeholder="220"
+            required
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+          placeholder="Describe the dish..."
+          rows={3}
+          required
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="category">Category</Label>
+          <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map(category => (
+                <SelectItem key={category} value={category}>{category}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div>
+          <Label htmlFor="preparationTime">Preparation Time (minutes)</Label>
+          <Input
+            id="preparationTime"
+            type="number"
+            value={formData.preparationTime}
+            onChange={(e) => setFormData(prev => ({ ...prev, preparationTime: Number(e.target.value) }))}
+            placeholder="15"
+            required
+          />
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="image">Image URL</Label>
+        <Input
+          id="image"
+          value={formData.image}
+          onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
+          placeholder="https://example.com/image.jpg"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="isVegetarian"
+            checked={formData.isVegetarian}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isVegetarian: checked }))}
+          />
+          <Label htmlFor="isVegetarian">Vegetarian</Label>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="isSpicy"
+            checked={formData.isSpicy}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isSpicy: checked }))}
+          />
+          <Label htmlFor="isSpicy">Spicy</Label>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="isPopular"
+            checked={formData.isPopular}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isPopular: checked }))}
+          />
+          <Label htmlFor="isPopular">Popular</Label>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="isAvailable"
+            checked={formData.isAvailable}
+            onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isAvailable: checked }))}
+          />
+          <Label htmlFor="isAvailable">Available</Label>
+        </div>
+      </div>
+
+      <div className="flex justify-end space-x-3 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white">
+          {item ? 'Update Item' : 'Add Item'}
+        </Button>
+      </div>
+    </form>
   );
 }
