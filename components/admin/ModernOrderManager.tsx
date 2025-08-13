@@ -232,7 +232,33 @@ export default function ModernOrderManager() {
   // Sync with real-time updates
   useEffect(() => {
     if (realTimeOrders && realTimeOrders.length > 0) {
-      setOrders(realTimeOrders as Order[]);
+      // Convert RealTimeOrderContext orders to local Order format
+      const convertedOrders: Order[] = realTimeOrders.map(rtOrder => ({
+        _id: rtOrder._id,
+        orderId: rtOrder.orderId,
+        tableNumber: rtOrder.tableNumber,
+        customerName: rtOrder.customerName,
+        customerPhone: '', // RealTimeOrderContext doesn't have this field
+        specialInstructions: rtOrder.notes || '', // Map notes to specialInstructions
+        items: rtOrder.items.map(item => ({
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          isVeg: true, // Default value since RealTimeOrderContext doesn't have this
+          category: 'Main Course', // Default value
+          subtotal: item.subtotal
+        })),
+        totalAmount: rtOrder.totalAmount,
+        status: rtOrder.status as Order['status'], // Cast to local status type
+        paymentMethod: rtOrder.paymentMethod,
+        paymentStatus: rtOrder.paymentStatus as Order['paymentStatus'], // Cast to local payment status type
+        timestamp: rtOrder.createdAt, // Use createdAt as timestamp
+        createdAt: rtOrder.createdAt,
+        updatedAt: rtOrder.updatedAt,
+        rating: rtOrder.rating,
+        feedback: rtOrder.feedback
+      }));
+      setOrders(convertedOrders);
     }
   }, [realTimeOrders]);
 
@@ -588,10 +614,10 @@ export default function ModernOrderManager() {
               Order #{statusDialog.order.orderId} - Table {statusDialog.order.tableNumber}
             </p>
             
-            <Select 
-              value={statusDialog.newStatus} 
-              onValueChange={(value) => setStatusDialog(prev => ({ ...prev, newStatus: value }))}
-            >
+                          <Select 
+                value={statusDialog.newStatus} 
+                onValueChange={(value: Order['status']) => setStatusDialog(prev => ({ ...prev, newStatus: value }))}
+              >
               <SelectTrigger>
                 <SelectValue placeholder="Select new status" />
               </SelectTrigger>
@@ -614,7 +640,7 @@ export default function ModernOrderManager() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setStatusDialog({ isOpen: false, order: null, newStatus: '' })}
+                onClick={() => setStatusDialog({ isOpen: false, order: null, newStatus: 'pending' })}
                 className="flex-1"
               >
                 Cancel

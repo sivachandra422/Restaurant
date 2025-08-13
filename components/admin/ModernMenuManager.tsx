@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Plus, 
   Search, 
@@ -92,7 +92,7 @@ export default function ModernMenuManager() {
 
 
 
-  const loadMenuItems = async () => {
+  const loadMenuItems = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -160,11 +160,11 @@ export default function ModernMenuManager() {
       console.log('Falling back to static menu data');
       try {
         const staticItems: MenuItem[] = Object.entries(sriKanyaMenu).flatMap(([category, items]) => 
-          items.map((item: any) => ({
+          Array.isArray(items) ? items.map((item: any) => ({
             ...item,
             category: category,
             id: item.id || `static_${category}_${Math.random()}`
-          }))
+          })) : []
         );
         
         setAllMenuItems(staticItems);
@@ -187,9 +187,9 @@ export default function ModernMenuManager() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
-  const filterItems = () => {
+  const filterItems = useCallback(() => {
     let filtered = allMenuItems;
 
     // Filter by search query
@@ -210,7 +210,7 @@ export default function ModernMenuManager() {
 
     setFilteredItems(filtered);
     setCurrentPage(1); // Reset to first page when filtering
-  };
+  }, [allMenuItems, searchQuery, selectedCategory]);
 
   // Load menu items on mount and auto-refresh
   useEffect(() => {
