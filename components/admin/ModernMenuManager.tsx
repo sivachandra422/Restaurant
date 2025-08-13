@@ -50,6 +50,7 @@ interface MenuItem {
   popularity?: number;
   trending?: boolean;
   isDisabled?: boolean;
+  rating?: number; // Added for new rating display
 }
 
 // API Response interface
@@ -153,7 +154,8 @@ export default function ModernMenuManager() {
         nameHi: item.nameHi,
         nameTe: item.nameTe,
         descriptionHi: item.descriptionHi,
-        descriptionTe: item.descriptionTe
+        descriptionTe: item.descriptionTe,
+        rating: item.rating // Assuming rating is part of the item object
       }));
       
       setAllMenuItems(allItems);
@@ -684,12 +686,17 @@ export default function ModernMenuManager() {
 
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center space-x-1">
-                    {item.popularity && (
+                    {item.rating ? (
                       <>
                         <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                        <span className="font-medium">{item.popularity}/10</span>
+                        <span className="font-medium">{item.rating}/5</span>
                       </>
-                    )}
+                    ) : item.popularity ? (
+                      <>
+                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                        <span className="font-medium">Popularity: {item.popularity}/10</span>
+                      </>
+                    ) : null}
                     {item.maxQuantity && (
                       <span className="text-slate-500">Max: {item.maxQuantity}</span>
                     )}
@@ -831,7 +838,8 @@ function AddEditMenuItemForm({
     preparationTime: item?.preparationTime || 15,
     popularity: item?.popularity || 5,
     trending: item?.trending || false,
-    isDisabled: item?.isDisabled || false
+    isDisabled: item?.isDisabled || false,
+    rating: item?.rating || 0 // Added rating field
   });
 
   const handleSubmit = (e: React.FormEvent) => {
