@@ -63,30 +63,50 @@ export async function PUT(request: NextRequest) {
 function getDefaultSettings() {
   return {
     restaurant: {
-      name: 'Sri Kanya Family restaurant',
+      name: 'Sri Kanya Family Restaurant',
       description: 'Authentic Indian Cuisine & Traditional Flavors',
-      contact: {
-        phone: '+91-9876543210',
-        email: 'srikanya.dharmavaram@gmail.com',
-        address: 'Dharmavaram, Andhra Pradesh - 533430'
+      address: 'Dharmavaram, Andhra Pradesh - 533430',
+      phone: '+91-9876543210',
+      email: 'srikanya.dharmavaram@gmail.com',
+      website: 'https://srikanya.com',
+      cuisine: 'Indian',
+      openingHours: {
+        monday: { open: '08:00', close: '23:00', closed: false },
+        tuesday: { open: '08:00', close: '23:00', closed: false },
+        wednesday: { open: '08:00', close: '23:00', closed: false },
+        thursday: { open: '08:00', close: '23:00', closed: false },
+        friday: { open: '08:00', close: '23:00', closed: false },
+        saturday: { open: '08:00', close: '23:00', closed: false },
+        sunday: { open: '08:00', close: '23:00', closed: false }
       },
-      social: {
-        facebook: 'https://facebook.com/srikanya',
-        instagram: 'https://instagram.com/srikanya',
-        twitter: 'https://twitter.com/srikanya'
-      }
+      deliveryRadius: 10,
+      minOrderAmount: 200,
+      freeDeliveryThreshold: 500
     },
-    operatingHours: {
-      monday: { open: '08:00', close: '23:00', closed: false },
-      tuesday: { open: '08:00', close: '23:00', closed: false },
-      wednesday: { open: '08:00', close: '23:00', closed: false },
-      thursday: { open: '08:00', close: '23:00', closed: false },
-      friday: { open: '08:00', close: '23:00', closed: false },
-      saturday: { open: '08:00', close: '23:00', closed: false },
-      sunday: { open: '08:00', close: '23:00', closed: false }
+    notifications: {
+      emailNotifications: true,
+      smsNotifications: false,
+      pushNotifications: true,
+      orderAlerts: true,
+      feedbackAlerts: true,
+      systemAlerts: true
+    },
+    security: {
+      twoFactorAuth: false,
+      sessionTimeout: 30,
+      passwordExpiry: 90,
+      loginAttempts: 5,
+      ipWhitelist: []
+    },
+    appearance: {
+      theme: 'light',
+      primaryColor: '#f97316',
+      accentColor: '#dc2626',
+      logo: '/logo.png',
+      favicon: '/favicon.ico'
     },
     payment: {
-      acceptedMethods: ['cash', 'phonepe'],
+      acceptedMethods: ['cash', 'card', 'phonepe', 'gpay', 'upi'],
       taxRate: 0.0,
       serviceCharge: 0.0,
       minimumOrder: 50,
@@ -98,118 +118,7 @@ function getDefaultSettings() {
       minimumOrder: 200,
       deliveryCharge: 50,
       freeDeliveryThreshold: 500,
-      deliveryRadius: 5, // km
-      estimatedTime: 30 // minutes
-    },
-    notifications: {
-      email: {
-        enabled: true,
-        address: 'admin@srikanya.com'
-      },
-      sms: {
-        enabled: false,
-        number: '+91 98765 43210'
-      },
-      push: {
-        enabled: true
-      }
-    },
-    system: {
-      autoRefresh: true,
-      refreshInterval: 30, // seconds
-      sessionTimeout: 3600, // seconds
-      maxOrdersPerTable: 10,
-      orderTimeout: 300, // seconds
-      maintenanceMode: false
-    },
-    menu: {
-      categories: [
-        'starters',
-        'mainCourse',
-        'biryani',
-        'breads',
-        'desserts',
-        'beverages'
-      ],
-      featuredItems: [],
-      seasonalItems: [],
-      dietaryOptions: ['vegetarian', 'non-vegetarian', 'vegan', 'gluten-free']
-    },
-    analytics: {
-      enabled: true,
-      trackCustomerBehavior: true,
-      trackOrderPatterns: true,
-      generateReports: true,
-      dataRetention: 365 // days
-    },
-    security: {
-      requireLogin: true,
-      sessionTimeout: 3600,
-      maxLoginAttempts: 5,
-      passwordPolicy: {
-        minLength: 8,
-        requireUppercase: true,
-        requireLowercase: true,
-        requireNumbers: true,
-        requireSpecialChars: true
-      }
-    },
-    appearance: {
-      theme: 'light',
-      primaryColor: '#f97316',
-      secondaryColor: '#dc2626',
-      logo: '/logo.png',
-      favicon: '/favicon.ico'
-    },
-    integrations: {
-      paymentGateway: {
-        provider: 'razorpay',
-        enabled: true,
-        testMode: true
-      },
-      analytics: {
-        googleAnalytics: {
-          enabled: false,
-          trackingId: ''
-        },
-        facebookPixel: {
-          enabled: false,
-          pixelId: ''
-        }
-      },
-      socialMedia: {
-        facebook: {
-          enabled: false,
-          pageId: ''
-        },
-        instagram: {
-          enabled: false,
-          accountId: ''
-        }
-      }
-    },
-    backup: {
-      autoBackup: true,
-      backupFrequency: 'daily',
-      retentionPeriod: 30, // days
-      cloudStorage: {
-        enabled: false,
-        provider: 'aws',
-        bucket: ''
-      }
-    },
-    maintenance: {
-      scheduledMaintenance: {
-        enabled: false,
-        day: 'sunday',
-        time: '02:00',
-        duration: 60 // minutes
-      },
-      emergencyContact: {
-        name: 'System Administrator',
-        phone: '+91 98765 43210',
-        email: 'admin@srikanya.com'
-      }
+      maxDistance: 10
     }
   };
 } 

@@ -35,7 +35,39 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useRealTimeOrders, Order } from '@/contexts/RealTimeOrderContext';
+
+// Use the actual Order interface from the database model
+interface OrderItem {
+  itemId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  isVeg: boolean;
+  category: string;
+  subtotal: number;
+  specialInstructions?: string;
+}
+
+interface Order {
+  _id: string;
+  orderId: string;
+  tableNumber: string;
+  items: OrderItem[];
+  totalAmount: number;
+  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
+  paymentMethod: 'cash' | 'card' | 'phonepe' | 'gpay' | 'upi';
+  customerName?: string;
+  customerPhone?: string;
+  specialInstructions?: string;
+  timestamp: string;
+  createdAt: string;
+  updatedAt: string;
+  estimatedTime?: number;
+  notes?: string;
+  rating?: number;
+  feedback?: string;
+}
 
 const statusConfig = {
   pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
@@ -49,12 +81,20 @@ const statusConfig = {
 const paymentStatusConfig = {
   pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' },
   paid: { label: 'Paid', color: 'bg-green-100 text-green-800' },
-  failed: { label: 'Failed', color: 'bg-red-100 text-red-800' }
+  failed: { label: 'Failed', color: 'bg-red-100 text-red-800' },
+  refunded: { label: 'Refunded', color: 'bg-gray-100 text-gray-800' }
+};
+
+const paymentMethodConfig = {
+  cash: { label: 'Cash', color: 'bg-green-100 text-green-800' },
+  card: { label: 'Card', color: 'bg-blue-100 text-blue-800' },
+  phonepe: { label: 'PhonePe', color: 'bg-purple-100 text-purple-800' },
+  gpay: { label: 'Google Pay', color: 'bg-blue-100 text-blue-800' },
+  upi: { label: 'UPI', color: 'bg-orange-100 text-orange-800' }
 };
 
 export default function ModernOrderManager() {
   const { toast } = useToast();
-  const { orders: realTimeOrders, isConnected } = useRealTimeOrders();
   
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -86,7 +126,16 @@ export default function ModernOrderManager() {
       }
 
       const result = await response.json();
+      console.log('Orders API response:', result);
+      
       if (result.success && result.orders) {
+        setOrders(result.orders);
+        toast({
+          title: "Orders Updated",
+          description: "Latest orders have been loaded successfully.",
+        });
+      } else if (result.orders) {
+        // Handle case where orders are returned directly
         setOrders(result.orders);
         toast({
           title: "Orders Updated",
@@ -97,6 +146,7 @@ export default function ModernOrderManager() {
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      console.error('Error loading orders:', err);
       toast({
         title: "Error",
         description: `Failed to load orders: ${errorMessage}`,
@@ -107,13 +157,6 @@ export default function ModernOrderManager() {
       setIsRefreshing(false);
     }
   }, [toast]);
-
-  // Update orders when real-time data changes
-  useEffect(() => {
-    if (realTimeOrders.length > 0) {
-      setOrders(realTimeOrders);
-    }
-  }, [realTimeOrders]);
 
   // Load orders on mount
   useEffect(() => {
@@ -128,9 +171,10 @@ export default function ModernOrderManager() {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(order => 
-        order.customerName.toLowerCase().includes(query) ||
-        order.tableNumber.toLowerCase().includes(query) ||
+        (order.customerName && order.customerName.toLowerCase().includes(query)) ||
+        (order.customerPhone && order.customerPhone.includes(query)) ||
         order.orderId.toLowerCase().includes(query) ||
+        order.tableNumber.toLowerCase().includes(query) ||
         order.items.some(item => item.name.toLowerCase().includes(query))
       );
     }
@@ -379,13 +423,22 @@ export default function ModernOrderManager() {
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <User className="w-4 h-4 text-slate-400" />
-                    <span className="font-medium text-slate-900">{order.customerName}</span>
+                    <span className="font-medium text-slate-900">
+                      {order.customerName || 'Walk-in Customer'}
+                    </span>
                   </div>
                   
                   <div className="flex items-center space-x-2">
                     <MapPin className="w-4 h-4 text-slate-400" />
                     <span className="text-sm text-slate-600">Table {order.tableNumber}</span>
                   </div>
+
+                  {order.customerPhone && (
+                    <div className="flex items-center space-x-2">
+                      <Phone className="w-4 h-4 text-slate-400" />
+                      <span className="text-sm text-slate-600">{order.customerPhone}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -411,7 +464,9 @@ export default function ModernOrderManager() {
                   <Badge variant="outline" className={paymentStatusConfig[order.paymentStatus].color}>
                     {paymentStatusConfig[order.paymentStatus].label}
                   </Badge>
-                  <span className="text-slate-500 capitalize">{order.paymentMethod}</span>
+                  <Badge variant="outline" className={paymentMethodConfig[order.paymentMethod].color}>
+                    {paymentMethodConfig[order.paymentMethod].label}
+                  </Badge>
                 </div>
 
                 {order.rating && (
@@ -452,6 +507,33 @@ export default function ModernOrderManager() {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Empty State */}
+      {currentOrders.length === 0 && !isLoading && (
+        <Card className="text-center py-12">
+          <CardContent>
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShoppingCart className="w-8 h-8 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">No orders found</h3>
+            <p className="text-slate-500 mb-4">
+              {searchQuery || statusFilter !== 'all' || paymentFilter !== 'all'
+                ? 'Try adjusting your search or filters'
+                : 'Orders will appear here when customers place them'
+              }
+            </p>
+            {(searchQuery || statusFilter !== 'all' || paymentFilter !== 'all') && (
+              <Button variant="outline" onClick={() => {
+                setSearchQuery('');
+                setStatusFilter('all');
+                setPaymentFilter('all');
+              }}>
+                Clear Filters
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Pagination */}
@@ -499,15 +581,25 @@ export default function ModernOrderManager() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-slate-600">Name</label>
-                      <p className="text-slate-900">{selectedOrder.customerName}</p>
+                      <p className="text-slate-900">
+                        {selectedOrder.customerName || 'Walk-in Customer'}
+                      </p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-slate-600">Table Number</label>
                       <p className="text-slate-900">{selectedOrder.tableNumber}</p>
                     </div>
+                    {selectedOrder.customerPhone && (
+                      <div>
+                        <label className="text-sm font-medium text-slate-600">Phone</label>
+                        <p className="text-slate-900">{selectedOrder.customerPhone}</p>
+                      </div>
+                    )}
                     <div>
                       <label className="text-sm font-medium text-slate-600">Payment Method</label>
-                      <Badge className="capitalize">{selectedOrder.paymentMethod}</Badge>
+                      <Badge className={paymentMethodConfig[selectedOrder.paymentMethod].color}>
+                        {paymentMethodConfig[selectedOrder.paymentMethod].label}
+                      </Badge>
                     </div>
                   </div>
                 </CardContent>
@@ -522,9 +614,14 @@ export default function ModernOrderManager() {
                   <div className="space-y-3">
                     {selectedOrder.items.map((item, index) => (
                       <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium text-slate-900">{item.name}</p>
-                          <p className="text-sm text-slate-500">Quantity: {item.quantity}</p>
+                        <div className="flex items-center space-x-3">
+                          <Badge variant={item.isVeg ? "default" : "secondary"}>
+                            {item.isVeg ? "🥬 Veg" : "🍖 Non-Veg"}
+                          </Badge>
+                          <div>
+                            <p className="font-medium text-slate-900">{item.name}</p>
+                            <p className="text-sm text-slate-500">{item.category}</p>
+                          </div>
                         </div>
                         <div className="text-right">
                           <p className="font-medium text-slate-900">₹{item.price} x {item.quantity}</p>
@@ -565,10 +662,10 @@ export default function ModernOrderManager() {
                     </div>
                   </div>
 
-                  {selectedOrder.notes && (
+                  {selectedOrder.specialInstructions && (
                     <div>
-                      <label className="text-sm font-medium text-slate-600">Notes</label>
-                      <p className="text-slate-900 mt-1">{selectedOrder.notes}</p>
+                      <label className="text-sm font-medium text-slate-600">Special Instructions</label>
+                      <p className="text-slate-900 mt-1">{selectedOrder.specialInstructions}</p>
                     </div>
                   )}
 
