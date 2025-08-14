@@ -965,6 +965,71 @@ export default function ModernSettings() {
                     </div>
                   </div>
                 </div>
+                
+                {/* Color Preview */}
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <Label className="text-sm font-medium text-gray-700 mb-3 block">Color Preview</Label>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <div 
+                        className="w-8 h-8 rounded border-2 border-gray-300"
+                        style={{ backgroundColor: settings.appearance.primaryColor }}
+                      ></div>
+                      <span className="text-sm text-gray-600">Primary</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div 
+                        className="w-8 h-8 rounded border-2 border-gray-300"
+                        style={{ backgroundColor: settings.appearance.accentColor }}
+                      ></div>
+                      <span className="text-sm text-gray-600">Accent</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 rounded border-2 border-gray-300 bg-white"></div>
+                      <span className="text-sm text-gray-600">Background</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Theme Preview */}
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <Label className="text-sm font-medium text-gray-700 mb-3 block">Theme Preview</Label>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div 
+                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                        settings.appearance.theme === 'light' 
+                          ? 'border-blue-500 bg-blue-50' 
+                          : 'border-gray-200 bg-white'
+                      }`}
+                      onClick={() => updateSetting('appearance', 'theme', 'light')}
+                    >
+                      <div className="w-full h-16 bg-white rounded border mb-2"></div>
+                      <div className="text-center text-xs font-medium">Light</div>
+                    </div>
+                    <div 
+                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                        settings.appearance.theme === 'dark' 
+                          ? 'border-blue-500 bg-blue-50' 
+                          : 'border-gray-200 bg-white'
+                      }`}
+                      onClick={() => updateSetting('appearance', 'theme', 'dark')}
+                    >
+                      <div className="w-full h-16 bg-gray-800 rounded border mb-2"></div>
+                      <div className="text-center text-xs font-medium">Dark</div>
+                    </div>
+                    <div 
+                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                        settings.appearance.theme === 'auto' 
+                          ? 'border-blue-500 bg-blue-50' 
+                          : 'border-gray-200 bg-white'
+                      }`}
+                      onClick={() => updateSetting('appearance', 'theme', 'auto')}
+                    >
+                      <div className="w-full h-16 bg-gradient-to-r from-white to-gray-800 rounded border mb-2"></div>
+                      <div className="text-center text-xs font-medium">Auto</div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -978,6 +1043,29 @@ export default function ModernSettings() {
                       onChange={(e) => updateSetting('appearance', 'logo', e.target.value)}
                       placeholder="/logo.png"
                     />
+                    {settings.appearance.logo && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded border">
+                        <Label className="text-xs text-gray-600 mb-1 block">Logo Preview</Label>
+                        <div className="w-16 h-16 bg-white rounded border flex items-center justify-center">
+                          {settings.appearance.logo.startsWith('http') || settings.appearance.logo.startsWith('/') ? (
+                            <img 
+                              src={settings.appearance.logo} 
+                              alt="Logo Preview" 
+                              className="max-w-full max-h-full object-contain"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.style.display = 'none';
+                                const sibling = target.nextElementSibling as HTMLElement;
+                                if (sibling) sibling.style.display = 'block';
+                              }}
+                            />
+                          ) : null}
+                          <div className="text-xs text-gray-400" style={{ display: settings.appearance.logo.startsWith('http') || settings.appearance.logo.startsWith('/') ? 'none' : 'block' }}>
+                            Logo
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <Label htmlFor="favicon">Favicon URL</Label>
@@ -987,6 +1075,29 @@ export default function ModernSettings() {
                       onChange={(e) => updateSetting('appearance', 'favicon', e.target.value)}
                       placeholder="/favicon.ico"
                     />
+                    {settings.appearance.favicon && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded border">
+                        <Label className="text-xs text-gray-600 mb-1 block">Favicon Preview</Label>
+                        <div className="w-8 h-8 bg-white rounded border flex items-center justify-center">
+                          {settings.appearance.favicon.startsWith('http') || settings.appearance.favicon.startsWith('/') ? (
+                            <img 
+                              src={settings.appearance.favicon} 
+                              alt="Favicon Preview" 
+                              className="max-w-full max-h-full object-contain"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                target.style.display = 'none';
+                                const sibling = target.nextElementSibling as HTMLElement;
+                                if (sibling) sibling.style.display = 'block';
+                              }}
+                            />
+                          ) : null}
+                          <div className="text-xs text-gray-400" style={{ display: settings.appearance.favicon.startsWith('http') || settings.appearance.favicon.startsWith('/') ? 'none' : 'block' }}>
+                            Icon
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

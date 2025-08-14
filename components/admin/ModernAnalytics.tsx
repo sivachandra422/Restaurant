@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useRealTimeOrders } from '@/contexts/RealTimeOrderContext';
 
 // Real analytics data interface
 interface AnalyticsData {
@@ -48,6 +49,7 @@ interface AnalyticsData {
 
 export default function ModernAnalytics() {
   const { toast } = useToast();
+  const { orders: realTimeOrders, lastUpdate } = useRealTimeOrders();
   const [timeRange, setTimeRange] = useState('7d');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -105,6 +107,24 @@ export default function ModernAnalytics() {
     
     return () => clearInterval(refreshInterval);
   }, [fetchAnalytics]);
+
+  // Real-time updates when orders change
+  useEffect(() => {
+    if (realTimeOrders && realTimeOrders.length > 0 && analyticsData) {
+      // Update analytics in real-time when new orders come in
+      const updateAnalytics = async () => {
+        try {
+          await fetchAnalytics(true);
+        } catch (err) {
+          console.log('Real-time analytics update failed, will retry on next interval');
+        }
+      };
+      
+      // Debounce real-time updates to avoid too frequent API calls
+      const timeoutId = setTimeout(updateAnalytics, 2000);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [realTimeOrders, analyticsData, fetchAnalytics]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -194,8 +214,23 @@ export default function ModernAnalytics() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
-          <p className="text-gray-600">Real-time insights into your restaurant performance</p>
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h2>
+            {lastUpdate && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                Live
+              </div>
+            )}
+          </div>
+          <p className="text-gray-600">
+            Real-time insights into your restaurant performance
+            {lastUpdate && (
+              <span className="ml-2 text-sm text-gray-500">
+                • Last updated: {lastUpdate.toLocaleTimeString()}
+              </span>
+            )}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <Select value={timeRange} onValueChange={setTimeRange}>

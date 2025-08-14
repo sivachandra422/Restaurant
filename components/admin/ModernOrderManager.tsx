@@ -512,13 +512,13 @@ export default function ModernOrderManager() {
                       <div className="space-y-1">
                         {order.items.slice(0, 3).map((item, index) => (
                           <div key={index} className="flex items-center justify-between text-sm">
-                            <div className="flex items-center space-x-2">
-                              <div className={`w-2 h-2 rounded-full ${item.isVeg ? 'bg-green-500' : 'bg-red-500'}`} />
-                              <span className="text-slate-700">{item.name}</span>
+                            <div className="flex items-center space-x-2 flex-1 min-w-0">
+                              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.isVeg ? 'bg-green-500' : 'bg-red-500'}`} />
+                              <span className="text-slate-700 truncate">{item.name}</span>
                             </div>
-                            <div className="flex items-center space-x-2 text-slate-600">
-                              <span>×{item.quantity}</span>
-                              <span>₹{item.subtotal}</span>
+                            <div className="flex items-center space-x-2 text-slate-600 flex-shrink-0">
+                              <span className="text-right min-w-[2rem]">×{item.quantity}</span>
+                              <span className="text-right min-w-[3rem]">₹{item.subtotal}</span>
                             </div>
                           </div>
                         ))}
