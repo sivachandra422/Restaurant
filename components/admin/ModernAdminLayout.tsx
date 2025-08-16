@@ -1,17 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  LayoutDashboard, 
-  ShoppingCart, 
-  Utensils, 
-  BarChart3, 
-  Star, 
-  Settings, 
-  Menu, 
-  X, 
-  ChevronLeft, 
-  LogOut, 
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Utensils,
+  BarChart3,
+  Star,
+  Settings,
+  Menu,
+  X,
+  ChevronLeft,
+  LogOut,
   RefreshCw,
   User,
   Search
@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
+import { useAdmin } from '@/contexts/AdminContext';
 
 interface ModernAdminLayoutProps {
   children: React.ReactNode;
@@ -100,9 +101,10 @@ export default function ModernAdminLayout({
     return () => clearInterval(updateInterval);
   }, []);
 
+  const { logout } = useAdmin();
+
   const handleLogout = () => {
-    // Add logout logic here
-    router.push('/admin/login');
+    logout();
   };
 
   const handleRefresh = () => {
@@ -113,7 +115,7 @@ export default function ModernAdminLayout({
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
@@ -179,8 +181,8 @@ export default function ModernAdminLayout({
                 className={`
                   w-full group flex items-center space-x-3 px-4 py-3 rounded-xl
                   transition-all duration-200 ease-in-out
-                  ${isActive 
-                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/25' 
+                  ${isActive
+                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/25'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
                   }
                 `}
