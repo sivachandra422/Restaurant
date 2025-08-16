@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { 
   Settings, 
   User, 
@@ -1048,9 +1049,11 @@ export default function ModernSettings() {
                         <Label className="text-xs text-gray-600 mb-1 block">Logo Preview</Label>
                         <div className="w-16 h-16 bg-white rounded border flex items-center justify-center">
                           {settings.appearance.logo.startsWith('http') || settings.appearance.logo.startsWith('/') ? (
-                            <img 
+                            <Image 
                               src={settings.appearance.logo} 
                               alt="Logo Preview" 
+                              width={64}
+                              height={64}
                               className="max-w-full max-h-full object-contain"
                               onError={(e) => {
                                 const target = e.currentTarget as HTMLImageElement;
@@ -1080,9 +1083,11 @@ export default function ModernSettings() {
                         <Label className="text-xs text-gray-600 mb-1 block">Favicon Preview</Label>
                         <div className="w-8 h-8 bg-white rounded border flex items-center justify-center">
                           {settings.appearance.favicon.startsWith('http') || settings.appearance.favicon.startsWith('/') ? (
-                            <img 
+                            <Image 
                               src={settings.appearance.favicon} 
                               alt="Favicon Preview" 
+                              width={32}
+                              height={32}
                               className="max-w-full max-h-full object-contain"
                               onError={(e) => {
                                 const target = e.currentTarget as HTMLImageElement;

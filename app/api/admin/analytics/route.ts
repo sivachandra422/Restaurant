@@ -1,382 +1,288 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import { sriKanyaMenu } from '@/data/sriKanyaMenu';
 
 export async function GET(request: NextRequest) {
   try {
     const { db } = await connectToDatabase();
     
-    // Check if database is available
     if (!db) {
-      console.log('Database not available for admin analytics, using mock data');
+      console.log('Database not available, generating analytics from API calls');
+      // Fallback: Generate analytics from orders API
+      try {
+        const ordersResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/orders`);
+        if (ordersResponse.ok) {
+          const ordersData = await ordersResponse.json();
+          const orders = ordersData.orders || ordersData || [];
+          
+          return NextResponse.json({
+            success: true,
+            data: generateAnalyticsFromOrders(orders)
+          });
+        }
+      } catch (fallbackError) {
+        console.error('Fallback analytics generation failed:', fallbackError);
+      }
+      
       return NextResponse.json({
         success: true,
-        data: generateMockAnalytics()
+        data: getDefaultAnalytics()
       });
     }
-    
-    // Get all orders with proper aggregation
-    const orders = await db.collection('orders').find({}).toArray();
-    
-    // If no orders in database, use mock data
-    if (orders.length === 0) {
-      console.log('No orders found in database, using mock data');
-      return NextResponse.json({
-        success: true,
-        data: generateMockAnalytics()
-      });
-    }
-    
-    // Calculate comprehensive analytics
-    const analytics = {
-      // Sales Analytics
-      totalRevenue: orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0),
-      totalOrders: orders.length,
-      averageOrderValue: orders.length > 0 ? orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0) / orders.length : 0,
-      
-      // Revenue by period
-      revenueByDay: calculateRevenueByPeriod(orders, 'day'),
-      revenueByMonth: calculateRevenueByPeriod(orders, 'month'),
-      
-      // Popular Items Analysis
-      popularItems: calculatePopularItems(orders),
-      
-      // Peak Hours Analysis
-      peakHours: calculatePeakHours(orders),
-      
-      // Customer Analytics
-      customerSatisfaction: calculateCustomerSatisfaction(orders),
-      customerReviewsCount: orders.filter(order => typeof order.rating === 'number' && order.rating > 0).length,
-      repeatCustomers: calculateRepeatCustomers(orders),
-      topCustomers: calculateTopCustomers(orders),
-      
-      // Category Performance
-      categoryPerformance: calculateCategoryPerformance(orders),
-      
-      // Order Status Distribution
-      orderStatusDistribution: calculateOrderStatusDistribution(orders),
-      
-      // Item Performance
-      itemPerformance: calculateItemPerformance(orders),
-      
-      // Revenue Trends
-      revenueTrends: calculateRevenueTrends(orders),
-      
-      // Real-time Stats
-      todayOrders: calculateTodayOrders(orders),
-      todayRevenue: calculateTodayRevenue(orders)
-    };
 
+    // Get real data from database
+    const ordersCollection = db.collection('orders');
+    const orders = await ordersCollection.find({}).toArray();
+    
+    const analytics = generateAnalyticsFromOrders(orders);
+    
     return NextResponse.json({
       success: true,
       data: analytics
     });
 
   } catch (error) {
-    console.error('Error in admin analytics:', error);
-    
-    // Return mock data on error
+    console.error('Error generating analytics:', error);
     return NextResponse.json({
-      success: true,
-      data: generateMockAnalytics()
-    });
+      success: false,
+      error: 'Failed to generate analytics'
+    }, { status: 500 });
   }
 }
 
-// Generate realistic mock analytics data
-function generateMockAnalytics() {
-  const mockOrders = [
-    { totalAmount: 450, status: 'completed', rating: 5, createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
-    { totalAmount: 320, status: 'completed', rating: 4, createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
-    { totalAmount: 280, status: 'completed', rating: 5, createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000) },
-    { totalAmount: 520, status: 'pending', rating: null, createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000) },
-    { totalAmount: 380, status: 'completed', rating: 4, createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000) }
-  ];
-
+function generateAnalyticsFromOrders(orders: any[]) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  
+  // Basic metrics
+  const totalOrders = orders.length;
+  const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+  const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+  
+  // Today's metrics
+  const todayOrders = orders.filter(order => {
+    const orderDate = new Date(order.createdAt || order.timestamp);
+    return orderDate >= today;
+  });
+  const todayRevenue = todayOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+  
+  // Customer satisfaction
+  const ordersWithRating = orders.filter(order => order.rating && order.rating > 0);
+  const customerSatisfaction = ordersWithRating.length > 0 
+    ? ordersWithRating.reduce((sum, order) => sum + order.rating, 0) / ordersWithRating.length 
+    : 0;
+  
+  // Popular items
+  const itemStats: { [key: string]: { count: number; revenue: number; avgRating: number; ratings: number[] } } = {};
+  orders.forEach(order => {
+    if (order.items && Array.isArray(order.items)) {
+      order.items.forEach((item: any) => {
+        const itemName = item.name || item.itemName || 'Unknown Item';
+        if (!itemStats[itemName]) {
+          itemStats[itemName] = { count: 0, revenue: 0, avgRating: 0, ratings: [] };
+        }
+        itemStats[itemName].count += item.quantity || 1;
+        itemStats[itemName].revenue += (item.price || 0) * (item.quantity || 1);
+        if (order.rating) {
+          itemStats[itemName].ratings.push(order.rating);
+        }
+      });
+    }
+  });
+  
+  const popularItems = Object.entries(itemStats)
+    .map(([name, stats]) => ({
+      name,
+      count: stats.count,
+      revenue: stats.revenue,
+      avgRating: stats.ratings.length > 0 
+        ? stats.ratings.reduce((sum, rating) => sum + rating, 0) / stats.ratings.length 
+        : 0
+    }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 10);
+  
+  // Peak hours analysis
+  const hourStats: { [key: number]: { orders: number; revenue: number } } = {};
+  orders.forEach(order => {
+    const hour = new Date(order.createdAt || order.timestamp).getHours();
+    if (!hourStats[hour]) {
+      hourStats[hour] = { orders: 0, revenue: 0 };
+    }
+    hourStats[hour].orders += 1;
+    hourStats[hour].revenue += order.totalAmount || 0;
+  });
+  
+  const peakHours = Object.entries(hourStats)
+    .map(([hour, stats]) => ({
+      hour: `${hour}:00`,
+      orders: stats.orders,
+      revenue: stats.revenue
+    }))
+    .sort((a, b) => b.orders - a.orders);
+  
+  // Order status distribution
+  const statusStats: { [key: string]: number } = {};
+  orders.forEach(order => {
+    const status = order.status || 'pending';
+    statusStats[status] = (statusStats[status] || 0) + 1;
+  });
+  
+  const orderStatusDistribution = Object.entries(statusStats)
+    .map(([status, count]) => ({ status, count }));
+  
+  // Revenue by day (last 30 days)
+  const revenueByDay = [];
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+    
+    const dayOrders = orders.filter(order => {
+      const orderDate = new Date(order.createdAt || order.timestamp);
+      return orderDate >= dayStart && orderDate < dayEnd;
+    });
+    
+    const dayRevenue = dayOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+    
+    revenueByDay.push({
+      date: dayStart.toISOString().split('T')[0],
+      revenue: dayRevenue
+    });
+  }
+  
+  // Top customers
+  const customerStats: { [key: string]: { orders: number; revenue: number; lastOrder: string } } = {};
+  orders.forEach(order => {
+    const customerKey = order.customerName || order.customerPhone || 'Anonymous';
+    if (!customerStats[customerKey]) {
+      customerStats[customerKey] = { orders: 0, revenue: 0, lastOrder: order.createdAt || order.timestamp };
+    }
+    customerStats[customerKey].orders += 1;
+    customerStats[customerKey].revenue += order.totalAmount || 0;
+    if (new Date(order.createdAt || order.timestamp) > new Date(customerStats[customerKey].lastOrder)) {
+      customerStats[customerKey].lastOrder = order.createdAt || order.timestamp;
+    }
+  });
+  
+  const topCustomers = Object.entries(customerStats)
+    .map(([name, stats]) => ({
+      name,
+      orders: stats.orders,
+      revenue: stats.revenue,
+      lastOrder: stats.lastOrder
+    }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 10);
+  
   return {
-    totalRevenue: 1950,
-    totalOrders: 5,
-    averageOrderValue: 390,
-    revenueByDay: [
-      { date: '2024-01-15', revenue: 450 },
-      { date: '2024-01-16', revenue: 320 },
-      { date: '2024-01-17', revenue: 1180 }
-    ],
-    revenueByMonth: [
-      { month: 'January 2024', revenue: 1950 }
-    ],
-    popularItems: [
-      { name: 'Chicken Biryani', count: 3, revenue: 1200, avgRating: 4.7 },
-      { name: 'Paneer Butter Masala', count: 2, revenue: 400, avgRating: 4.5 },
-      { name: 'Veg Fried Rice', count: 2, revenue: 350, avgRating: 4.2 }
-    ],
-    peakHours: [
-      { hour: '12:00 PM', orders: 2, revenue: 770 },
-      { hour: '1:00 PM', orders: 1, revenue: 320 },
-      { hour: '7:00 PM', orders: 2, revenue: 860 }
-    ],
-    customerSatisfaction: 4.5,
-    customerReviewsCount: 4,
-    repeatCustomers: 2,
-    topCustomers: [
-      { name: 'Customer A', orders: 2, revenue: 770, lastOrder: '2024-01-17' },
-      { name: 'Customer B', orders: 1, revenue: 450, lastOrder: '2024-01-15' },
-      { name: 'Customer C', orders: 1, revenue: 320, lastOrder: '2024-01-16' }
-    ],
-    categoryPerformance: [
-      { category: 'Biryani', orders: 3, revenue: 1200, percentage: 61.5 },
-      { category: 'Main Course', orders: 1, revenue: 400, percentage: 20.5 },
-      { category: 'Rice & Noodles', orders: 1, revenue: 350, percentage: 18.0 }
-    ],
-    orderStatusDistribution: [
-      { status: 'completed', count: 4 },
-      { status: 'pending', count: 1 }
-    ],
-    itemPerformance: [
-      { name: 'Chicken Biryani', orders: 3, revenue: 1200, avgRating: 4.7 },
-      { name: 'Paneer Butter Masala', orders: 2, revenue: 400, avgRating: 4.5 },
-      { name: 'Veg Fried Rice', orders: 2, revenue: 350, avgRating: 4.2 }
-    ],
-    revenueTrends: [
-      { period: 'Last 7 days', revenue: 1950, change: 15.2 },
-      { period: 'Last 30 days', revenue: 1950, change: 8.7 }
-    ],
-    todayOrders: 2,
-    todayRevenue: 860
+    totalRevenue,
+    totalOrders,
+    averageOrderValue,
+    todayOrders: todayOrders.length,
+    todayRevenue,
+    customerSatisfaction,
+    customerReviewsCount: ordersWithRating.length,
+    popularItems,
+    peakHours,
+    orderStatusDistribution,
+    revenueByDay,
+    topCustomers,
+    repeatCustomers: Object.values(customerStats).filter(stats => stats.orders > 1).length,
+    categoryPerformance: generateCategoryPerformance(orders),
+    revenueTrends: generateRevenueTrends(orders),
+    itemPerformance: popularItems
   };
 }
 
-// Helper functions for comprehensive analytics
-function calculateRevenueByPeriod(orders: any[], period: 'day' | 'month') {
-  const revenueMap = new Map();
+function generateCategoryPerformance(orders: any[]) {
+  const categoryStats: { [key: string]: { orders: number; revenue: number } } = {};
   
   orders.forEach(order => {
-    const date = new Date(order.timestamp || order.createdAt);
-    let key: string;
-    
-    if (period === 'day') {
-      key = date.toISOString().split('T')[0]; // YYYY-MM-DD
-    } else {
-      key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`; // YYYY-MM
+    if (order.items && Array.isArray(order.items)) {
+      order.items.forEach((item: any) => {
+        const category = item.category || 'Other';
+        if (!categoryStats[category]) {
+          categoryStats[category] = { orders: 0, revenue: 0 };
+        }
+        categoryStats[category].orders += item.quantity || 1;
+        categoryStats[category].revenue += (item.price || 0) * (item.quantity || 1);
+      });
     }
-    
-    const currentRevenue = revenueMap.get(key) || 0;
-    revenueMap.set(key, currentRevenue + (order.totalAmount || 0));
   });
   
-  return Array.from(revenueMap.entries())
-    .map(([date, revenue]) => ({ date, revenue }))
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(-30); // Last 30 periods
-}
-
-function calculatePopularItems(orders: any[]) {
-  const itemCounts: { [key: string]: { count: number; revenue: number; avgRating: number; ratings: number[] } } = {};
+  const totalRevenue = Object.values(categoryStats).reduce((sum, stats) => sum + stats.revenue, 0);
   
-  orders.forEach(order => {
-    order.items?.forEach((item: any) => {
-      const itemName = item.name;
-      if (!itemCounts[itemName]) {
-        itemCounts[itemName] = { count: 0, revenue: 0, avgRating: 0, ratings: [] };
-      }
-      itemCounts[itemName].count += item.quantity;
-      itemCounts[itemName].revenue += (item.price || 0) * item.quantity;
-      
-      // Add rating if available
-      if (order.rating && order.rating > 0) {
-        itemCounts[itemName].ratings.push(order.rating);
-      }
-    });
-  });
-  
-  // Calculate average ratings and return final data
-  return Object.entries(itemCounts)
-    .map(([name, data]) => ({
-      name,
-      count: data.count,
-      revenue: data.revenue,
-      avgRating: data.ratings.length > 0 
-        ? Math.round((data.ratings.reduce((sum, rating) => sum + rating, 0) / data.ratings.length) * 10) / 10
-        : 0
-    }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 10);
-}
-
-function calculatePeakHours(orders: any[]) {
-  const hourCounts = new Array(24).fill(0);
-  const hourRevenue = new Array(24).fill(0);
-  
-  orders.forEach(order => {
-    const date = new Date(order.timestamp || order.createdAt);
-    const hour = date.getHours();
-    hourCounts[hour]++;
-    hourRevenue[hour] += order.totalAmount || 0;
-  });
-  
-  return hourCounts.map((count, hour) => ({
-    hour: `${hour.toString().padStart(2, '0')}:00`,
-    orders: count,
-    revenue: hourRevenue[hour]
-  }));
-}
-
-function calculateCustomerSatisfaction(orders: any[]) {
-  const ordersWithRatings = orders.filter(order => order.rating && order.rating > 0);
-  if (ordersWithRatings.length === 0) return 0;
-  
-  const totalRating = ordersWithRatings.reduce((sum, order) => sum + order.rating, 0);
-  return Math.round((totalRating / ordersWithRatings.length) * 10) / 10;
-}
-
-function calculateRepeatCustomers(orders: any[]) {
-  const customerOrders: { [key: string]: number } = {};
-  
-  orders.forEach(order => {
-    const customerId = order.customerPhone || order.customerName || 'anonymous';
-    customerOrders[customerId] = (customerOrders[customerId] || 0) + 1;
-  });
-  
-  return Object.values(customerOrders).filter(count => count > 1).length;
-}
-
-function calculateTopCustomers(orders: any[]) {
-  const customerData: { [key: string]: { orders: number; totalSpent: number; avgOrderValue: number } } = {};
-  
-  orders.forEach(order => {
-    const customerId = order.customerPhone || order.customerName || 'anonymous';
-    if (!customerData[customerId]) {
-      customerData[customerId] = { orders: 0, totalSpent: 0, avgOrderValue: 0 };
-    }
-    customerData[customerId].orders++;
-    customerData[customerId].totalSpent += order.totalAmount || 0;
-  });
-  
-  // Calculate average order value
-  Object.keys(customerData).forEach(customerId => {
-    customerData[customerId].avgOrderValue = customerData[customerId].totalSpent / customerData[customerId].orders;
-  });
-  
-  return Object.entries(customerData)
-    .map(([customerId, data]) => ({
-      customerId,
-      orders: data.orders,
-      totalSpent: data.totalSpent,
-      avgOrderValue: Math.round(data.avgOrderValue)
-    }))
-    .sort((a, b) => b.totalSpent - a.totalSpent)
-    .slice(0, 10);
-}
-
-function calculateCategoryPerformance(orders: any[]) {
-  const categoryData: { [key: string]: { orders: number; revenue: number; items: number } } = {};
-  
-  orders.forEach(order => {
-    order.items?.forEach((item: any) => {
-      const category = item.category || 'uncategorized';
-      if (!categoryData[category]) {
-        categoryData[category] = { orders: 0, revenue: 0, items: 0 };
-      }
-      categoryData[category].items += item.quantity;
-      categoryData[category].revenue += (item.price || 0) * item.quantity;
-    });
-    
-    // Count unique orders per category
-    const orderCategories = Array.from(new Set(order.items?.map((item: any) => item.category || 'uncategorized'))) as string[];
-    orderCategories.forEach(category => {
-      if (categoryData[category]) {
-        categoryData[category].orders++;
-      }
-    });
-  });
-  
-  return Object.entries(categoryData)
-    .map(([category, data]) => ({
+  return Object.entries(categoryStats)
+    .map(([category, stats]) => ({
       category,
-      orders: data.orders,
-      revenue: data.revenue,
-      items: data.items
+      orders: stats.orders,
+      revenue: stats.revenue,
+      percentage: totalRevenue > 0 ? Math.round((stats.revenue / totalRevenue) * 100) : 0
     }))
     .sort((a, b) => b.revenue - a.revenue);
 }
 
-function calculateOrderStatusDistribution(orders: any[]) {
-  const statusCounts: { [key: string]: number } = {};
+function generateRevenueTrends(orders: any[]) {
+  const now = new Date();
+  const trends = [];
   
-  orders.forEach(order => {
-    const status = order.status || 'pending';
-    statusCounts[status] = (statusCounts[status] || 0) + 1;
-  });
-  
-  return Object.entries(statusCounts)
-    .map(([status, count]) => ({
-      status,
-      count,
-      percentage: Math.round((count / orders.length) * 100)
-    }))
-    .sort((a, b) => b.count - a.count);
-}
-
-function calculateItemPerformance(orders: any[]) {
-  const itemStats: { [key: string]: { orders: number; revenue: number; avgRating: number; ratings: number[] } } = {};
-  
-  orders.forEach(order => {
-    order.items?.forEach((item: any) => {
-      const itemName = item.name;
-      if (!itemStats[itemName]) {
-        itemStats[itemName] = { orders: 0, revenue: 0, avgRating: 0, ratings: [] };
-      }
-      itemStats[itemName].orders++;
-      itemStats[itemName].revenue += (item.price || 0) * item.quantity;
-      
-      if (order.rating && order.rating > 0) {
-        itemStats[itemName].ratings.push(order.rating);
-      }
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const dayEnd = new Date(dayStart);
+    dayEnd.setDate(dayEnd.getDate() + 1);
+    
+    const dayOrders = orders.filter(order => {
+      const orderDate = new Date(order.createdAt || order.timestamp);
+      return orderDate >= dayStart && orderDate < dayEnd;
     });
-  });
+    
+    const dayRevenue = dayOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+    
+    // Calculate change from previous day
+    const prevDate = new Date(dayStart);
+    prevDate.setDate(prevDate.getDate() - 1);
+    const prevDayEnd = new Date(dayStart);
+    
+    const prevDayOrders = orders.filter(order => {
+      const orderDate = new Date(order.createdAt || order.timestamp);
+      return orderDate >= prevDate && orderDate < prevDayEnd;
+    });
+    
+    const prevDayRevenue = prevDayOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+    const change = prevDayRevenue > 0 ? ((dayRevenue - prevDayRevenue) / prevDayRevenue) * 100 : 0;
+    
+    trends.push({
+      period: dayStart.toLocaleDateString(),
+      revenue: dayRevenue,
+      change: Math.round(change * 10) / 10
+    });
+  }
   
-  // Calculate average ratings and return final data
-  return Object.entries(itemStats)
-    .map(([name, data]) => ({
-      name,
-      orders: data.orders,
-      revenue: data.revenue,
-      avgRating: data.ratings.length > 0 
-        ? Math.round((data.ratings.reduce((sum, rating) => sum + rating, 0) / data.ratings.length) * 10) / 10
-        : 0
-    }))
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 20);
+  return trends;
 }
 
-function calculateRevenueTrends(orders: any[]) {
-  const dailyRevenue = new Map();
-  
-  orders.forEach(order => {
-    const date = new Date(order.timestamp || order.createdAt);
-    const dateKey = date.toISOString().split('T')[0];
-    const currentRevenue = dailyRevenue.get(dateKey) || 0;
-    dailyRevenue.set(dateKey, currentRevenue + (order.totalAmount || 0));
-  });
-  
-  return Array.from(dailyRevenue.entries())
-    .map(([date, revenue]) => ({ date, revenue }))
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(-30); // Last 30 days
+function getDefaultAnalytics() {
+  return {
+    totalRevenue: 0,
+    totalOrders: 0,
+    averageOrderValue: 0,
+    todayOrders: 0,
+    todayRevenue: 0,
+    customerSatisfaction: 0,
+    customerReviewsCount: 0,
+    popularItems: [],
+    peakHours: [],
+    orderStatusDistribution: [],
+    revenueByDay: [],
+    topCustomers: [],
+    repeatCustomers: 0,
+    categoryPerformance: [],
+    revenueTrends: [],
+    itemPerformance: []
+  };
 }
-
-function calculateTodayOrders(orders: any[]) {
-  const today = new Date();
-  return orders.filter(order => {
-    const orderDate = new Date(order.timestamp || order.createdAt);
-    return orderDate.toDateString() === today.toDateString();
-  }).length;
-}
-
-function calculateTodayRevenue(orders: any[]) {
-  const today = new Date();
-  return orders.filter(order => {
-    const orderDate = new Date(order.timestamp || order.createdAt);
-    return orderDate.toDateString() === today.toDateString();
-  }).reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-} 

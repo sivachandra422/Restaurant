@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { 
   Plus, 
   Search, 
@@ -628,10 +629,11 @@ export default function ModernMenuManager() {
                 <div className="relative">
                   <div className="w-full h-48 bg-gradient-to-br from-slate-200 to-slate-300 rounded-lg flex items-center justify-center overflow-hidden">
                     {item.image ? (
-                      <img 
+                      <Image 
                         src={item.image} 
                         alt={item.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
                       <Utensils className="w-16 h-16 text-slate-400" />

@@ -1,254 +1,349 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 
+interface Notification {
+  id: string;
+  type: 'order' | 'feedback' | 'system' | 'alert';
+  title: string;
+  message: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  read: boolean;
+  actionRequired: boolean;
+  relatedId?: string; // Order ID, feedback ID, etc.
+  createdAt: Date;
+  readAt?: Date;
+}
+
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const type = searchParams.get('type') || 'all';
-    const limit = parseInt(searchParams.get('limit') || '50');
-    
     const { db } = await connectToDatabase();
-    
-    // Check if database is available
+
     if (!db) {
-      return NextResponse.json(
-        { error: 'Database not available' },
-        { status: 503 }
-      );
+      console.log('Database not available, generating notifications from orders');
+      // Fallback: Generate notifications from recent orders
+      try {
+        const ordersResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/orders`);
+        if (ordersResponse.ok) {
+          const ordersData = await ordersResponse.json();
+          const orders = ordersData.orders || ordersData || [];
+
+          const notifications = generateNotificationsFromOrders(orders);
+
+          return NextResponse.json({
+            success: true,
+            notifications
+          });
+        }
+      } catch (fallbackError) {
+        console.error('Fallback notifications generation failed:', fallbackError);
+      }
+
+      return NextResponse.json({
+        success: true,
+        notifications: generateMockNotifications()
+      });
     }
-    
-    let notifications: any[] = [];
-    
-    switch (type) {
-      case 'orders':
-        notifications = await getOrderNotifications(db, limit);
-        break;
-      case 'system':
-        notifications = await getSystemNotifications(db, limit);
-        break;
-      case 'alerts':
-        notifications = await getAlertNotifications(db, limit);
-        break;
-      default:
-        notifications = await getAllNotifications(db, limit);
+
+    // Get real notifications from database
+    const notificationsCollection = db.collection('notifications');
+    let notifications = await notificationsCollection
+      .find({})
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .toArray();
+
+    // If no notifications exist, generate from orders and feedback
+    if (notifications.length === 0) {
+      console.log('No notifications in database, generating from orders...');
+
+      const ordersCollection = db.collection('orders');
+      const orders = await ordersCollection.find({}).sort({ createdAt: -1 }).limit(20).toArray();
+
+      const generatedNotifications = generateNotificationsFromOrders(orders);
+
+      // Save generated notifications to database
+      if (generatedNotifications.length > 0) {
+        const insertResult = await notificationsCollection.insertMany(generatedNotifications);
+        // Fetch the inserted notifications to get proper _id fields
+        notifications = await notificationsCollection
+          .find({ _id: { $in: Object.values(insertResult.insertedIds) } })
+          .toArray();
+      }
     }
-    
-    return NextResponse.json({ notifications });
+
+    return NextResponse.json({
+      success: true,
+      notifications: notifications.map(notif => ({
+        ...notif,
+        id: notif._id?.toString() || notif.id
+      }))
+    });
+
   } catch (error) {
-    console.error('Notifications API Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch notifications' },
-      { status: 500 }
-    );
+    console.error('Error fetching notifications:', error);
+    return NextResponse.json({
+      success: true,
+      notifications: generateMockNotifications()
+    });
   }
+}
+
+function generateNotificationsFromOrders(orders: any[]) {
+  const notifications = [];
+  const now = new Date();
+
+  // Generate notifications from recent orders
+  orders.slice(0, 10).forEach((order, index) => {
+    const orderDate = new Date(order.createdAt || order.timestamp);
+    const timeDiff = now.getTime() - orderDate.getTime();
+    const minutesAgo = Math.floor(timeDiff / (1000 * 60));
+
+    // New order notification
+    if (minutesAgo < 60) {
+      notifications.push({
+        id: `order-${order._id || order.orderId}-${index}`,
+        type: 'order',
+        title: 'New Order Received',
+        message: `Order #${order.orderId?.slice(-6) || 'N/A'} from Table ${order.tableNumber} - ₹${order.totalAmount}`,
+        priority: 'high',
+        read: Math.random() > 0.7, // 30% chance of being read
+        actionRequired: order.status === 'pending',
+        relatedId: order.orderId || order._id,
+        createdAt: orderDate
+      });
+    }
+
+    // Order ready notification
+    if (order.status === 'ready') {
+      notifications.push({
+        id: `ready-${order._id || order.orderId}-${index}`,
+        type: 'order',
+        title: 'Order Ready for Pickup',
+        message: `Order #${order.orderId?.slice(-6) || 'N/A'} is ready for Table ${order.tableNumber}`,
+        priority: 'high',
+        read: Math.random() > 0.5,
+        actionRequired: true,
+        relatedId: order.orderId || order._id,
+        createdAt: new Date(orderDate.getTime() + 15 * 60 * 1000) // 15 minutes after order
+      });
+    }
+
+    // Feedback notification
+    if (order.rating && order.rating > 0) {
+      const feedbackType = order.rating >= 4 ? 'positive' : order.rating <= 2 ? 'complaint' : 'neutral';
+      notifications.push({
+        id: `feedback-${order._id || order.orderId}-${index}`,
+        type: 'feedback',
+        title: feedbackType === 'complaint' ? 'Customer Complaint' : 'New Customer Review',
+        message: `${order.customerName || 'Customer'} left a ${order.rating}-star review${order.feedback ? ': "' + order.feedback.substring(0, 50) + '..."' : ''}`,
+        priority: feedbackType === 'complaint' ? 'high' : 'medium',
+        read: Math.random() > 0.6,
+        actionRequired: feedbackType === 'complaint' || !order.feedbackResponse,
+        relatedId: order.orderId || order._id,
+        createdAt: new Date(orderDate.getTime() + 30 * 60 * 1000) // 30 minutes after order
+      });
+    }
+  });
+
+  // Add system notifications
+  const systemNotifications = [
+    {
+      id: `system-peak-${Date.now()}`,
+      type: 'alert',
+      title: 'Peak Hour Alert',
+      message: `${orders.length} orders in queue - consider additional staff`,
+      priority: orders.length > 10 ? 'urgent' : 'medium',
+      read: false,
+      actionRequired: false,
+      createdAt: new Date(now.getTime() - 30 * 60 * 1000)
+    },
+    {
+      id: `system-report-${Date.now()}`,
+      type: 'system',
+      title: 'Daily Report Generated',
+      message: 'Today\'s sales report is ready for review',
+      priority: 'low',
+      read: Math.random() > 0.3,
+      actionRequired: false,
+      createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000)
+    }
+  ];
+
+  notifications.push(...systemNotifications);
+
+  // Sort by creation date (newest first) and limit
+  return notifications
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 20);
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { type, title, message, priority = 'medium', data = {} } = body;
-    
+    const notificationData = await request.json();
     const { db } = await connectToDatabase();
-    
-    // Check if database is available
+
     if (!db) {
-      return NextResponse.json(
-        { error: 'Database not available' },
-        { status: 503 }
-      );
+      return NextResponse.json({
+        success: false,
+        error: 'Database not available'
+      }, { status: 500 });
     }
-    
+
+    const notificationsCollection = db.collection('notifications');
+
     const notification = {
-      type,
-      title,
-      message,
-      priority,
-      data,
-      timestamp: new Date(),
-      read: false,
-      id: generateNotificationId()
+      ...notificationData,
+      id: Date.now().toString(),
+      createdAt: new Date(),
+      read: false
     };
-    
-    await db.collection('notifications').insertOne(notification);
-    
-    return NextResponse.json({ success: true, notification });
+
+    const result = await notificationsCollection.insertOne(notification);
+
+    if (result.acknowledged) {
+      return NextResponse.json({
+        success: true,
+        notification: {
+          ...notification,
+          id: result.insertedId.toString()
+        }
+      });
+    } else {
+      throw new Error('Failed to create notification');
+    }
+
   } catch (error) {
-    console.error('Create Notification Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to create notification' },
-      { status: 500 }
-    );
+    console.error('Error creating notification:', error);
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to create notification'
+    }, { status: 500 });
   }
 }
 
-export async function PATCH(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { id, read } = body;
-    
+    const { notificationId, updates } = await request.json();
     const { db } = await connectToDatabase();
-    
-    // Check if database is available
+
     if (!db) {
-      return NextResponse.json(
-        { error: 'Database not available' },
-        { status: 503 }
-      );
+      return NextResponse.json({
+        success: false,
+        error: 'Database not available'
+      }, { status: 500 });
     }
-    
-    await db.collection('notifications').updateOne(
-      { id },
-      { $set: { read } }
+
+    const notificationsCollection = db.collection('notifications');
+
+    const result = await notificationsCollection.updateOne(
+      { _id: notificationId },
+      {
+        $set: {
+          ...updates,
+          ...(updates.read && { readAt: new Date() })
+        }
+      }
     );
-    
-    return NextResponse.json({ success: true });
+
+    if (result.acknowledged) {
+      return NextResponse.json({
+        success: true,
+        message: 'Notification updated successfully'
+      });
+    } else {
+      throw new Error('Failed to update notification');
+    }
+
   } catch (error) {
-    console.error('Update Notification Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update notification' },
-      { status: 500 }
-    );
+    console.error('Error updating notification:', error);
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to update notification'
+    }, { status: 500 });
   }
 }
 
-async function getOrderNotifications(db: any, limit: number) {
-  const orders = await db.collection('orders')
-    .find({})
-    .sort({ timestamp: -1 })
-    .limit(limit)
-    .toArray();
-  
-  return orders.map((order: any) => ({
-    id: `order-${order._id}`,
-    type: 'order',
-    title: `New Order #${order.orderId?.slice(-6) || 'N/A'}`,
-    message: `Order received from Table ${order.tableNumber} for ₹${order.totalAmount || 0}`,
-    priority: 'high',
-    timestamp: order.timestamp || order.createdAt,
-    read: false,
-    data: {
-      orderId: order.orderId,
-      tableNumber: order.tableNumber,
-      totalAmount: order.totalAmount,
-      itemCount: order.items?.length || 0
-    }
-  }));
-}
+function generateMockNotifications(): Notification[] {
+  const now = new Date();
 
-async function getSystemNotifications(db: any, limit: number) {
-  // Get system notifications from database
-  const systemNotifications = await db.collection('notifications')
-    .find({ type: 'system' })
-    .sort({ timestamp: -1 })
-    .limit(limit)
-    .toArray();
-  
-  // Add some default system notifications
-  const defaultNotifications = [
+  return [
     {
-      id: 'system-1',
-      type: 'system',
-      title: 'System Maintenance',
-      message: 'Scheduled maintenance completed successfully',
-      priority: 'medium',
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-      read: true
+      id: '1',
+      type: 'order',
+      title: 'New Order Received',
+      message: 'Order #ORD001 from Table 5 - ₹450',
+      priority: 'high',
+      read: false,
+      actionRequired: true,
+      relatedId: 'ORD001',
+      createdAt: new Date(now.getTime() - 5 * 60 * 1000) // 5 minutes ago
     },
     {
-      id: 'system-2',
-      type: 'system',
-      title: 'Database Backup',
-      message: 'Daily database backup completed',
-      priority: 'low',
-      timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-      read: true
-    }
-  ];
-  
-  return [...systemNotifications, ...defaultNotifications];
-}
-
-async function getAlertNotifications(db: any, limit: number) {
-  const orders = await db.collection('orders').find({}).toArray();
-  
-  const alerts: any[] = [];
-  
-  // Check for high-value orders
-  const highValueOrders = orders.filter((order: any) => (order.totalAmount || 0) > 1000);
-  highValueOrders.forEach((order: any) => {
-    alerts.push({
-      id: `alert-high-value-${order._id}`,
-      type: 'alert',
-      title: 'High Value Order',
-      message: `Large order received: ₹${order.totalAmount} from Table ${order.tableNumber}`,
-      priority: 'high',
-      timestamp: order.timestamp || order.createdAt,
-      read: false,
-      data: { orderId: order.orderId, amount: order.totalAmount }
-    });
-  });
-  
-  // Check for repeat customers
-  const customerOrders = new Map();
-  orders.forEach((order: any) => {
-    const table = order.tableNumber;
-    customerOrders.set(table, (customerOrders.get(table) || 0) + 1);
-  });
-  
-  const repeatCustomers = Array.from(customerOrders.entries())
-    .filter(([_, count]) => count > 1)
-    .slice(0, 5);
-  
-  repeatCustomers.forEach(([table, count]) => {
-    alerts.push({
-      id: `alert-repeat-${table}`,
-      type: 'alert',
-      title: 'Repeat Customer',
-      message: `Table ${table} has placed ${count} orders`,
+      id: '2',
+      type: 'feedback',
+      title: 'New Customer Review',
+      message: 'Rajesh Kumar left a 5-star review for Chicken Biryani',
       priority: 'medium',
-      timestamp: new Date(),
       read: false,
-      data: { tableNumber: table, orderCount: count }
-    });
-  });
-  
-  // Check for peak hours
-  const hourlyOrders = new Map();
-  orders.forEach((order: any) => {
-    const hour = new Date(order.timestamp || order.createdAt).getHours();
-    hourlyOrders.set(hour, (hourlyOrders.get(hour) || 0) + 1);
-  });
-  
-  const peakHours = Array.from(hourlyOrders.entries())
-    .filter(([_, count]) => count > 5)
-    .slice(0, 3);
-  
-  peakHours.forEach(([hour, count]) => {
-    alerts.push({
-      id: `alert-peak-${hour}`,
+      actionRequired: false,
+      relatedId: 'REV001',
+      createdAt: new Date(now.getTime() - 15 * 60 * 1000) // 15 minutes ago
+    },
+    {
+      id: '3',
+      type: 'system',
+      title: 'Menu Item Low Stock',
+      message: 'Chicken Dum Biryani is running low on ingredients',
+      priority: 'medium',
+      read: true,
+      actionRequired: true,
+      relatedId: 'chicken_dum_biryani_half',
+      createdAt: new Date(now.getTime() - 30 * 60 * 1000), // 30 minutes ago
+      readAt: new Date(now.getTime() - 25 * 60 * 1000)
+    },
+    {
+      id: '4',
+      type: 'order',
+      title: 'Order Ready for Pickup',
+      message: 'Order #ORD002 is ready for Table 3',
+      priority: 'high',
+      read: true,
+      actionRequired: true,
+      relatedId: 'ORD002',
+      createdAt: new Date(now.getTime() - 45 * 60 * 1000), // 45 minutes ago
+      readAt: new Date(now.getTime() - 40 * 60 * 1000)
+    },
+    {
+      id: '5',
       type: 'alert',
       title: 'Peak Hour Alert',
-      message: `${count} orders received during ${hour}:00 hour`,
-      priority: 'medium',
-      timestamp: new Date(),
+      message: 'Dinner rush starting - 15 orders in queue',
+      priority: 'urgent',
       read: false,
-      data: { hour, orderCount: count }
-    });
-  });
-  
-  return alerts.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, limit);
+      actionRequired: false,
+      createdAt: new Date(now.getTime() - 60 * 60 * 1000) // 1 hour ago
+    },
+    {
+      id: '6',
+      type: 'system',
+      title: 'Daily Report Generated',
+      message: 'Today\'s sales report is ready for review',
+      priority: 'low',
+      read: true,
+      actionRequired: false,
+      createdAt: new Date(now.getTime() - 2 * 60 * 60 * 1000), // 2 hours ago
+      readAt: new Date(now.getTime() - 90 * 60 * 1000)
+    },
+    {
+      id: '7',
+      type: 'feedback',
+      title: 'Customer Complaint',
+      message: 'Priya Sharma reported delayed delivery for Order #ORD003',
+      priority: 'high',
+      read: false,
+      actionRequired: true,
+      relatedId: 'ORD003',
+      createdAt: new Date(now.getTime() - 3 * 60 * 60 * 1000) // 3 hours ago
+    }
+  ];
 }
-
-async function getAllNotifications(db: any, limit: number) {
-  const orderNotifications = await getOrderNotifications(db, Math.floor(limit / 3));
-  const systemNotifications = await getSystemNotifications(db, Math.floor(limit / 3));
-  const alertNotifications = await getAlertNotifications(db, Math.floor(limit / 3));
-  
-  return [...orderNotifications, ...systemNotifications, ...alertNotifications]
-    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-    .slice(0, limit);
-}
-
-function generateNotificationId() {
-  return `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-} 

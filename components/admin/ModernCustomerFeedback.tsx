@@ -2,24 +2,18 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  MessageSquare, 
   Star, 
-  ThumbsUp, 
-  ThumbsDown, 
-  Filter,
-  Search,
-  Download,
-  RefreshCw,
-  Reply,
-  Flag,
-  CheckCircle,
+  MessageSquare, 
+  Search, 
+  Reply, 
+  CheckCircle, 
   AlertCircle,
   Clock,
   User,
-  Calendar,
-  TrendingUp,
-  TrendingDown,
-  Loader2
+  RefreshCw,
+  Loader2,
+  Download,
+  ThumbsUp
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +22,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useAdmin } from '@/contexts/AdminContext';
 
 // Real feedback data interface
 interface FeedbackItem {
@@ -55,6 +50,7 @@ interface FeedbackStats {
 
 export default function ModernCustomerFeedback() {
   const { toast } = useToast();
+  const { getAuthHeaders } = useAdmin();
   const [feedbackData, setFeedbackData] = useState<FeedbackItem[]>([]);
   const [filteredFeedback, setFilteredFeedback] = useState<FeedbackItem[]>([]);
   const [stats, setStats] = useState<FeedbackStats>({
@@ -88,7 +84,7 @@ export default function ModernCustomerFeedback() {
     response: ''
   });
 
-  // Fetch real feedback data from orders
+  // Fetch real feedback data from API
   const fetchFeedback = useCallback(async (isRefresh = false) => {
     try {
       if (isRefresh) {
@@ -98,42 +94,44 @@ export default function ModernCustomerFeedback() {
       }
       setError(null);
 
-      const response = await fetch('/api/orders');
+      const response = await fetch('/api/admin/feedback/enhanced', {
+        headers: getAuthHeaders()
+      });
+      
       if (!response.ok) {
         throw new Error('Failed to fetch feedback data');
       }
 
       const data = await response.json();
-      const orders = data.orders || data || [];
       
-      // Filter orders with ratings and feedback
-      const ordersWithFeedback = orders
-        .filter((order: any) => order.rating && order.rating > 0)
-        .map((order: any) => ({
-          id: order._id || order.orderId || `order-${Date.now()}-${Math.random()}`,
-          customerName: order.customerName || 'Anonymous',
-          customerEmail: order.customerEmail,
-          rating: order.rating,
-          orderId: order.orderId || order._id,
-          orderItems: order.items?.map((item: any) => item.name || item.itemName) || [],
-          feedback: order.feedback || 'No feedback provided',
-          sentiment: getSentiment(order.rating, order.feedback),
-          category: getFeedbackCategory(order.feedback),
-          status: order.feedbackResponse ? 'resolved' : 'pending',
-          createdAt: order.createdAt || order.timestamp || new Date().toISOString(),
-          response: order.feedbackResponse,
-          responseDate: order.feedbackResponseDate
-        }))
-        .sort((a: FeedbackItem, b: FeedbackItem) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-      setFeedbackData(ordersWithFeedback);
-      calculateStats(ordersWithFeedback);
-      
-      if (isRefresh) {
-        toast({
-          title: "Feedback Updated",
-          description: "Latest feedback data has been refreshed successfully.",
-        });
+      if (data.success && data.feedback) {
+        const processedFeedback = data.feedback.map((item: any) => ({
+          id: item.id || item._id,
+          customerName: item.customerName || 'Anonymous',
+          customerEmail: item.customerEmail,
+          rating: item.rating || 0,
+          orderId: item.orderId || item.id,
+          orderItems: item.orderItems || [],
+          feedback: item.comment || item.feedback || 'No feedback provided',
+          sentiment: getSentiment(item.rating, item.comment || item.feedback),
+          category: item.category || getFeedbackCategory(item.comment || item.feedback),
+          status: item.status === 'reviewed' || item.status === 'resolved' ? 'resolved' : 'pending',
+          createdAt: item.createdAt || new Date().toISOString(),
+          response: item.response,
+          responseDate: item.respondedAt || item.responseDate
+        }));
+        
+        setFeedbackData(processedFeedback);
+        calculateStats(processedFeedback);
+        
+        if (isRefresh) {
+          toast({
+            title: "Feedback Updated",
+            description: "Latest feedback data has been refreshed successfully.",
+          });
+        }
+      } else {
+        throw new Error('Invalid feedback data format');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
@@ -147,7 +145,49 @@ export default function ModernCustomerFeedback() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [toast]);
+  }, [toast, getAuthHeaders]);
+
+  // Real-time SSE connection for feedback updates
+  useEffect(() => {
+    let eventSource: EventSource | null = null;
+    
+    const setupSSE = () => {
+      try {
+        eventSource = new EventSource('/api/admin/feedback/stream');
+        
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'feedback-update') {
+              console.log('Real-time feedback update received:', data.data);
+              fetchFeedback(true); // Refresh feedback data
+            }
+          } catch (error) {
+            console.error('Error parsing SSE message:', error);
+          }
+        };
+
+        eventSource.onerror = (error) => {
+          console.error('SSE connection error:', error);
+          if (eventSource) {
+            eventSource.close();
+            eventSource = null;
+          }
+        };
+      } catch (error) {
+        console.error('Failed to setup SSE:', error);
+      }
+    };
+
+    setupSSE();
+
+    return () => {
+      if (eventSource) {
+        eventSource.close();
+      }
+    };
+  }, [fetchFeedback]);
 
   // Calculate feedback statistics
   const calculateStats = (feedback: FeedbackItem[]) => {
@@ -175,6 +215,7 @@ export default function ModernCustomerFeedback() {
 
   // Categorize feedback based on content
   const getFeedbackCategory = (feedback: string): string => {
+    if (!feedback) return 'general';
     const text = feedback.toLowerCase();
     if (text.includes('food') || text.includes('taste') || text.includes('quality')) return 'food_quality';
     if (text.includes('delivery') || text.includes('time') || text.includes('speed')) return 'delivery';
@@ -235,32 +276,56 @@ export default function ModernCustomerFeedback() {
     if (!responseDialog.feedback || !responseDialog.response.trim()) return;
 
     try {
-      // In a real implementation, you'd send this to an API endpoint
-      // For now, we'll update the local state
-      const updatedFeedback = feedbackData.map(item =>
-        item.id === responseDialog.feedback!.id
-          ? {
-              ...item,
-              status: 'resolved' as const,
-              response: responseDialog.response,
-              responseDate: new Date().toISOString()
-            }
-          : item
-      );
-
-      setFeedbackData(updatedFeedback);
-      calculateStats(updatedFeedback);
-      
-      setResponseDialog({ isOpen: false, feedback: null, response: '' });
-      
-      toast({
-        title: "Response Sent",
-        description: "Your response has been sent successfully.",
+      const response = await fetch('/api/admin/feedback/enhanced', {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          feedbackId: responseDialog.feedback.id,
+          updates: {
+            response: responseDialog.response,
+            status: 'resolved',
+            respondedBy: 'Admin',
+            respondedAt: new Date()
+          }
+        })
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to send response');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Update local state
+        const updatedFeedback = feedbackData.map(item =>
+          item.id === responseDialog.feedback!.id
+            ? {
+                ...item,
+                status: 'resolved' as const,
+                response: responseDialog.response,
+                responseDate: new Date().toISOString()
+              }
+            : item
+        );
+
+        setFeedbackData(updatedFeedback);
+        calculateStats(updatedFeedback);
+        
+        setResponseDialog({ isOpen: false, feedback: null, response: '' });
+        
+        toast({
+          title: "Response Sent",
+          description: "Your response has been sent successfully.",
+        });
+      } else {
+        throw new Error(result.message || 'Failed to send response');
+      }
     } catch (error) {
+      console.error('Error sending response:', error);
       toast({
         title: "Error",
-        description: "Failed to send response. Please try again.",
+        description: error instanceof Error ? error.message : 'Failed to send response. Please try again.',
         variant: "destructive",
       });
     }

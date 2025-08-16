@@ -1,32 +1,50 @@
 import { NextRequest } from 'next/server';
-import sseEventEmitter from '@/lib/sse-events';
 
+// Store active connections
+const connections = new Set<ReadableStreamDefaultController>();
+
+// This route should not be statically generated
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
+  // Create a readable stream for SSE
   const stream = new ReadableStream({
     start(controller) {
-      const encoder = new TextEncoder();
-
-      const send = (data: any) => {
-        const eventName = data?.type ? `event: ${data.type}\n` : '';
-        controller.enqueue(encoder.encode(`${eventName}data: ${JSON.stringify(data)}\n\n`));
-      };
-
-      // initial
-      send({ type: 'connected', message: 'feedback stream connected' });
-
-      const handler = (payload: any) => {
-        if (payload?.type === 'feedback-submitted' || payload?.type === 'order-updated') {
-          send(payload);
+      connections.add(controller);
+      
+      // Send initial connection message
+      controller.enqueue(`data: ${JSON.stringify({
+        type: 'connected',
+        timestamp: Date.now()
+      })}\n\n`);
+      
+      // Send heartbeat every 30 seconds
+      const heartbeat = setInterval(() => {
+        try {
+          controller.enqueue(`data: ${JSON.stringify({
+            type: 'heartbeat',
+            timestamp: Date.now()
+          })}\n\n`);
+        } catch (error) {
+          clearInterval(heartbeat);
+          connections.delete(controller);
         }
-      };
-      sseEventEmitter.on('order-event', handler);
-
+      }, 30000);
+      
+      // Cleanup on close
       request.signal.addEventListener('abort', () => {
-        sseEventEmitter.off('order-event', handler);
-        controller.close();
+        clearInterval(heartbeat);
+        connections.delete(controller);
+        try {
+          controller.close();
+        } catch (error) {
+          // Controller already closed
+        }
       });
+    },
+    
+    cancel(controller) {
+      connections.delete(controller);
     }
   });
 
@@ -34,9 +52,27 @@ export async function GET(request: NextRequest) {
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive'
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Cache-Control'
     }
   });
 }
 
+// Function to broadcast updates to all connected clients
+export function broadcastFeedbackUpdate(data: any) {
+  const message = `data: ${JSON.stringify({
+    type: 'feedback-update',
+    data,
+    timestamp: Date.now()
+  })}\n\n`;
 
+  connections.forEach(controller => {
+    try {
+      controller.enqueue(message);
+    } catch (error) {
+      // Remove dead connections
+      connections.delete(controller);
+    }
+  });
+}
