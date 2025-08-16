@@ -494,27 +494,27 @@ export default function ModernDashboard({ onSectionChange }: ModernDashboardProp
             <div className="space-y-4">
               {dashboardData.recentOrders.length > 0 ? (
                 dashboardData.recentOrders.map((order, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-lg hover:shadow-md transition-all duration-200">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-300 rounded-lg flex items-center justify-center">
-                        <span className="text-orange-700 font-bold text-sm">#{order.id}</span>
+                  <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                        {order.customer.charAt(0)}
                       </div>
-                      <div>
-                        <p className="font-semibold text-slate-900 text-base">{order.customer}</p>
-                        <div className="flex items-center space-x-2 text-sm text-slate-600 mt-1">
-                          <span className="font-medium">{order.table}</span>
-                          <span className="text-slate-400">•</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-slate-900 truncate">{order.customer}</p>
+                        <div className="flex items-center space-x-2 text-xs text-slate-500">
+                          <span>{order.table}</span>
+                          <span>•</span>
                           <span>{order.items} items</span>
-                          <span className="text-slate-400">•</span>
+                          <span>•</span>
                           <span>{order.time}</span>
                         </div>
                       </div>
                     </div>
                     
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-slate-900">₹{order.amount}</div>
-                      <Badge className={`${getStatusColor(order.status)} text-xs`}>
-                        {getStatusIcon(order.status)} {order.status}
+                    <div className="text-right flex-shrink-0">
+                      <div className="text-base font-bold text-slate-900">₹{order.amount}</div>
+                      <Badge className={`${getStatusColor(order.status)} text-xs mt-1`}>
+                        {order.status}
                       </Badge>
                     </div>
                   </div>
