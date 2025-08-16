@@ -3,41 +3,62 @@ import { connectToDatabase } from '@/lib/mongodb';
 
 export async function GET(request: NextRequest) {
   try {
-    const { db } = await connectToDatabase();
+    // First try to get real orders from the orders API
+    console.log('Fetching real orders for analytics...');
     
-    if (!db) {
-      console.log('Database not available, generating analytics from API calls');
-      // Fallback: Generate analytics from orders API
-      try {
-        const ordersResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/orders`);
-        if (ordersResponse.ok) {
-          const ordersData = await ordersResponse.json();
-          const orders = ordersData.orders || ordersData || [];
-          
+    try {
+      const ordersResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/orders`, {
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
+      if (ordersResponse.ok) {
+        const ordersData = await ordersResponse.json();
+        const orders = ordersData.orders || ordersData || [];
+        
+        console.log(`Found ${orders.length} orders for analytics`);
+        
+        if (orders.length > 0) {
+          const analytics = generateAnalyticsFromOrders(orders);
           return NextResponse.json({
             success: true,
-            data: generateAnalyticsFromOrders(orders)
+            data: analytics,
+            source: 'real_orders'
           });
         }
-      } catch (fallbackError) {
-        console.error('Fallback analytics generation failed:', fallbackError);
       }
-      
-      return NextResponse.json({
-        success: true,
-        data: getDefaultAnalytics()
-      });
+    } catch (apiError) {
+      console.error('Orders API failed:', apiError);
     }
 
-    // Get real data from database
-    const ordersCollection = db.collection('orders');
-    const orders = await ordersCollection.find({}).toArray();
+    // Try MongoDB as backup
+    try {
+      const { db } = await connectToDatabase();
+      if (db) {
+        const ordersCollection = db.collection('orders');
+        const orders = await ordersCollection.find({}).toArray();
+        
+        if (orders.length > 0) {
+          const analytics = generateAnalyticsFromOrders(orders);
+          return NextResponse.json({
+            success: true,
+            data: analytics,
+            source: 'mongodb'
+          });
+        }
+      }
+    } catch (dbError) {
+      console.error('MongoDB failed:', dbError);
+    }
     
-    const analytics = generateAnalyticsFromOrders(orders);
-    
+    // Only use sample data as last resort
+    console.log('Using sample data as fallback');
     return NextResponse.json({
       success: true,
-      data: analytics
+      data: getDefaultAnalytics(),
+      source: 'sample_data',
+      message: 'No real orders found. Add some orders to see real analytics.'
     });
 
   } catch (error) {

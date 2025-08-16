@@ -586,16 +586,28 @@ export default function ModernDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
-              <ShoppingCart className="w-6 h-6" />
+            <Button 
+              variant="outline" 
+              className="h-20 flex flex-col items-center justify-center space-y-2 hover:bg-blue-50 hover:border-blue-300 transition-colors"
+              onClick={() => window.location.href = '/admin/modern?section=orders'}
+            >
+              <ShoppingCart className="w-6 h-6 text-blue-600" />
               <span>View All Orders</span>
             </Button>
-            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
-              <BarChart3 className="w-6 h-6" />
+            <Button 
+              variant="outline" 
+              className="h-20 flex flex-col items-center justify-center space-y-2 hover:bg-green-50 hover:border-green-300 transition-colors"
+              onClick={() => window.location.href = '/admin/modern?section=analytics'}
+            >
+              <BarChart3 className="w-6 h-6 text-green-600" />
               <span>Analytics Report</span>
             </Button>
-            <Button variant="outline" className="h-20 flex flex-col items-center justify-center space-y-2">
-              <Settings className="w-6 h-6" />
+            <Button 
+              variant="outline" 
+              className="h-20 flex flex-col items-center justify-center space-y-2 hover:bg-orange-50 hover:border-orange-300 transition-colors"
+              onClick={() => window.location.href = '/admin/modern?section=settings'}
+            >
+              <Settings className="w-6 h-6 text-orange-600" />
               <span>Restaurant Settings</span>
             </Button>
           </div>

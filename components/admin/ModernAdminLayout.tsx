@@ -74,6 +74,7 @@ export default function ModernAdminLayout({
 }: ModernAdminLayoutProps) {
   const [notifications, setNotifications] = useState(0);
   const [notificationData, setNotificationData] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -256,14 +257,67 @@ export default function ModernAdminLayout({
             
             <div className="flex items-center space-x-4">
               {/* Notifications */}
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="w-5 h-5" />
-                {notifications > 0 && (
-                  <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 text-xs">
-                    {notifications}
-                  </Badge>
+              <div className="relative">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="relative"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                >
+                  <Bell className="w-5 h-5" />
+                  {notifications > 0 && (
+                    <Badge className="absolute -top-1 -right-1 w-5 h-5 p-0 text-xs bg-red-500">
+                      {notifications}
+                    </Badge>
+                  )}
+                </Button>
+                
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-lg border border-slate-200 z-50">
+                    <div className="p-4 border-b border-slate-200">
+                      <h3 className="font-semibold text-slate-900">Notifications</h3>
+                      <p className="text-sm text-slate-500">{notifications} unread</p>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {notificationData.length > 0 ? (
+                        notificationData.slice(0, 10).map((notification: any) => (
+                          <div 
+                            key={notification.id} 
+                            className={`p-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer ${!notification.read ? 'bg-blue-50' : ''}`}
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div className={`w-2 h-2 rounded-full mt-2 ${!notification.read ? 'bg-blue-500' : 'bg-slate-300'}`}></div>
+                              <div className="flex-1">
+                                <p className="font-medium text-slate-900 text-sm">{notification.title}</p>
+                                <p className="text-slate-600 text-xs mt-1">{notification.message}</p>
+                                <p className="text-slate-400 text-xs mt-1">
+                                  {new Date(notification.createdAt).toLocaleTimeString()}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-8 text-center text-slate-500">
+                          <Bell className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                          <p>No notifications</p>
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-3 border-t border-slate-200">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full text-blue-600 hover:text-blue-700"
+                        onClick={() => window.location.href = '/admin/modern?section=notifications'}
+                      >
+                        View All Notifications
+                      </Button>
+                    </div>
+                  </div>
                 )}
-              </Button>
+              </div>
               
               {/* User Menu */}
               <div className="flex items-center space-x-3">

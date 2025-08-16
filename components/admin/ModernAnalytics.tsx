@@ -17,7 +17,8 @@ import {
   Download,
   RefreshCw,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Plus
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -45,6 +46,8 @@ interface AnalyticsData {
   topCustomers: Array<{ name: string; orders: number; revenue: number; lastOrder: string }>;
   revenueTrends: Array<{ period: string; revenue: number; change: number }>;
   itemPerformance: Array<{ name: string; orders: number; revenue: number; avgRating: number }>;
+  dataSource?: string;
+  dataMessage?: string;
 }
 
 export default function ModernAnalytics() {
@@ -74,10 +77,22 @@ export default function ModernAnalytics() {
 
       const result = await response.json();
       if (result.success && result.data) {
-        setAnalyticsData(result.data);
+        setAnalyticsData({
+          ...result.data,
+          dataSource: result.source,
+          dataMessage: result.message
+        });
+        
+        const sourceMessage = result.source === 'sample_data' 
+          ? "Using sample data - Add real orders to see actual analytics"
+          : result.source === 'real_orders'
+          ? "Real-time analytics from your orders"
+          : "Analytics loaded successfully";
+          
         toast({
           title: "Analytics Updated",
-          description: "Latest analytics data has been loaded successfully.",
+          description: sourceMessage,
+          variant: result.source === 'sample_data' ? "default" : "default"
         });
       } else {
         throw new Error(result.error || 'Failed to load analytics data');
@@ -231,8 +246,55 @@ export default function ModernAnalytics() {
               </span>
             )}
           </p>
+          {analyticsData?.dataSource && (
+            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mt-2 ${
+              analyticsData.dataSource === 'sample_data' 
+                ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' 
+                : analyticsData.dataSource === 'real_orders'
+                ? 'bg-green-100 text-green-800 border border-green-200'
+                : 'bg-blue-100 text-blue-800 border border-blue-200'
+            }`}>
+              {analyticsData.dataSource === 'sample_data' && '⚠️ Sample Data'}
+              {analyticsData.dataSource === 'real_orders' && '✅ Real Data'}
+              {analyticsData.dataSource === 'mongodb' && '🗄️ Database Data'}
+              <span className="ml-1">
+                {analyticsData.dataSource === 'sample_data' 
+                  ? 'Add real orders to see actual analytics'
+                  : 'Live analytics from your restaurant'
+                }
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
+          {analyticsData?.dataSource === 'sample_data' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/test/create-order', { method: 'POST' });
+                  if (response.ok) {
+                    toast({
+                      title: "Test Order Created",
+                      description: "A test order has been added. Refresh to see updated analytics.",
+                    });
+                    setTimeout(() => fetchAnalytics(true), 1000);
+                  }
+                } catch (error) {
+                  toast({
+                    title: "Error",
+                    description: "Failed to create test order",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              className="text-green-600 border-green-300 hover:bg-green-50"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Test Order
+            </Button>
+          )}
           <Select value={timeRange} onValueChange={setTimeRange}>
             <SelectTrigger className="w-32">
               <SelectValue />
