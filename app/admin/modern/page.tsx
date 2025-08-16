@@ -15,7 +15,7 @@ export default function ModernAdminPage() {
   const renderSection = () => {
     switch (currentSection) {
       case 'dashboard':
-        return <ModernDashboard />;
+        return <ModernDashboard onSectionChange={setCurrentSection} />;
       case 'orders':
         return <ModernOrderManager />;
       case 'menu':
@@ -27,7 +27,7 @@ export default function ModernAdminPage() {
       case 'settings':
         return <ModernSettings />;
       default:
-        return <ModernDashboard />;
+        return <ModernDashboard onSectionChange={setCurrentSection} />;
     }
   };
 

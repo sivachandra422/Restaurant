@@ -64,7 +64,11 @@ interface DashboardData {
   averageRating: number;
 }
 
-export default function ModernDashboard() {
+interface ModernDashboardProps {
+  onSectionChange?: (section: string) => void;
+}
+
+export default function ModernDashboard({ onSectionChange }: ModernDashboardProps = {}) {
   const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isLoading, setIsLoading] = useState(true);
@@ -490,18 +494,18 @@ export default function ModernDashboard() {
             <div className="space-y-4">
               {dashboardData.recentOrders.length > 0 ? (
                 dashboardData.recentOrders.map((order, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-                        #{order.id}
+                  <div key={index} className="flex items-center justify-between p-4 bg-white border border-slate-200 rounded-lg hover:shadow-md transition-all duration-200">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-orange-200 border-2 border-orange-300 rounded-lg flex items-center justify-center">
+                        <span className="text-orange-700 font-bold text-sm">#{order.id}</span>
                       </div>
                       <div>
-                        <p className="font-medium text-slate-900">{order.customer}</p>
-                        <div className="flex items-center space-x-2 text-sm text-slate-500">
-                          <span>{order.table}</span>
-                          <span>•</span>
+                        <p className="font-semibold text-slate-900 text-base">{order.customer}</p>
+                        <div className="flex items-center space-x-2 text-sm text-slate-600 mt-1">
+                          <span className="font-medium">{order.table}</span>
+                          <span className="text-slate-400">•</span>
                           <span>{order.items} items</span>
-                          <span>•</span>
+                          <span className="text-slate-400">•</span>
                           <span>{order.time}</span>
                         </div>
                       </div>
@@ -589,7 +593,7 @@ export default function ModernDashboard() {
             <Button 
               variant="outline" 
               className="h-20 flex flex-col items-center justify-center space-y-2 hover:bg-blue-50 hover:border-blue-300 transition-colors"
-              onClick={() => window.location.href = '/admin/modern?section=orders'}
+              onClick={() => onSectionChange?.('orders')}
             >
               <ShoppingCart className="w-6 h-6 text-blue-600" />
               <span>View All Orders</span>
@@ -597,7 +601,7 @@ export default function ModernDashboard() {
             <Button 
               variant="outline" 
               className="h-20 flex flex-col items-center justify-center space-y-2 hover:bg-green-50 hover:border-green-300 transition-colors"
-              onClick={() => window.location.href = '/admin/modern?section=analytics'}
+              onClick={() => onSectionChange?.('analytics')}
             >
               <BarChart3 className="w-6 h-6 text-green-600" />
               <span>Analytics Report</span>
@@ -605,7 +609,7 @@ export default function ModernDashboard() {
             <Button 
               variant="outline" 
               className="h-20 flex flex-col items-center justify-center space-y-2 hover:bg-orange-50 hover:border-orange-300 transition-colors"
-              onClick={() => window.location.href = '/admin/modern?section=settings'}
+              onClick={() => onSectionChange?.('settings')}
             >
               <Settings className="w-6 h-6 text-orange-600" />
               <span>Restaurant Settings</span>

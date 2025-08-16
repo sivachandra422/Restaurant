@@ -3,10 +3,41 @@ import { connectToDatabase } from '@/lib/mongodb';
 
 export async function GET(request: NextRequest) {
   try {
-    // First try to get real orders from the orders API
-    console.log('Fetching real orders for analytics...');
+    console.log('🔍 Analytics API: Starting data fetch...');
     
+    // Try MongoDB FIRST (most reliable for real data)
     try {
+      console.log('🗄️ Trying MongoDB connection...');
+      const { db } = await connectToDatabase();
+      if (db) {
+        console.log('✅ MongoDB connected, fetching orders...');
+        const ordersCollection = db.collection('orders');
+        const orders = await ordersCollection.find({}).toArray();
+        
+        console.log(`📊 Found ${orders.length} orders in MongoDB`);
+        
+        if (orders.length > 0) {
+          const analytics = generateAnalyticsFromOrders(orders);
+          console.log(`✅ Generated analytics from ${orders.length} real orders`);
+          return NextResponse.json({
+            success: true,
+            data: analytics,
+            source: 'mongodb',
+            orderCount: orders.length
+          });
+        } else {
+          console.log('⚠️ MongoDB connected but no orders found');
+        }
+      } else {
+        console.log('❌ MongoDB connection failed');
+      }
+    } catch (dbError) {
+      console.error('❌ MongoDB error:', dbError);
+    }
+
+    // Try Orders API as backup
+    try {
+      console.log('🌐 Trying Orders API...');
       const ordersResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/orders`, {
         headers: {
           'Cache-Control': 'no-cache'
@@ -17,52 +48,44 @@ export async function GET(request: NextRequest) {
         const ordersData = await ordersResponse.json();
         const orders = ordersData.orders || ordersData || [];
         
-        console.log(`Found ${orders.length} orders for analytics`);
+        console.log(`📊 Orders API returned ${orders.length} orders`);
         
-        if (orders.length > 0) {
+        // Check if these are real orders (not mock data)
+        const hasRealOrders = orders.some((order: any) => 
+          !order._id?.toString().startsWith('mock_order_')
+        );
+        
+        if (orders.length > 0 && hasRealOrders) {
           const analytics = generateAnalyticsFromOrders(orders);
+          console.log(`✅ Generated analytics from ${orders.length} API orders`);
           return NextResponse.json({
             success: true,
             data: analytics,
-            source: 'real_orders'
+            source: 'orders_api',
+            orderCount: orders.length
           });
+        } else if (orders.length > 0) {
+          console.log('⚠️ Orders API returned mock data only');
         }
+      } else {
+        console.log('❌ Orders API request failed');
       }
     } catch (apiError) {
-      console.error('Orders API failed:', apiError);
-    }
-
-    // Try MongoDB as backup
-    try {
-      const { db } = await connectToDatabase();
-      if (db) {
-        const ordersCollection = db.collection('orders');
-        const orders = await ordersCollection.find({}).toArray();
-        
-        if (orders.length > 0) {
-          const analytics = generateAnalyticsFromOrders(orders);
-          return NextResponse.json({
-            success: true,
-            data: analytics,
-            source: 'mongodb'
-          });
-        }
-      }
-    } catch (dbError) {
-      console.error('MongoDB failed:', dbError);
+      console.error('❌ Orders API error:', apiError);
     }
     
-    // Only use sample data as last resort
-    console.log('Using sample data as fallback');
+    // Last resort: sample data
+    console.log('⚠️ Using sample data as fallback');
     return NextResponse.json({
       success: true,
       data: getDefaultAnalytics(),
       source: 'sample_data',
-      message: 'No real orders found. Add some orders to see real analytics.'
+      message: 'No real orders found. Database connection may be failing.',
+      orderCount: 0
     });
 
   } catch (error) {
-    console.error('Error generating analytics:', error);
+    console.error('❌ Analytics API error:', error);
     return NextResponse.json({
       success: false,
       error: 'Failed to generate analytics'
