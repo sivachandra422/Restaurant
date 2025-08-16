@@ -72,7 +72,8 @@ export default function ModernAdminLayout({
   currentSection, 
   onSectionChange 
 }: ModernAdminLayoutProps) {
-  const [notifications, setNotifications] = useState(3); // Mock notification count
+  const [notifications, setNotifications] = useState(0);
+  const [notificationData, setNotificationData] = useState<any[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -94,12 +95,29 @@ export default function ModernAdminLayout({
 
   // Real-time updates simulation
   useEffect(() => {
+    // Fetch real notifications
+    const fetchNotifications = async () => {
+      try {
+        const response = await fetch('/api/admin/notifications');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.notifications) {
+            setNotificationData(data.notifications);
+            const unreadCount = data.notifications.filter((n: any) => !n.read).length;
+            setNotifications(unreadCount);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+      }
+    };
+
+    // Initial fetch
+    fetchNotifications();
+
     const updateInterval = setInterval(() => {
       setLastUpdate(new Date());
-      // Simulate new notifications
-      if (Math.random() > 0.7) {
-        setNotifications(prev => prev + 1);
-      }
+      fetchNotifications(); // Fetch real notifications
     }, 30000); // Update every 30 seconds
 
     return () => clearInterval(updateInterval);

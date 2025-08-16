@@ -624,7 +624,7 @@ export default function ModernMenuManager() {
       {viewMode === 'grid' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {currentItems.map((item) => (
-            <Card key={item.id} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+            <Card key={item.id} className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col h-full">
               <CardHeader className="pb-3">
                 <div className="relative">
                   <div className="w-full h-48 bg-gradient-to-br from-slate-200 to-slate-300 rounded-lg flex items-center justify-center overflow-hidden">
@@ -666,53 +666,55 @@ export default function ModernMenuManager() {
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-3">
-                <div>
-                  <h3 className="font-semibold text-slate-900 text-lg mb-1">{item.name}</h3>
-                  <p className="text-sm text-slate-600 line-clamp-2">{item.description}</p>
-                  {item.nameHi && (
-                    <p className="text-xs text-slate-500 mt-1">🇮🇳 {item.nameHi}</p>
-                  )}
-                  {item.nameTe && (
-                    <p className="text-xs text-slate-500">🇮🇳 {item.nameTe}</p>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <Badge className={getCategoryColor(item.category)}>
-                    {categoryDisplayNames[item.category] || item.category}
-                  </Badge>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-slate-900">₹{item.price}</p>
-                    {item.preparationTime && (
-                      <div className="flex items-center space-x-1 text-xs text-slate-500">
-                        <Clock className="w-3 h-3" />
-                        <span>{item.preparationTime}min</span>
-                      </div>
+              <CardContent className="flex flex-col flex-1 p-4">
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <h3 className="font-semibold text-slate-900 text-lg mb-1 line-clamp-1">{item.name}</h3>
+                    <p className="text-sm text-slate-600 line-clamp-2 min-h-[2.5rem]">{item.description}</p>
+                    {item.nameHi && (
+                      <p className="text-xs text-slate-500 mt-1 line-clamp-1">🇮🇳 {item.nameHi}</p>
                     )}
+                    {item.nameTe && (
+                      <p className="text-xs text-slate-500 line-clamp-1">🇮🇳 {item.nameTe}</p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <Badge className={getCategoryColor(item.category)}>
+                      {categoryDisplayNames[item.category] || item.category}
+                    </Badge>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-slate-900">₹{item.price}</p>
+                      {item.preparationTime && (
+                        <div className="flex items-center space-x-1 text-xs text-slate-500">
+                          <Clock className="w-3 h-3" />
+                          <span>{item.preparationTime}min</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm min-h-[1.5rem]">
+                    <div className="flex items-center space-x-1">
+                      {item.rating ? (
+                        <>
+                          <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                          <span className="font-medium">{item.rating}/5</span>
+                        </>
+                      ) : item.popularity ? (
+                        <>
+                          <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                          <span className="font-medium">Popularity: {item.popularity}/10</span>
+                        </>
+                      ) : null}
+                      {item.maxQuantity && (
+                        <span className="text-slate-500">Max: {item.maxQuantity}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center space-x-1">
-                    {item.rating ? (
-                      <>
-                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                        <span className="font-medium">{item.rating}/5</span>
-                      </>
-                    ) : item.popularity ? (
-                      <>
-                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                        <span className="font-medium">Popularity: {item.popularity}/10</span>
-                      </>
-                    ) : null}
-                    {item.maxQuantity && (
-                      <span className="text-slate-500">Max: {item.maxQuantity}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex space-x-2 pt-3 border-t border-slate-100">
+                <div className="flex space-x-2 pt-3 border-t border-slate-100 mt-auto">
                   <Button 
                     variant="outline" 
                     size="sm" 

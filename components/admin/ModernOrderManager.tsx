@@ -520,7 +520,7 @@ export default function ModernOrderManager() {
             const PaymentIcon = paymentMethodConfig[order.paymentMethod]?.icon || CreditCard;
             
             return (
-              <Card key={order._id} className="hover:shadow-lg transition-shadow">
+              <Card key={order._id} className="hover:shadow-lg transition-shadow flex flex-col h-full">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
@@ -541,69 +541,71 @@ export default function ModernOrderManager() {
                   </div>
                 </CardHeader>
                 
-                <CardContent className="space-y-4">
-                  {/* Customer Info */}
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Users className="w-4 h-4 text-slate-400" />
-                      <span className="font-medium text-slate-900">
-                        {order.customerName || 'Walk-in Customer'}
-                      </span>
-                    </div>
-                    {order.customerPhone && (
-                      <div className="flex items-center space-x-2 text-sm text-slate-600">
-                        <Phone className="w-4 h-4" />
-                        <span>{order.customerPhone}</span>
+                <CardContent className="flex flex-col flex-1 p-4">
+                  <div className="flex-1 space-y-4">
+                    {/* Customer Info */}
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Users className="w-4 h-4 text-slate-400" />
+                        <span className="font-medium text-slate-900 line-clamp-1">
+                          {order.customerName || 'Walk-in Customer'}
+                        </span>
                       </div>
-                    )}
-                    {order.specialInstructions && (
-                      <div className="flex items-start space-x-2 text-sm text-slate-600">
-                        <MessageSquare className="w-4 h-4 mt-0.5" />
-                        <span className="italic">&ldquo;{order.specialInstructions}&rdquo;</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Order Items */}
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium text-slate-700">Order Items:</p>
-                    <div className="space-y-1">
-                      {order.items.slice(0, 3).map((item, index) => (
-                        <div key={index} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center space-x-2 flex-1 min-w-0">
-                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.isVeg ? 'bg-green-500' : 'bg-red-500'}`} />
-                            <span className="text-slate-700 truncate">{item.name}</span>
-                          </div>
-                          <div className="flex items-center space-x-2 text-slate-600 flex-shrink-0">
-                            <span className="text-right min-w-[2rem]">×{item.quantity}</span>
-                            <span className="text-right min-w-[3rem]">₹{item.subtotal}</span>
-                          </div>
+                      {order.customerPhone && (
+                        <div className="flex items-center space-x-2 text-sm text-slate-600">
+                          <Phone className="w-4 h-4" />
+                          <span>{order.customerPhone}</span>
                         </div>
-                      ))}
-                      {order.items.length > 3 && (
-                        <p className="text-xs text-slate-500 text-center">
-                          +{order.items.length - 3} more items
-                        </p>
+                      )}
+                      {order.specialInstructions && (
+                        <div className="flex items-start space-x-2 text-sm text-slate-600">
+                          <MessageSquare className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                          <span className="italic line-clamp-2">&ldquo;{order.specialInstructions}&rdquo;</span>
+                        </div>
                       )}
                     </div>
-                  </div>
 
-                  {/* Payment Info */}
-                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                    <div className="flex items-center space-x-2">
-                      <PaymentIcon className="w-4 h-4 text-slate-400" />
-                      <Badge className={paymentStatusConfig[order.paymentStatus]?.color}>
-                        {paymentStatusConfig[order.paymentStatus]?.label}
-                      </Badge>
+                    {/* Order Items */}
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-slate-700">Order Items:</p>
+                      <div className="space-y-1">
+                        {order.items.slice(0, 3).map((item, index) => (
+                          <div key={index} className="flex items-center justify-between text-sm">
+                            <div className="flex items-center space-x-2 flex-1 min-w-0">
+                              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.isVeg ? 'bg-green-500' : 'bg-red-500'}`} />
+                              <span className="text-slate-700 truncate">{item.name}</span>
+                            </div>
+                            <div className="flex items-center space-x-2 text-slate-600 flex-shrink-0">
+                              <span className="text-right min-w-[2rem]">×{item.quantity}</span>
+                              <span className="text-right min-w-[3rem]">₹{item.subtotal}</span>
+                            </div>
+                          </div>
+                        ))}
+                        {order.items.length > 3 && (
+                          <p className="text-xs text-slate-500 text-center">
+                            +{order.items.length - 3} more items
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-slate-900">₹{order.totalAmount}</p>
-                      <p className="text-xs text-slate-500 capitalize">{order.paymentMethod}</p>
+
+                    {/* Payment Info */}
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                      <div className="flex items-center space-x-2">
+                        <PaymentIcon className="w-4 h-4 text-slate-400" />
+                        <Badge className={paymentStatusConfig[order.paymentStatus]?.color}>
+                          {paymentStatusConfig[order.paymentStatus]?.label}
+                        </Badge>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-slate-900">₹{order.totalAmount}</p>
+                        <p className="text-xs text-slate-500 capitalize">{order.paymentMethod}</p>
+                      </div>
                     </div>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex space-x-2 pt-2">
+                  <div className="flex space-x-2 pt-4 mt-auto border-t border-slate-100">
                     <Button
                       size="sm"
                       variant="outline"
