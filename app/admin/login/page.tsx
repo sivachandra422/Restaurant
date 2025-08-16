@@ -17,7 +17,7 @@ export default function AdminLoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (state.isAuthenticated) {
-      router.push('/admin');
+      router.push('/admin/modern');
     }
   }, [state.isAuthenticated, router]);
 
@@ -41,8 +41,8 @@ export default function AdminLoginPage() {
   // Check for successful authentication and redirect
   useEffect(() => {
     if (state.isAuthenticated && state.user) {
-      console.log('Login successful, redirecting to admin dashboard');
-      router.push('/admin');
+      console.log('Login successful, redirecting to modern admin dashboard');
+      router.push('/admin/modern');
     }
   }, [state.isAuthenticated, state.user, router]);
 
