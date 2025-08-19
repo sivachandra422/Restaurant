@@ -30,6 +30,7 @@ interface ChatResponse {
 
 export default function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -49,6 +50,40 @@ export default function AIChatbot() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Handle keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        closeChat();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
+  // Close chat completely
+  const closeChat = () => {
+    setIsOpen(false);
+    setIsMinimized(false);
+  };
+
+  // Minimize chat (keep it open but collapsed)
+  const minimizeChat = () => {
+    setIsMinimized(!isMinimized);
+  };
+
+  // Open chat (from minimized state)
+  const openChat = () => {
+    setIsOpen(true);
+    setIsMinimized(false);
+  };
 
   const sendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -127,111 +162,188 @@ export default function AIChatbot() {
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-36 left-3 sm:left-4 z-40 w-[90vw] max-w-sm sm:w-96 h-[60vh] sm:h-[500px] shadow-xl border-0">
+        <Card className="fixed bottom-36 left-3 sm:left-4 z-40 w-[90vw] max-w-sm sm:w-96 shadow-xl border-0">
           <CardHeader className="bg-gradient-to-r from-orange-500 to-orange-600 text-white pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Bot className="w-5 h-5" />
-              Sri Kanya Assistant
-              <Badge variant="secondary" className="bg-white/20 text-white">
-                <Sparkles className="w-3 h-3 mr-1" />
-                AI
-              </Badge>
+            <CardTitle className="flex items-center justify-between text-lg">
+              <div className="flex items-center gap-2">
+                <Bot className="w-5 h-5" />
+                Sri Kanya Assistant
+                <Badge variant="secondary" className="bg-white/20 text-white">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  AI
+                </Badge>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1">
+                {/* Minimize Button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={minimizeChat}
+                  className="h-8 w-8 p-0 text-white hover:bg-white/20 hover:text-white rounded-full transition-all duration-200"
+                  aria-label="Minimize chat"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </Button>
+                
+                {/* Close Button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={closeChat}
+                  className="h-8 w-8 p-0 text-white hover:bg-white/20 hover:text-white rounded-full transition-all duration-200"
+                  aria-label="Close chat"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </CardTitle>
           </CardHeader>
           
-          <CardContent className="p-0 h-full flex flex-col">
-            {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
+          {/* Chat Content - Show only when not minimized */}
+          {!isMinimized && (
+            <CardContent className="p-0 h-[60vh] sm:h-[500px] flex flex-col">
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {messages.map((message) => (
                   <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
-                      message.type === 'user'
-                        ? 'bg-orange-500 text-white'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
+                    key={message.id}
+                    className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className="flex items-start gap-2">
-                      {message.type === 'bot' && (
-                        <Bot className="w-4 h-4 mt-0.5 text-orange-600 flex-shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                        <p className="text-xs opacity-70 mt-1">
-                          {message.timestamp.toLocaleTimeString()}
-                        </p>
+                    <div
+                      className={`max-w-[80%] rounded-lg p-3 ${
+                        message.type === 'user'
+                          ? 'bg-orange-500 text-white'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        {message.type === 'bot' && (
+                          <Bot className="w-4 h-4 mt-0.5 text-orange-600 flex-shrink-0" />
+                        )}
+                        <div className="flex-1">
+                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                          <p className="text-xs opacity-70 mt-1">
+                            {message.timestamp.toLocaleTimeString()}
+                          </p>
+                        </div>
+                        {message.type === 'user' && (
+                          <User className="w-4 h-4 mt-0.5 text-white flex-shrink-0" />
+                        )}
                       </div>
-                      {message.type === 'user' && (
-                        <User className="w-4 h-4 mt-0.5 text-white flex-shrink-0" />
-                      )}
                     </div>
                   </div>
-                </div>
-              ))}
-              
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-gray-100 rounded-lg p-3">
-                    <div className="flex items-center gap-2">
-                      <Bot className="w-4 h-4 text-orange-600" />
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                ))}
+                
+                {isLoading && (
+                  <div className="flex justify-start">
+                    <div className="bg-gray-100 rounded-lg p-3">
+                      <div className="flex items-center gap-2">
+                        <Bot className="w-4 h-4 text-orange-600" />
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
                       </div>
                     </div>
+                  </div>
+                )}
+                
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Quick Suggestions */}
+              {messages.length === 1 && (
+                <div className="p-4 border-t bg-gray-50">
+                  <p className="text-xs text-gray-600 mb-2">Quick questions:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {['Show menu', 'Opening hours', 'Location', 'Contact info'].map((suggestion) => (
+                      <Button
+                        key={suggestion}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="text-xs"
+                      >
+                        {suggestion}
+                      </Button>
+                    ))}
                   </div>
                 </div>
               )}
-              
-              <div ref={messagesEndRef} />
-            </div>
 
-            {/* Quick Suggestions */}
-            {messages.length === 1 && (
-              <div className="p-4 border-t bg-gray-50">
-                <p className="text-xs text-gray-600 mb-2">Quick questions:</p>
-                <div className="flex flex-wrap gap-2">
-                  {['Show menu', 'Opening hours', 'Location', 'Contact info'].map((suggestion) => (
-                    <Button
-                      key={suggestion}
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSuggestionClick(suggestion)}
-                      className="text-xs"
-                    >
-                      {suggestion}
-                    </Button>
-                  ))}
+              {/* Input Area */}
+              <div className="p-4 border-t">
+                <div className="flex gap-2">
+                  <Input
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask me anything..."
+                    className="flex-1"
+                    disabled={isLoading}
+                  />
+                  <Button
+                    onClick={sendMessage}
+                    disabled={!inputMessage.trim() || isLoading}
+                    size="sm"
+                    className="bg-orange-600 hover:bg-orange-700"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
-            )}
+            </CardContent>
+          )}
+        </Card>
+      )}
 
-            {/* Input Area */}
-            <div className="p-4 border-t">
-              <div className="flex gap-2">
-                <Input
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Ask me anything..."
-                  className="flex-1"
-                  disabled={isLoading}
-                />
+      {/* Minimized Chat Bar - Show when minimized */}
+      {isOpen && isMinimized && (
+        <Card className="fixed bottom-36 left-3 sm:left-4 z-40 w-[90vw] max-w-sm sm:w-96 shadow-xl border-0">
+          <CardHeader className="bg-gradient-to-r from-orange-500 to-orange-600 text-white pb-3">
+            <CardTitle className="flex items-center justify-between text-lg">
+              <div className="flex items-center gap-2">
+                <Bot className="w-5 h-5" />
+                Sri Kanya Assistant
+                <Badge variant="secondary" className="bg-white/20 text-white">
+                  <Sparkles className="w-3 h-3 mr-1" />
+                  AI
+                </Badge>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1">
+                {/* Expand Button */}
                 <Button
-                  onClick={sendMessage}
-                  disabled={!inputMessage.trim() || isLoading}
+                  variant="ghost"
                   size="sm"
-                  className="bg-orange-600 hover:bg-orange-700"
+                  onClick={openChat}
+                  className="h-8 w-8 p-0 text-white hover:bg-white/20 hover:text-white rounded-full transition-all duration-200"
+                  aria-label="Expand chat"
                 >
-                  <Send className="w-4 h-4" />
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                  </svg>
+                </Button>
+                
+                {/* Close Button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={closeChat}
+                  className="h-8 w-8 p-0 text-white hover:bg-white/20 hover:text-white rounded-full transition-all duration-200"
+                  aria-label="Close chat"
+                >
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
-            </div>
-          </CardContent>
+            </CardTitle>
+          </CardHeader>
         </Card>
       )}
     </>
