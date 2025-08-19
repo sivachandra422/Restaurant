@@ -153,7 +153,7 @@ export default function MenuPage() {
   return (
     <div className="min-h-screen">
       {/* Enhanced Header */}
-      <div className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50 backdrop-blur-sm bg-white/95">
+      <div className="shadow-sm border-b border-gray-100 sticky top-0 z-50 backdrop-blur-sm" style={{ backgroundColor: 'var(--bg-app)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-12 sm:h-18 lg:h-20">
             {/* Enhanced Logo and Restaurant Name */}
@@ -252,7 +252,7 @@ export default function MenuPage() {
       </div>
 
       {/* Enhanced Search and Filter Section */}
-      <div className="bg-white border-b border-gray-100 shadow-sm">
+      <div className="border-b border-gray-100 shadow-sm" style={{ backgroundColor: 'var(--bg-app)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             {/* Enhanced Search with suggestions */}
@@ -374,7 +374,7 @@ export default function MenuPage() {
       </div>
 
       {/* Categories (sticky under header) */}
-      <div ref={categoriesRef} className="bg-white border-b sticky top-[56px] sm:top-[72px] z-40 backdrop-blur bg-white/95">
+      <div ref={categoriesRef} className="border-b sticky top-[56px] sm:top-[72px] z-40 backdrop-blur" style={{ backgroundColor: 'var(--bg-app)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <ElegantCategoryTabs
             categories={menuCategories}
@@ -385,7 +385,7 @@ export default function MenuPage() {
       </div>
 
       {/* Enhanced Menu Items Grid */}
-      <div className="bg-white">
+      <div style={{ backgroundColor: 'var(--bg-app)' }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
           {loading ? (
             <div className="text-center py-12 sm:py-16">
@@ -555,7 +555,7 @@ export default function MenuPage() {
       )}
 
       {/* Mobile Bottom Action Bar */}
-      <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+      <div className="sm:hidden fixed bottom-0 inset-x-0 z-40 border-t border-gray-200 backdrop-blur" style={{ backgroundColor: 'var(--bg-app)' }}>
         <div className="flex items-center justify-around h-14 px-2 pb-[calc(env(safe-area-inset-bottom,0px))]">
           {/* Search */}
           <button

@@ -41,7 +41,7 @@ export function ElegantCategoryTabs({
   const { language } = useLanguage();
 
   return (
-    <div className="w-full bg-white">
+          <div className="w-full" style={{ backgroundColor: 'var(--bg-app)' }}>
       {/* Horizontal Scroll for All Screen Sizes */}
       <ScrollArea className="w-full" type="always">
         <div className="flex space-x-3 sm:space-x-4 p-3 sm:p-4 pb-4 sm:pb-6 min-w-max">
@@ -57,10 +57,11 @@ export function ElegantCategoryTabs({
                 className={`group relative px-4 sm:px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation flex-shrink-0 min-w-[160px] sm:min-w-[180px] max-w-[180px] sm:max-w-[220px] focus-ring ${
                   isActive
                     ? 'bg-gradient-primary text-white shadow-lg shadow-glow'
-                    : 'bg-white text-neutral-700 hover:bg-neutral-50 hover:shadow-md border border-neutral-200 hover:border-primary-200'
+                    : 'text-neutral-700 hover:bg-neutral-50 hover:shadow-md border border-neutral-200 hover:border-primary-200'
                 }`}
                 style={{
-                  animationDelay: `${index * 100}ms`
+                  animationDelay: `${index * 100}ms`,
+                  backgroundColor: isActive ? undefined : 'var(--bg-app)'
                 }}
               >
                 {/* Icon */}
