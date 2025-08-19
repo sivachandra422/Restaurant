@@ -749,6 +749,11 @@ button {
   margin-left: 1rem;
 }
 
+/* Premium Menu Background Override */
+.premium-menu-bg {
+  background-color: #fff7ed !important;
+}
+
 /* Custom CSS for enhanced UI */
 @layer base {
   html {
