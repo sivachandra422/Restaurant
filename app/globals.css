@@ -1,6 +1,31 @@
 :root{
-  --bg-app:#fff7ed; /* Light orange background for premium feel */
-  --bg-surface:#fff7ed;
+  /* ELEGANT BACKGROUND OPTIONS - Choose one by uncommenting: */
+  
+  /* Option 1: Warm Pearl (Current - Subtle & Luxurious) */
+  --bg-app:#faf8f5; /* Warm pearl - subtle & luxurious */
+  
+  /* Option 2: Premium Ivory */
+  /* --bg-app:#fefcf8; */ /* Premium ivory - very elegant & clean */
+  
+  /* Option 3: Warm Pearl */
+  /* --bg-app:#faf8f5; */ /* Warm pearl - subtle & luxurious */
+  
+  /* Option 4: Soft Champagne */
+  /* --bg-app:#fef9f4; */ /* Soft champagne - warm & inviting */
+  
+  /* Option 5: Gentle Almond */
+  /* --bg-app:#fef8f3; */ /* Gentle almond - sophisticated & warm */
+  
+  /* Option 6: Cream Silk */
+  /* --bg-app:#fefaf6; */ /* Cream silk - elegant & smooth */
+  
+  /* Option 7: Warm Vanilla */
+  /* --bg-app:#fefbf7; */ /* Warm vanilla - cozy & premium */
+  
+  /* Option 8: Pearl White */
+  /* --bg-app:#fafaf9; */ /* Pearl white - very subtle & elegant */
+  
+  --bg-surface:var(--bg-app);
   --border-subtle:#e5e7eb;
 }
 html,body{background:var(--bg-app);} 
