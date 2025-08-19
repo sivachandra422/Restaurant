@@ -151,7 +151,7 @@ export default function MenuPage() {
   const hasItems = state.totalItems > 0;
 
   return (
-    <div className="min-h-screen bg-white pb-28 sm:pb-0">
+    <div className="min-h-screen bg-orange-50">
       {/* Enhanced Header */}
       <div className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50 backdrop-blur-sm bg-white/95">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
