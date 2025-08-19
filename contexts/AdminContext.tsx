@@ -234,13 +234,17 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     if (state.sessionExpiry) {
       const interval = setInterval(() => {
         if (state.sessionExpiry && new Date() > state.sessionExpiry) {
-          logout();
+          // Handle session expiry
+          dispatch({ type: 'LOGOUT' });
+          localStorage.removeItem('adminSession');
+          deleteCookie('admin-token');
+          router.push('/admin/login');
         }
       }, 60000); // Check every minute
 
       return () => clearInterval(interval);
     }
-  }, [state.sessionExpiry]);
+  }, [state.sessionExpiry, router]);
 
   // Save session to localStorage when authenticated
   useEffect(() => {
@@ -296,12 +300,18 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Logout function
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    console.log('Logout called - clearing state and redirecting');
     dispatch({ type: 'LOGOUT' });
     localStorage.removeItem('adminSession');
     deleteCookie('admin-token');
-    router.push('/admin/login');
-  }, [router]);
+    console.log('Logout - redirecting to login page');
+    
+    // Small delay to ensure state is cleared before redirect
+    setTimeout(() => {
+      window.location.href = '/admin/login';
+    }, 100);
+  }, []);
 
   // Set current section
   const setSection = useCallback((section: AdminState['currentSection']) => {

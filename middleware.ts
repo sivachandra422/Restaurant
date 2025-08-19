@@ -28,7 +28,7 @@ export function middleware(request: NextRequest) {
 
   // If trying to access login page with valid token, redirect to admin dashboard
   if (path === '/admin/login' && token) {
-    return NextResponse.redirect(new URL('/admin', request.url));
+    return NextResponse.redirect(new URL('/admin/modern', request.url));
   }
 
   // Create response
