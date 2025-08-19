@@ -1,6 +1,6 @@
 :root{
-  --bg-app:#ffffff; /* consider #faf7f3 for subtle warm tint */
-  --bg-surface:#ffffff;
+  --bg-app:#fff7ed; /* Light orange background for premium feel */
+  --bg-surface:#fff7ed;
   --border-subtle:#e5e7eb;
 }
 html,body{background:var(--bg-app);} 
@@ -101,7 +101,7 @@ html,body{background:var(--bg-app);}
 @layer base {
   :root {
     /* Warm Luxe (light) */
-    --background: 30 100% 97%;        /* #FFF8F1 ivory */
+    --background: 30 100% 97%;        /* #FFF8F1 ivory - light orange */
     --foreground: 222 47% 11%;        /* slate-900 */
     --card: 0 0% 100%;                /* white */
     --card-foreground: 222 47% 11%;
@@ -749,10 +749,7 @@ button {
   margin-left: 1rem;
 }
 
-/* Premium Menu Background Override */
-.premium-menu-bg {
-  background-color: #fff7ed !important;
-}
+
 
 /* Custom CSS for enhanced UI */
 @layer base {
