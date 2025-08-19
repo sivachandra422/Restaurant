@@ -196,6 +196,21 @@ function generateAnalyticsFromOrders(orders: any[]) {
       revenue: dayRevenue
     });
   }
+
+  // Calculate real trends by comparing periods
+  const previousPeriodStart = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const previousPeriodEnd = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+  
+  const previousPeriodOrders = orders.filter(order => {
+    const orderDate = new Date(order.createdAt || order.timestamp);
+    return orderDate >= previousPeriodStart && orderDate < previousPeriodEnd;
+  });
+  
+  const previousPeriodRevenue = previousPeriodOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+  const previousPeriodCount = previousPeriodOrders.length;
+  
+  const revenueChange = previousPeriodRevenue > 0 ? ((todayRevenue - previousPeriodRevenue) / previousPeriodRevenue) * 100 : 0;
+  const ordersChange = previousPeriodCount > 0 ? ((todayOrders.length - previousPeriodCount) / previousPeriodCount) * 100 : 0;
   
   // Top customers
   const customerStats: { [key: string]: { orders: number; revenue: number; lastOrder: string } } = {};
@@ -221,6 +236,8 @@ function generateAnalyticsFromOrders(orders: any[]) {
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 10);
   
+
+
   return {
     totalRevenue,
     totalOrders,
@@ -237,7 +254,13 @@ function generateAnalyticsFromOrders(orders: any[]) {
     repeatCustomers: Object.values(customerStats).filter(stats => stats.orders > 1).length,
     categoryPerformance: generateCategoryPerformance(orders),
     revenueTrends: generateRevenueTrends(orders),
-    itemPerformance: popularItems
+    itemPerformance: popularItems,
+    trends: {
+      revenueChange: Math.round(revenueChange * 10) / 10,
+      ordersChange: Math.round(ordersChange * 10) / 10,
+      previousPeriodRevenue,
+      previousPeriodCount
+    }
   };
 }
 

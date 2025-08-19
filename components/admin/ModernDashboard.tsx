@@ -62,6 +62,8 @@ interface DashboardData {
   todayOrders: number;
   pendingOrders: number;
   averageRating: number;
+  dataSource?: string;
+  isRealData?: boolean;
 }
 
 interface ModernDashboardProps {
@@ -123,8 +125,16 @@ export default function ModernDashboard({ onSectionChange }: ModernDashboardProp
     const previousRevenue = previousPeriodOrders.reduce((sum: number, order: any) => sum + (order.totalAmount || 0), 0);
     
     const revenueChange = previousRevenue > 0 ? ((todayRevenue - previousRevenue) / previousRevenue) * 100 : 0;
-    const ordersChange = previousPeriodOrders.length > 0 ? ((todayOrders - previousPeriodOrders.length) / previousPeriodOrders.length) * 100 : 0;
-    const customersChange = 0; // Would need historical data for accurate calculation
+    const ordersChange = previousPeriodOrders.length > 0 ? ((todayOrders.length - previousPeriodOrders.length) / previousPeriodOrders.length) * 100 : 0;
+    
+    // Calculate customer change (unique customers in previous period vs today)
+    const previousPeriodCustomers = new Set(
+      previousPeriodOrders.map((order: any) => order.customerPhone || order.customerName)
+    ).size;
+    const todayCustomers = new Set(
+      todayOrders.map((order: any) => order.customerPhone || order.customerName)
+    ).size;
+    const customersChange = previousPeriodCustomers > 0 ? ((todayCustomers - previousPeriodCustomers) / previousPeriodCustomers) * 100 : 0;
 
     // Process recent orders
     const recentOrders: RecentOrder[] = ordersList
@@ -156,7 +166,7 @@ export default function ModernDashboard({ onSectionChange }: ModernDashboardProp
         name,
         orders: data.orders,
         revenue: data.revenue,
-        trend: Math.random() * 20 - 10 // Would need historical data for accurate trends
+        trend: revenueChange // Use overall revenue trend as proxy for item trends
       }))
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 4);
@@ -193,8 +203,8 @@ export default function ModernDashboard({ onSectionChange }: ModernDashboardProp
         {
           title: 'Avg Order Value',
           value: `₹${Math.round(avgOrderValue)}`,
-          change: 15.3, // Would need historical data for accurate calculation
-          changeType: 'increase',
+          change: Math.abs(revenueChange), // Use real revenue change as proxy for AOV trend
+          changeType: revenueChange >= 0 ? 'increase' : 'decrease',
           icon: Target,
           color: 'from-orange-500 to-orange-600',
           description: 'Per order average'
@@ -239,12 +249,26 @@ export default function ModernDashboard({ onSectionChange }: ModernDashboardProp
 
       // Process and combine data
       const processedData = processDashboardData(analyticsData, ordersData, menuData);
-      setDashboardData(processedData);
+      
+      // Add data source information
+      const dataSource = analyticsData.source || 'unknown';
+      const isRealData = dataSource === 'mongodb' || dataSource === 'orders_api';
+      
+      setDashboardData({
+        ...processedData,
+        dataSource,
+        isRealData
+      });
 
       if (isRefresh) {
+        const sourceMessage = isRealData 
+          ? "Latest real-time data has been refreshed successfully."
+          : "Sample data has been refreshed. Add real orders to see live analytics.";
+          
         toast({
           title: "Dashboard Updated",
-          description: "Latest data has been refreshed successfully.",
+          description: sourceMessage,
+          variant: isRealData ? "default" : "default"
         });
       }
     } catch (err) {
@@ -388,6 +412,33 @@ export default function ModernDashboard({ onSectionChange }: ModernDashboardProp
           </div>
         </div>
       </div>
+
+      {/* Data Source Indicator */}
+      {dashboardData && (
+        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className={`w-3 h-3 rounded-full ${dashboardData.isRealData ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+              <div>
+                <span className={`text-sm font-medium ${dashboardData.isRealData ? 'text-green-700' : 'text-yellow-700'}`}>
+                  {dashboardData.isRealData ? '🟢 Live Data' : '🟡 Sample Data'}
+                </span>
+                <p className="text-xs text-slate-600 mt-1">
+                  {dashboardData.isRealData 
+                    ? 'Showing real-time analytics from your orders' 
+                    : 'Showing sample data. Add real orders to see live analytics'
+                  }
+                </p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-xs text-slate-500">
+                Source: {dashboardData.dataSource || 'unknown'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Today's Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -48,6 +48,12 @@ interface AnalyticsData {
   itemPerformance: Array<{ name: string; orders: number; revenue: number; avgRating: number }>;
   dataSource?: string;
   dataMessage?: string;
+  trends?: {
+    revenueChange: number;
+    ordersChange: number;
+    previousPeriodRevenue: number;
+    previousPeriodCount: number;
+  };
 }
 
 export default function ModernAnalytics() {
@@ -173,9 +179,9 @@ export default function ModernAnalytics() {
   const calculateTrends = () => {
     if (!analyticsData) return { revenue: { trend: 'up' as const, change: 0 }, orders: { trend: 'up' as const, change: 0 } };
 
-    // Simple trend calculation - in real implementation, you&apos;d compare with previous period
-    const revenueChange = 15.2; // This would come from comparing current vs previous period
-    const ordersChange = 8.7;
+    // Use real trend data from analytics API
+    const revenueChange = analyticsData.trends?.revenueChange || 0;
+    const ordersChange = analyticsData.trends?.ordersChange || 0;
 
     return {
       revenue: { trend: (revenueChange >= 0 ? 'up' : 'down') as 'up' | 'down', change: Math.abs(revenueChange) },
