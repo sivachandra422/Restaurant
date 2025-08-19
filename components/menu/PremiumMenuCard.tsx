@@ -273,15 +273,15 @@ export function PremiumMenuCard({
   };
 
   return (
-    <Card className="menu-card group overflow-hidden border-0 shadow-soft hover:shadow-glow bg-white transform transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1">
+    <Card className="menu-card group overflow-hidden border-0 shadow-soft hover:shadow-glow bg-white transform transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 rounded-xl">
       <CardContent className="p-0">
         {/* Image Section */}
-        <div ref={imageRef} className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+        <div ref={imageRef} className="relative aspect-[4/3] overflow-hidden bg-neutral-100">
           {/* Skeleton Loading Placeholder */}
           {imageLoading && (
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse">
+            <div className="absolute inset-0 bg-gradient-to-br from-neutral-200 to-neutral-300 animate-pulse">
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-gray-400">
+                <div className="text-neutral-400">
                   <ChefHat className="w-8 h-8 animate-pulse" />
                 </div>
               </div>
@@ -304,44 +304,56 @@ export function PremiumMenuCard({
               loading={shouldPreload ? "eager" : "lazy"}
               placeholder="blur"
               blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+              quality={95}
               unoptimized={currentImageUrl.startsWith('https://res.cloudinary.com/')} // Keep Cloudinary handling
             />
+          )}
+          
+          {/* Enhanced Loading States */}
+          {!isInView && (
+            <div className="absolute inset-0 bg-gradient-to-br from-neutral-100 to-neutral-200 animate-pulse">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-neutral-400">
+                  <ChefHat className="w-8 h-8 animate-pulse" />
+                </div>
+              </div>
+            </div>
           )}
           
           {/* Favorite Button with enhanced animation */}
           <button
             onClick={handleFavoriteClick}
-            className="absolute top-2 left-2 w-8 h-8 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 hover:bg-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transform hover:rotate-12 z-10 shadow-md"
+            className="absolute top-3 left-3 w-9 h-9 bg-white/95 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 hover:bg-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transform hover:rotate-12 z-10 shadow-md"
             style={{ zIndex: 10 }}
           >
             <Heart 
               className={`w-4 h-4 transition-all duration-300 ${
                 isItemFavorite(item.id) 
-                  ? 'text-red-500 fill-current scale-110' 
-                  : 'text-gray-600 hover:text-red-500'
+                  ? 'text-primary-500 fill-current scale-110' 
+                  : 'text-neutral-600 hover:text-primary-500'
               }`}
             />
           </button>
           
           {/* Enhanced Badges with animations */}
-          <div className="absolute top-2 right-2 flex flex-col gap-1 max-w-[calc(100%-1rem)]">
+          <div className="absolute top-3 right-3 flex flex-col gap-2 max-w-[calc(100%-1.5rem)]">
             {/* Veg Badge - Always show if applicable */}
             {item.isVeg && (
-              <Badge className="bg-green-500 text-white text-xs px-2 py-1 shadow-md transform transition-all duration-300 hover:scale-105 animate-fadeInUp">
+              <Badge className="bg-food-veg text-white text-xs px-3 py-1.5 shadow-md transform transition-all duration-300 hover:scale-105 animate-fade-in rounded-full">
                 {t('veg', language)}
               </Badge>
             )}
             
             {/* Signature Badge - Priority badge */}
             {item.isSignature && (
-              <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs px-2 py-1 shadow-md transform transition-all duration-300 hover:scale-105 animate-fadeInUp">
+              <Badge className="bg-gradient-primary text-white text-xs px-3 py-1.5 shadow-md transform transition-all duration-300 hover:scale-105 animate-fade-in rounded-full">
                 {t('signature', language)}
               </Badge>
             )}
             
             {/* Trending Badge - Only show if not signature and trending */}
             {item.trending && !item.isSignature && (
-              <Badge className="pulse-glow bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1 shadow-md transform transition-all duration-300 hover:scale-105 animate-fadeInUp">
+              <Badge className="pulse-glow bg-gradient-accent text-white text-xs px-3 py-1.5 shadow-md transform transition-all duration-300 hover:scale-105 animate-fade-in rounded-full">
                 {t('trending', language)}
               </Badge>
             )}
@@ -351,49 +363,49 @@ export function PremiumMenuCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300" />
         </div>
 
-        {/* Content Section */}
-        <div className="p-3 sm:p-4">
-          {/* Title and Description */}
-          <div className="mb-3">
-            <h3 className="font-semibold text-sm sm:text-base text-gray-900 mb-1 line-clamp-1 group-hover:text-orange-600 transition-colors duration-200">
+        {/* Content Section - Enhanced Layout */}
+        <div className="p-4 sm:p-5">
+          {/* Title and Description - Better Typography */}
+          <div className="mb-4">
+            <h3 className="font-bold text-base sm:text-lg text-neutral-900 mb-2 line-clamp-1 group-hover:text-primary-500 transition-colors duration-200 leading-tight">
               {localizedName}
             </h3>
             <div className="description-container">
-              <p className="text-xs sm:text-sm text-gray-600 description-text">
+              <p className="text-sm text-neutral-600 description-text leading-relaxed line-clamp-2">
                 {localizedDescription}
               </p>
             </div>
           </div>
 
-          {/* Enhanced Price and Time Section */}
-          <div className="flex items-center justify-between mb-3">
+          {/* Enhanced Price and Time Section - Better Alignment */}
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
-              <span className="font-bold text-lg sm:text-xl text-gray-900 group-hover:text-orange-600 transition-colors duration-200">
+              <span className="font-bold text-xl sm:text-2xl text-neutral-900 group-hover:text-primary-500 transition-colors duration-200">
                 {t('currency', language)}{item.price}
               </span>
             </div>
             <WaitTimeIndicator item={item} />
           </div>
 
-          {/* Enhanced Add to Cart Section */}
+          {/* Enhanced Add to Cart Section - Better Spacing */}
           <div className="flex items-center justify-between">
             {quantity === 0 ? (
               <Button
                 onClick={(e) => { handleAddClick(e); flyToCart(); }}
-                className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium ripple focus-ring transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+                className="w-full bg-gradient-primary hover:from-primary-600 hover:to-primary-700 text-white font-semibold ripple focus-ring transition-all duration-300 transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl py-3 rounded-xl"
               >
-                <Plus className="w-4 h-4 mr-1" />
+                <Plus className="w-5 h-5 mr-2" />
                 {t('add_to_cart', language)}
               </Button>
             ) : (
-              <div className="flex items-center space-x-2 w-full">
+              <div className="flex items-center space-x-3 w-full">
                 {/* Labels / Badges left-aligned for consistent height */}
-                <div className="hidden sm:flex items-center gap-1">
+                <div className="hidden sm:flex items-center gap-2">
                   {item.isVeg && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">{t('veg', language)}</span>
+                    <span className="text-xs px-3 py-1.5 rounded-full bg-success-100 text-success-700 border border-success-200 font-medium">{t('veg', language)}</span>
                   )}
                   {item.isSignature && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">{t('premium', language)}</span>
+                    <span className="text-xs px-3 py-1.5 rounded-full bg-warning-100 text-warning-700 border border-warning-200 font-medium">{t('premium', language)}</span>
                   )}
                 </div>
                 <Button
@@ -405,12 +417,12 @@ export function PremiumMenuCard({
                   onTouchEnd={endPress}
                   variant="outline"
                   size="sm"
-                  className="w-8 h-8 p-0 rounded-full ripple focus-ring transition-all duration-200 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                  className="w-10 h-10 p-0 rounded-full ripple focus-ring transition-all duration-200 hover:bg-error-50 hover:border-error-300 hover:text-error-600 shadow-sm"
                 >
-                  <Minus className="w-3 h-3" />
+                  <Minus className="w-4 h-4" />
                 </Button>
                 
-                <span className="flex-1 text-center font-semibold text-gray-900 text-lg">
+                <span className="flex-1 text-center font-bold text-neutral-900 text-xl">
                   {quantity}
                 </span>
                 
@@ -423,12 +435,12 @@ export function PremiumMenuCard({
                   onTouchEnd={endPress}
                   variant="outline"
                   size="sm"
-                  className={`w-8 h-8 p-0 rounded-full ripple focus-ring transition-all duration-200 hover:bg-green-50 hover:border-green-300 hover:text-green-600 ${
+                  className={`w-10 h-10 p-0 rounded-full ripple focus-ring transition-all duration-200 hover:bg-success-50 hover:border-success-300 hover:text-success-600 shadow-sm ${
                     isAtMaxQuantity ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                   disabled={isAtMaxQuantity}
                 >
-                  <Plus className="w-3 h-3" />
+                  <Plus className="w-4 h-4" />
                 </Button>
               </div>
             )}

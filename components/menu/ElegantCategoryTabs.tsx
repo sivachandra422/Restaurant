@@ -56,8 +56,8 @@ export function ElegantCategoryTabs({
                 onClick={() => onCategoryChange(category.id)}
                 className={`group relative px-4 sm:px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation flex-shrink-0 min-w-[160px] sm:min-w-[180px] max-w-[180px] sm:max-w-[220px] focus-ring ${
                   isActive
-                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-glow'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 hover:shadow-md border border-gray-200 hover:border-orange-200'
+                    ? 'bg-gradient-primary text-white shadow-lg shadow-glow'
+                    : 'bg-white text-neutral-700 hover:bg-neutral-50 hover:shadow-md border border-neutral-200 hover:border-primary-200'
                 }`}
                 style={{
                   animationDelay: `${index * 100}ms`
@@ -77,7 +77,7 @@ export function ElegantCategoryTabs({
                 
                 {/* Description */}
                 <div className={`text-[11px] sm:text-xs leading-tight ${isActive ? 'line-clamp-1' : 'line-clamp-1 sm:line-clamp-2'} transition-colors duration-200 ${
-                  isActive ? 'text-orange-100' : 'text-gray-500 group-hover:text-gray-700'
+                  isActive ? 'text-primary-100' : 'text-neutral-500 group-hover:text-neutral-700'
                 }`}>
                   {localizedDescription}
                 </div>
@@ -90,8 +90,8 @@ export function ElegantCategoryTabs({
                 {/* Hover Effect */}
                 <div className={`absolute inset-0 rounded-lg sm:rounded-xl transition-opacity duration-300 ${
                   isActive 
-                    ? 'bg-gradient-to-r from-orange-600 to-red-600 opacity-0' 
-                    : 'bg-gradient-to-r from-orange-500 to-red-500 opacity-0 group-hover:opacity-10'
+                    ? 'bg-gradient-primary opacity-0' 
+                    : 'bg-gradient-accent opacity-0 group-hover:opacity-10'
                 }`} />
               </button>
             );
