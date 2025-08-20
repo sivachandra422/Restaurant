@@ -19,8 +19,8 @@ export async function GET(request: NextRequest) {
         if (orders.length > 0) {
           const analytics = generateAnalyticsFromOrders(orders);
           console.log(`✅ Generated analytics from ${orders.length} real orders`);
-          return NextResponse.json({
-            success: true,
+      return NextResponse.json({
+        success: true,
             data: analytics,
             source: 'mongodb',
             orderCount: orders.length
@@ -58,8 +58,8 @@ export async function GET(request: NextRequest) {
         if (orders.length > 0 && hasRealOrders) {
           const analytics = generateAnalyticsFromOrders(orders);
           console.log(`✅ Generated analytics from ${orders.length} API orders`);
-          return NextResponse.json({
-            success: true,
+      return NextResponse.json({
+        success: true,
             data: analytics,
             source: 'orders_api',
             orderCount: orders.length
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
       message: 'No real orders found. Database connection may be failing.',
       orderCount: 0
     });
-
+    
   } catch (error) {
     console.error('❌ Analytics API error:', error);
     return NextResponse.json({
@@ -395,4 +395,4 @@ function getDefaultAnalytics() {
     ],
     itemPerformance: sampleItems
   };
-}
+} 

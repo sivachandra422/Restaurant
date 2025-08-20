@@ -1,17 +1,17 @@
 :root{
-  /* ELEGANT BACKGROUND OPTIONS - Choose one by uncommenting: */
+  /* PREMIUM LUXURY BACKGROUND OPTIONS - Choose one by uncommenting: */
   
   /* Option 1: Warm Pearl (Current - Subtle & Luxurious) */
-  --bg-app:#faf8f5; /* Warm pearl - subtle & luxurious */
+  /* --bg-app:#faf8f5; */ /* Warm pearl - subtle & luxurious */
   
   /* Option 2: Premium Ivory */
-  /* --bg-app:#fefcf8; */ /* Premium ivory - very elegant & clean */
+  /* --bg-app:#fefcf8;  /* Premium ivory - very elegant & clean */
   
   /* Option 3: Warm Pearl */
   /* --bg-app:#faf8f5; */ /* Warm pearl - subtle & luxurious */
   
   /* Option 4: Soft Champagne */
-  /* --bg-app:#fef9f4; */ /* Soft champagne - warm & inviting */
+  /* --bg-app:#fef9f4; /* Soft champagne - warm & inviting */
   
   /* Option 5: Gentle Almond */
   /* --bg-app:#fef8f3; */ /* Gentle almond - sophisticated & warm */
@@ -24,6 +24,9 @@
   
   /* Option 8: Pearl White */
   /* --bg-app:#fafaf9; */ /* Pearl white - very subtle & elegant */
+  
+  /* Option 9: Luxury Gold Cream (ACTIVE - Premium & Sophisticated) */
+  --bg-app:#f5eee0;  /* Luxury gold cream - rich & sophisticated */
   
   --bg-surface:var(--bg-app);
   --border-subtle:#e5e7eb;
@@ -125,8 +128,8 @@ html,body{background:var(--bg-app);}
 
 @layer base {
   :root {
-    /* Warm Luxe (light) */
-    --background: 30 100% 97%;        /* #FFF8F1 ivory - light orange */
+    /* PREMIUM LUXURY THEME - Warm & Sophisticated */
+    --background: 35 100% 97%;        /* #FFF8F1 - Warm cream with golden undertones */
     --foreground: 222 47% 11%;        /* slate-900 */
     --card: 0 0% 100%;                /* white */
     --card-foreground: 222 47% 11%;
@@ -134,16 +137,16 @@ html,body{background:var(--bg-app);}
     --popover-foreground: 222 47% 11%;
     --primary: 22 90% 52%;            /* #F97316 */
     --primary-foreground: 0 0% 100%;  /* white */
-    --secondary: 28 40% 94%;          /* soft warm neutral */
+    --secondary: 35 40% 94%;          /* Warm cream background */
     --secondary-foreground: 222 47% 11%;
-    --muted: 28 30% 94%;              /* subtle warm tint */
-    --muted-foreground: 25 12% 45%;   /* warm gray text */
+    --muted: 35 30% 94%;              /* Subtle warm cream tint */
+    --muted-foreground: 25 12% 45%;   /* Warm gray text */
     --accent: 165 89% 20%;            /* deep teal/green #065F46 */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 24 10% 85%;             /* warm border */
-    --input: 24 10% 85%;
+    --border: 35 10% 85%;             /* Warm cream border */
+    --input: 35 10% 85%;
     --ring: 22 90% 52%;               /* match primary */
     --chart-1: 22 90% 52%;
     --chart-2: 165 60% 35%;
@@ -153,8 +156,8 @@ html,body{background:var(--bg-app);}
     --radius: 0.5rem;
   }
   .dark {
-    /* Charcoal & Champagne (dark) */
-    --background: 210 30% 6%;         /* #0B0F14 */
+    /* PREMIUM DARK THEME - Rich & Luxurious */
+    --background: 220 25% 8%;         /* #0F1419 - Deep charcoal with blue undertones */
     --foreground: 220 14% 96%;        /* #F3F4F6 */
     --card: 222 47% 11%;              /* #111827 */
     --card-foreground: 220 14% 96%;
@@ -187,20 +190,81 @@ html,body{background:var(--bg-app);}
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-inter), system-ui, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* PREMIUM BACKGROUND GRADIENT - ACTIVE */
+    background: linear-gradient(135deg, #fef9f0 0%, #faf4e9 50%, #f5eee0 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
   }
   html {
     scroll-behavior: smooth;
   }
 }
 
+/* PREMIUM LUXURY BACKGROUND ALTERNATIVES - Uncomment to try different luxury themes */
+
+/* Option 1: Warm Pearl */
+/* body { background: linear-gradient(135deg, #faf8f5 0%, #f5f1eb 50%, #f0ebe0 100%); } */
+
+/* Option 2: Premium Ivory */
+/* body { background: linear-gradient(135deg, #fefcf8 0%, #faf6f0 50%, #f5efe6 100%); } */
+
+/* Option 3: Soft Champagne */
+/* body { background: linear-gradient(135deg, #fef9f4 0%, #faf4ed 50%, #f5ede4 100%); } */
+
+/* Option 4: Gentle Almond */
+/* body { background: linear-gradient(135deg, #fef8f3 0%, #faf3ec 50%, #f5ede3 100%); } */
+
+/* Option 5: Cream Silk */
+/* body { background: linear-gradient(135deg, #fefaf6 0%, #faf6f0 50%, #f5f0e8 100%); } */
+
+/* Option 6: Warm Vanilla */
+/* body { background: linear-gradient(135deg, #fefbf7 0%, #faf7f1 50%, #f5f1e9 100%); } */
+
+/* Option 7: Pearl White */
+/* body { background: linear-gradient(135deg, #fafaf9 0%, #f5f5f4 50%, #f0f0ef 100%); } */
+
+/* Option 8: Luxury Gold Cream (CURRENTLY ACTIVE) */
+/* body { background: linear-gradient(135deg, #fef9f0 0%, #faf4e9 50%, #f5eee0 100%); } */
+
+/* Option 9: Premium Beige */
+/* body { background: linear-gradient(135deg, #fef8f3 0%, #faf3ec 50%, #f5ede3 100%); } */
+
+/* Option 10: Sophisticated Cream */
+/* body { background: linear-gradient(135deg, #fefaf5 0%, #faf5ee 50%, #f5efe5 100%); } */
+
+/* ENSURE PREMIUM BACKGROUND COVERS ENTIRE PAGE */
+html {
+  background: linear-gradient(135deg, #fef9f0 0%, #faf4e9 50%, #f5eee0 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+body {
+  background: linear-gradient(135deg, #fef9f0 0%, #faf4e9 50%, #f5eee0 100%) !important;
+  background-attachment: fixed !important;
+  min-height: 100vh;
+}
+
+/* Override any white backgrounds from components */
+#__next, .app, .main, .container {
+  background: transparent !important;
+}
+
+/* Ensure menu page has premium background */
+.menu-page, .menu-container {
+  background: transparent !important;
+}
+
 /* Premium Typography */
 .font-elegant {
-  font-family: var(--font-playfair), Georgia, serif;
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
 }
 
 .font-body {
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* Premium Scrollbar */
@@ -783,7 +847,7 @@ button {
   }
   
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

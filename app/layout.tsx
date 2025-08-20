@@ -1,6 +1,5 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import { CartProvider } from '@/contexts/CartContext';
 import { OfflineProvider } from '@/contexts/OfflineContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
@@ -25,7 +24,8 @@ if (typeof window === 'undefined' && process.env.NEXT_PHASE !== 'phase-productio
   }
 }
 
-const inter = Inter({ subsets: ['latin'] });
+// Local font classes instead of Google Fonts to prevent build failures
+const fontClasses = 'font-sans antialiased';
 
 export const metadata: Metadata = {
   title: 'Sri Kanya Family Restaurant - Authentic Indian Cuisine',
@@ -57,10 +57,23 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="//res.cloudinary.com" />
         <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="anonymous" />
         
-        {/* Preload critical fonts */}
-        <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
+        {/* Local font fallbacks - no external dependencies */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            @font-face {
+              font-family: 'Inter';
+              src: local('Inter'), local('Inter-Regular'), local('Inter-Variable');
+              font-display: swap;
+            }
+            @font-face {
+              font-family: 'Playfair Display';
+              src: local('Playfair Display'), local('PlayfairDisplay-Regular');
+              font-display: swap;
+            }
+          `
+        }} />
       </head>
-      <body className={inter.className}>
+      <body className={fontClasses}>
         <OfflineProvider>
           <LanguageProvider>
             <AnalyticsProvider>
@@ -68,12 +81,12 @@ export default function RootLayout({
                 <MenuProvider>
                   <AdminProvider>
                     <RealTimeOrderProvider>
-                                          <CartProvider>
-                      <ErrorBoundary>
-                        {children}
-                        <Toaster />
-                      </ErrorBoundary>
-                    </CartProvider>
+                      <CartProvider>
+                        <ErrorBoundary>
+                          {children}
+                          <Toaster />
+                        </ErrorBoundary>
+                      </CartProvider>
                     </RealTimeOrderProvider>
                   </AdminProvider>
                 </MenuProvider>
