@@ -433,8 +433,8 @@ function generateMockOrders() {
 async function sendOrderNotifications(orderData: any) {
   try {
     // Get notification settings from environment or use defaults
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@srikanya.com';
-    const kitchenEmail = process.env.KITCHEN_EMAIL || 'kitchen@srikanya.com';
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
+    const kitchenEmail = process.env.KITCHEN_EMAIL || 'kitchen@example.com';
     
     // Prepare email data
     const emailData = {

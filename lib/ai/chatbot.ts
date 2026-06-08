@@ -116,7 +116,7 @@ export class AIChatbot {
   // Handle contact inquiry
   private handleContactInquiry(): ChatResponse {
     const phone = this.restaurantInfo?.phone || '+91-9876543210';
-    const email = this.restaurantInfo?.email || 'orders@srikanya.com';
+    const email = this.restaurantInfo?.email || 'orders@example.com';
     
     return {
       message: `You can reach us at:\n📞 Phone: ${phone}\n📧 Email: ${email}\n\nWe're here to help with any questions!`,

@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     if (users.length === 0) {
       const defaultAdmin = {
         name: 'Admin User',
-        email: 'admin@srikanya.com',
+        email: 'admin@example.com',
         password: await bcrypt.hash('admin123', 10),
         role: 'admin',
         status: 'active',
@@ -300,7 +300,7 @@ function generateMockUsers(): User[] {
     {
       id: '1',
       name: 'Admin User',
-      email: 'admin@srikanya.com',
+      email: 'admin@example.com',
       role: 'admin',
       status: 'active',
       permissions: ['all'],
@@ -311,7 +311,7 @@ function generateMockUsers(): User[] {
     {
       id: '2',
       name: 'Manager User',
-      email: 'manager@srikanya.com',
+      email: 'manager@example.com',
       role: 'manager',
       status: 'active',
       permissions: ['orders', 'menu', 'analytics', 'feedback', 'settings'],
@@ -322,7 +322,7 @@ function generateMockUsers(): User[] {
     {
       id: '3',
       name: 'Kitchen Staff',
-      email: 'kitchen@srikanya.com',
+      email: 'kitchen@example.com',
       role: 'staff',
       status: 'active',
       permissions: ['orders', 'menu'],
@@ -333,7 +333,7 @@ function generateMockUsers(): User[] {
     {
       id: '4',
       name: 'Service Staff',
-      email: 'service@srikanya.com',
+      email: 'service@example.com',
       role: 'staff',
       status: 'active',
       permissions: ['orders'],

@@ -57,8 +57,8 @@ MONGODB_MAX_POOL_SIZE=10
 JWT_SECRET=your_super_secret_jwt_key_here_minimum_32_chars
 
 # Admin Configuration
-ADMIN_EMAIL=admin@srikanya.com
-ADMIN_PASSWORD=srikanya2024
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=change_me_in_production
 ```
 
 #### **☁️ Cloudinary (Image Uploads)**
@@ -74,7 +74,7 @@ EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USER=your-email@gmail.com
 EMAIL_PASS=your-app-password
-EMAIL_FROM=Sri Kanya Restaurant <your-email@gmail.com>
+EMAIL_FROM=Restaurant <your-email@gmail.com>
 ```
 
 #### **🌍 Application Configuration**
@@ -105,8 +105,8 @@ MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
 JWT_SECRET=your_super_secret_jwt_key_here_minimum_32_chars
 
 # Admin
-ADMIN_EMAIL=admin@srikanya.com
-ADMIN_PASSWORD=srikanya2024
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=change_me_in_production
 
 # Cloudinary
 CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name

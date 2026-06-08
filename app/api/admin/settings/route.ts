@@ -147,8 +147,8 @@ function getDefaultSettings(): SettingsData {
       description: 'Authentic Indian cuisine with traditional recipes and fresh ingredients',
       address: 'Dharmavaram, Andhra Pradesh, India',
       phone: '+91 98765 43210',
-      email: 'info@srikanya.com',
-      website: 'https://srikanya.com',
+      email: 'info@example.com',
+      website: 'https://example.com',
       cuisine: 'Indian, South Indian, North Indian',
       openingHours: {
         monday: { open: '11:00', close: '22:00', closed: false },

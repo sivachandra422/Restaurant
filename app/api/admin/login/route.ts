@@ -81,7 +81,7 @@ async function verifyPassword(role: 'admin' | 'manager', inputPassword: string):
   }
 
   // Fallback to legacy ADMIN_PASSWORD for both roles (development only)
-  const legacy = process.env.ADMIN_PASSWORD || 'srikanya2024';
+  const legacy = process.env.ADMIN_PASSWORD || 'change-me-in-production';
   return inputPassword === legacy;
 }
 

@@ -5,7 +5,7 @@ export const RESTAURANT_INFO = {
   tagline: 'Authentic Indian Cuisine & Traditional Flavors',
   phone: '+91-9876543210',
   address: 'Dharmavaram, Andhra Pradesh - 533430',
-  email: 'srikanya.dharmavaram@gmail.com',
+  email: 'restaurant@example.com',
   hours: 'Daily: 8:00 AM - 11:00 PM',
 };
 

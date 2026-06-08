@@ -17,7 +17,7 @@ async function verifyAdminAuth(request: NextRequest) {
     }
 
     const jwt = require('jsonwebtoken');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'srikanya-jwt-secret-2024');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'change-this-jwt-secret');
     
     return { isAuthenticated: true, user: decoded };
   } catch (error) {

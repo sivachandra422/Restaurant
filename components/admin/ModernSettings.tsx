@@ -209,7 +209,7 @@ export default function ModernSettings() {
       {
         id: 1,
         name: 'Admin User',
-        email: 'admin@srikanya.com',
+        email: 'admin@example.com',
         role: 'admin',
         status: 'active',
         lastLogin: '2024-01-15T10:30:00Z',
@@ -218,7 +218,7 @@ export default function ModernSettings() {
       {
         id: 2,
         name: 'Manager User',
-        email: 'manager@srikanya.com',
+        email: 'manager@example.com',
         role: 'manager',
         status: 'active',
         lastLogin: '2024-01-14T15:20:00Z',
@@ -227,7 +227,7 @@ export default function ModernSettings() {
       {
         id: 3,
         name: 'Staff User',
-        email: 'staff@srikanya.com',
+        email: 'staff@example.com',
         role: 'staff',
         status: 'active',
         lastLogin: '2024-01-13T12:10:00Z',

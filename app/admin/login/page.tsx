@@ -139,11 +139,12 @@ export default function AdminLoginPage() {
 
           {/* Demo Credentials - hide in production */}
           {process.env.NODE_ENV !== 'production' && (
-            <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials</h3>
-              <div className="space-y-1 text-xs text-gray-600">
-                <p><strong>Admin:</strong> admin / srikanya2024</p>
-                <p><strong>Manager:</strong> manager / srikanya2024</p>
+            <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h3 className="text-sm font-medium text-blue-700 mb-2">🔐 Demo Credentials (Dev Only)</h3>
+              <div className="space-y-1 text-xs text-blue-600">
+                <p><strong>Admin:</strong> admin / demo-password</p>
+                <p><strong>Manager:</strong> manager / demo-password</p>
+                <p className="mt-2 text-blue-500">⚠️ Change in production</p>
               </div>
             </div>
           )}
@@ -151,7 +152,7 @@ export default function AdminLoginPage() {
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-xs text-gray-500">
-            © 2024 Sri Kanya Family Restaurant. All rights reserved.
+            © 2024 Restaurant Platform. All rights reserved.
           </p>
         </div>
       </div>

@@ -32,17 +32,17 @@
 ### **Required Environment Variables (Render)**
 ```bash
 # Vector Search Provider (Choose ONE)
-GROQ_API_KEY=gsk_your_groq_api_key_here
+GROQ_API_KEY=your_groq_api_key
 
 # Database
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/restaurant
 
 # Security
-JWT_SECRET=your_super_secret_jwt_key_here_minimum_32_chars
+JWT_SECRET=your_jwt_secret_key_minimum_32_chars
 
-# Admin
-ADMIN_EMAIL=admin@srikanya.com
-ADMIN_PASSWORD=srikanya2024
+# Admin (set strong password in production)
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=change_me_in_production
 
 # Environment
 NODE_ENV=production
@@ -56,15 +56,15 @@ VECTOR_SEARCH_DIMENSIONS=1536
 ### **Optional Environment Variables**
 ```bash
 # Cloudinary (Image Uploads)
-CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 
-# Email Configuration
+# Email Configuration (Gmail app password)
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_specific_password
 ```
 
 ## **💰 Cost Analysis with Your $500 MongoDB Credits**
